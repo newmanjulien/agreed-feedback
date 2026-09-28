@@ -1,0 +1,55 @@
+@import 'tailwindcss';
+
+@theme {
+	--font-sans: Arial, Helvetica, sans-serif;
+
+	--color-canvas: #f1f3f4;
+	--color-surface: #ffffff;
+	--color-surface-subtle: #f8f9fa;
+
+	--color-document-ink: #171717;
+	--color-ink: #202124;
+	--color-ink-secondary: #3c4043;
+	--color-ink-muted: #5f6368;
+	--color-ink-subtle: #777b80;
+
+	--color-line: #dadce0;
+	--color-line-strong: #9aa0a6;
+
+	--color-hover: #e3e6e8;
+	--color-hover-subtle: #e8eaed;
+
+	--color-accent: #2563eb;
+	--color-accent-hover: #1d4ed8;
+	--color-danger: #b42318;
+	--color-danger-surface: #fff1f0;
+	--color-danger-surface-hover: #ffe4e1;
+
+	--color-clause-editable-highlight: rgba(34, 197, 94, 0.2);
+
+	/* Clause box highlights */
+	--color-clause-green-highlight: rgba(34, 197, 94, 0.16);
+	--color-clause-green-highlight-hover: rgba(34, 197, 94, 0.22);
+	--color-clause-green-highlight-selected: rgba(34, 197, 94, 0.28);
+
+	--radius-control: 14px;
+	--radius-sm: 6px;
+	--radius-field: 14px;
+	--radius-panel: 12px;
+	--radius-box: 14px;
+}
+
+:root {
+	--app-header-height: 51px;
+	--document-viewport-gap: 16px;
+}
+
+@media (max-width: 650px) {
+	:root {
+		--app-header-height: 48px;
+	}
+}
+
+html {
+	scrollbar-gutter: stable;
+}

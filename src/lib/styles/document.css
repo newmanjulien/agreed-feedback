@@ -1,0 +1,242 @@
+.document-page {
+	position: relative;
+	width: var(--contract-page-width);
+	height: var(--contract-page-height);
+	padding: var(--contract-page-top-padding) var(--contract-page-horizontal-padding)
+		var(--contract-page-bottom-padding);
+	overflow: hidden;
+	border: 0;
+	border-radius: 0;
+	outline: 1px solid var(--color-line);
+	outline-offset: -1px;
+	background: var(--color-surface);
+	box-shadow: none;
+}
+
+.document-page__number {
+	position: absolute;
+	right: 48px;
+	bottom: 32px;
+	font-size: 15px;
+	line-height: 1;
+	color: #a3a3a3;
+}
+
+.document-page.first-page {
+	padding-top: var(--contract-first-page-top-padding);
+}
+
+.document-page__content,
+.measurement-surface {
+	width: var(--contract-content-width);
+}
+
+.contract-document {
+	font-family: Arial, Helvetica, sans-serif;
+	color: var(--color-document-ink);
+	user-select: text;
+}
+
+.contract-document,
+.contract-document *,
+.contract-document *::before,
+.contract-document *::after {
+	box-sizing: border-box;
+}
+
+/* Clause box passages use the green highlight. */
+.contract-clause {
+	--clause-highlight-background: var(--color-clause-green-highlight);
+	--clause-hover-background: var(--color-clause-green-highlight-hover);
+	--clause-selected-background: var(--color-clause-green-highlight-selected);
+	cursor: pointer;
+	border-radius: 3px;
+	background: var(--clause-highlight-background);
+	box-decoration-break: clone;
+	-webkit-box-decoration-break: clone;
+	transition: background-color 120ms ease;
+}
+
+.contract-clause:hover {
+	background: var(--clause-hover-background);
+}
+.contract-clause--inactive,
+.contract-clause--inactive:hover {
+	background: transparent;
+	cursor: inherit;
+}
+
+.contract-clause[aria-pressed='true'] {
+	background: var(--clause-selected-background);
+}
+
+.contract-clause:focus-visible {
+	outline: 2px solid var(--color-accent);
+	outline-offset: 2px;
+}
+
+/* An insertion slot occupies a complete text line even before it has content. */
+.contract-paragraph.is-empty-insertion-slot .contract-clause {
+	display: block;
+	width: 100%;
+	min-height: 1.46em;
+}
+
+.contract-revision-removed {
+	box-decoration-break: clone;
+	-webkit-box-decoration-break: clone;
+	background: #e5e7eb;
+	color: var(--color-document-ink);
+	text-decoration: line-through;
+	user-select: none;
+	-webkit-user-select: none;
+}
+
+.contract-revision-removed.revision-bold {
+	font-weight: bold;
+}
+.contract-revision-removed.revision-italic {
+	font-style: italic;
+}
+
+.contract-revision-added {
+	background: rgba(255, 235, 59, 0.25);
+	text-decoration: none;
+	box-decoration-break: clone;
+	-webkit-box-decoration-break: clone;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.contract-clause {
+		transition: none;
+	}
+}
+
+/*
+ * Search highlights
+ */
+::highlight(agreed-search-matches) {
+	background: rgba(250, 204, 21, 0.38);
+	color: inherit;
+}
+
+::highlight(agreed-search-active-match) {
+	background: rgba(249, 115, 22, 0.72);
+	color: inherit;
+}
+
+.contract-flow {
+	display: flex;
+	flex-direction: column;
+}
+
+.contract-heading {
+	scroll-margin-top: calc(var(--app-header-height) + var(--document-viewport-gap));
+}
+
+.contract-heading:focus {
+	outline: none;
+}
+
+.contract-document h1,
+.contract-document h2,
+.contract-document p {
+	flex: 0 0 auto;
+	margin-right: 0;
+	margin-left: 0;
+}
+
+.contract-document h1 {
+	text-align: center;
+	margin-top: 0;
+	margin-bottom: 33px;
+	font-size: 20px;
+	line-height: 0;
+	letter-spacing: -0.4px;
+}
+
+.contract-document h2 {
+	margin-top: 34px;
+	margin-bottom: 10px;
+	font-size: 17px;
+	line-height: 1.25;
+	letter-spacing: -0.25px;
+}
+
+.contract-document p {
+	margin-top: 0;
+	margin-bottom: 20px;
+	font-size: 15px;
+	line-height: 1.46;
+}
+
+.contract-document .contract-paragraph {
+	text-align: justify;
+}
+
+.contract-document .contract-paragraph:not(.is-final) {
+	margin-bottom: 0;
+}
+
+.contract-table {
+	width: 100%;
+	margin: 12px 0 24px;
+	border-collapse: collapse;
+	table-layout: fixed;
+	font-size: 14px;
+	line-height: 1.4;
+}
+
+.contract-table th,
+.contract-table td {
+	height: 44px;
+	padding: 8px;
+	border: 1px solid var(--color-document-ink);
+	text-align: left;
+	vertical-align: top;
+	overflow-wrap: anywhere;
+}
+
+.contract-table th {
+	background: var(--color-hover-subtle);
+}
+
+.contract-table .clause-cell {
+	background: var(--color-clause-green-highlight);
+	cursor: pointer;
+}
+
+.contract-table .clause-cell:hover {
+	background: var(--color-clause-green-highlight-hover);
+}
+
+.contract-table .clause-cell:has(.contract-clause[aria-pressed='true']) {
+	background: var(--color-clause-green-highlight-selected);
+}
+
+.contract-table .contract-clause {
+	display: block;
+	background: transparent;
+}
+
+.signature-table {
+	margin: 30px 0;
+	table-layout: auto;
+}
+
+.signature-table th,
+.signature-table td {
+	height: auto;
+	padding: 9px 12px 9px 0;
+	border: 0;
+	background: transparent;
+}
+
+.measurement-surface {
+	position: fixed;
+	top: 0;
+	left: -100000px;
+	height: auto;
+	visibility: hidden;
+	pointer-events: none;
+}
