@@ -3,7 +3,7 @@ import type { EditableCopyKey } from '$lib/contract/model';
 export const CLAUSE_BOX_TEXT_SECTIONS = [
 	{
 		key: 'howToExplainToBuyers',
-		label: 'How to explain to customers',
+		label: 'How to explain to buyers',
 		placeholder: 'Give reps a talk track'
 	},
 	{
