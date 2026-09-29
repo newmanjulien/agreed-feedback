@@ -12,7 +12,7 @@ const source = input.endsWith('.zip')
 	: await readFile(input, 'utf8');
 const fields = [
 	'summary',
-	'howToExplainToCustomers',
+	'howToExplainToBuyers',
 	'commonObjections',
 	'negotiation',
 	'changesNeedEscalation'

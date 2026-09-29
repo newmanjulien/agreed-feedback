@@ -59,7 +59,7 @@ const concession = v.object({
 
 export const editableCopyField = v.union(
 	v.literal('summary'),
-	v.literal('howToExplainToCustomers'),
+	v.literal('howToExplainToBuyers'),
 	v.literal('commonObjections'),
 	v.literal('negotiation'),
 	v.literal('changesNeedEscalation')
@@ -68,7 +68,7 @@ export const editableCopyField = v.union(
 const clauseBoxFields = {
 	clauseKey: v.string(),
 	summary: v.string(),
-	howToExplainToCustomers: v.string(),
+	howToExplainToBuyers: v.string(),
 	commonObjections: v.string(),
 	negotiation: v.string(),
 	changesNeedEscalation: v.string(),
