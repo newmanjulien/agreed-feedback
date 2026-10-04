@@ -1,0 +1,1586 @@
+{
+  "blocks": [
+    {
+      "oldId": "j9750bbn0k8f9x8rhekhsj1sr58fbz4a",
+      "blockKey": "heading-oceans-xyz-llc"
+    },
+    {
+      "oldId": "j9723wcbm66ns6nm80w8p646ex8fbcn4",
+      "blockKey": "heading-contract-section-1"
+    },
+    {
+      "oldId": "j97a67dzk0axjeyeg774zp20dd8fan7c",
+      "blockKey": "paragraph-agreement-introduction"
+    },
+    {
+      "oldId": "j973fs5gtqpanfyr5vtwjqe5an8fanbd",
+      "blockKey": "heading-contract-section-5"
+    },
+    {
+      "oldId": "j97bm7jxxr6tppw9gefdsadp198fajny",
+      "blockKey": "paragraph-services-recital"
+    },
+    {
+      "oldId": "j97ebxy6p7q3pr9dzwmw71nffn8fbk1b",
+      "blockKey": "heading-contract-section-9"
+    },
+    {
+      "oldId": "j9788g6pvp3rfzj585rfwwqjrs8fbhpe",
+      "blockKey": "paragraph-agreement-recital"
+    },
+    {
+      "oldId": "j97bf94ax33m1cpjw3sstcert58fbhzc",
+      "blockKey": "heading-access-use"
+    },
+    {
+      "oldId": "j979arw7zc90myb6rgfq3bngfs8fbjgt",
+      "blockKey": "paragraph-provision-professionals"
+    },
+    {
+      "oldId": "j97bqp6ne1tpjhzknf0dn83cmh8fa2kn",
+      "blockKey": "paragraph-resale"
+    },
+    {
+      "oldId": "j97bnqvs3qhtdkvx8jm979htrx8fakxn",
+      "blockKey": "paragraph-amendments-statement-of-work"
+    },
+    {
+      "oldId": "j975sahna217n309agvhs42fdd8facq8",
+      "blockKey": "paragraph-replacement-professional"
+    },
+    {
+      "oldId": "j970g5tzwmrme693zdhrdreyf18fansq",
+      "blockKey": "paragraph-reservation-of-rights"
+    },
+    {
+      "oldId": "j978fcnj9j1a25r4em3h75z0nx8faktn",
+      "blockKey": "heading-buyer-responsibilities"
+    },
+    {
+      "oldId": "j971ppazcpzdzj0yxabtxrdj3x8fbgdb",
+      "blockKey": "paragraph-buyer-orientation"
+    },
+    {
+      "oldId": "j970ff0s61pyctt9bvqtghtzph8fb1va",
+      "blockKey": "paragraph-buyer-meetings"
+    },
+    {
+      "oldId": "j97bcv0dy8vdsx8qqfgqvwdpyd8fa5vb",
+      "blockKey": "paragraph-provider-meetings"
+    },
+    {
+      "oldId": "j9752zx25kt5e4208pyd7ftt4s8fawc0",
+      "blockKey": "paragraph-buyer-systems"
+    },
+    {
+      "oldId": "j97392g30hxjrnjvp6mg35t1118faz9e",
+      "blockKey": "heading-fees-and-payment"
+    },
+    {
+      "oldId": "j978heknc1pbnq1bd67j0j4sr98fa96z",
+      "blockKey": "paragraph-fees"
+    },
+    {
+      "oldId": "j976e4zjp69785xma4mw5jv2ys8fawkf",
+      "blockKey": "paragraph-initial-term-fee"
+    },
+    {
+      "oldId": "j975gywnsktqp76sy3m8fdj9xn8fa29q",
+      "blockKey": "paragraph-renewal-term-fee"
+    },
+    {
+      "oldId": "j97cmnkp2e12wxfj6510zzcfkh8fb3zk",
+      "blockKey": "paragraph-equipment-fee"
+    },
+    {
+      "oldId": "j972r2nxhpnk4x0hzadft0wszs8facm8",
+      "blockKey": "paragraph-automatic-payment-authorization"
+    },
+    {
+      "oldId": "j972xs7c2mjq8c19d7ttje0z258fb6fx",
+      "blockKey": "paragraph-taxes"
+    },
+    {
+      "oldId": "j97dc34d9khzc5yetykc5h6vb58fbn90",
+      "blockKey": "heading-confidential-information"
+    },
+    {
+      "oldId": "j97eh0cppkbyw3884ws1ws59rn8fbyxq",
+      "blockKey": "paragraph-confidential-information-detail"
+    },
+    {
+      "oldId": "j974bsatpkj42v80ma81cdadx98fb8re",
+      "blockKey": "heading-intellectual-property"
+    },
+    {
+      "oldId": "j97f78yw5serj9yykp9res774h8fbnp8",
+      "blockKey": "paragraph-provider-ip-buyer-ip"
+    },
+    {
+      "oldId": "j97d2kzc1w1c8qnacrkvk1hmb98fat50",
+      "blockKey": "paragraph-marketing-rights"
+    },
+    {
+      "oldId": "j972m913chgrs66bgc36h1reen8fahag",
+      "blockKey": "paragraph-work-product-deliverables"
+    },
+    {
+      "oldId": "j975ve75s6k93tes4jqgn5xhsx8fbnb1",
+      "blockKey": "heading-warranty-disclaimer"
+    },
+    {
+      "oldId": "j97136gsvs2mqn8qa04jkpz5z18fazef",
+      "blockKey": "paragraph-warranties-disclaimer"
+    },
+    {
+      "oldId": "j978a37xdwj8m0fcn0kenf71qd8fbkcz",
+      "blockKey": "paragraph-professional-qualifications"
+    },
+    {
+      "oldId": "j97dpwr35r7rk7y9zymvmewbh18fan5g",
+      "blockKey": "heading-limitations-of-liability"
+    },
+    {
+      "oldId": "j9703mds5dexybq4vtnf8kv9fs8fbptv",
+      "blockKey": "paragraph-limitations-of-liability-detail"
+    },
+    {
+      "oldId": "j97f10r5c3nd739nfhdr9tsg2d8fa1a7",
+      "blockKey": "heading-term-and-termination"
+    },
+    {
+      "oldId": "j971jbwe4z8sjft1h6gdymgq458fb7kg",
+      "blockKey": "paragraph-term-of-contract"
+    },
+    {
+      "oldId": "j9778kte4vy7r4xx0n8v2xcchd8fadt0",
+      "blockKey": "paragraph-contract-term"
+    },
+    {
+      "oldId": "j978mjynr7dgrn5cgzgbhwyzmn8fa3bd",
+      "blockKey": "paragraph-professional-terms"
+    },
+    {
+      "oldId": "j975hjfr452p5y63g5bxxz6g958fb31c",
+      "blockKey": "paragraph-initial-term-commitment"
+    },
+    {
+      "oldId": "j978s6kea6yydk9nn41kmf1rgh8fb3ew",
+      "blockKey": "paragraph-liability-for-payment"
+    },
+    {
+      "oldId": "j970t6b8dg2qv1x1db9qdrtkpd8fasdh",
+      "blockKey": "paragraph-early-termination-fees-rebates"
+    },
+    {
+      "oldId": "j973ebfs4ranrdb4vbxs7kjcq18fbv59",
+      "blockKey": "paragraph-termination"
+    },
+    {
+      "oldId": "j97ch2n1f7wf5gam3anmfj8bfd8fbty5",
+      "blockKey": "paragraph-provider-termination"
+    },
+    {
+      "oldId": "j978w4g2d2jzd92rhse26qf0cx8faxvk",
+      "blockKey": "paragraph-insolvency-termination"
+    },
+    {
+      "oldId": "j97008estm0h4hf75j4g59m23d8fab8a",
+      "blockKey": "paragraph-nonrenewal-termination"
+    },
+    {
+      "oldId": "j971x4rf8hg4ys4616w1sc3dh18fah01",
+      "blockKey": "paragraph-professional-termination"
+    },
+    {
+      "oldId": "j979nk9akhav8xx4rvmnttkrgh8fbt1z",
+      "blockKey": "paragraph-professional-conduct"
+    },
+    {
+      "oldId": "j974efy1tq5g41jbrxabwnd5m18fbmgn",
+      "blockKey": "paragraph-buyer-policies"
+    },
+    {
+      "oldId": "j977mw7g93q805zschbrsf0h198fbrs5",
+      "blockKey": "paragraph-professional-conviction"
+    },
+    {
+      "oldId": "j972d64rb9cg7nys2k5q394n218faygg",
+      "blockKey": "paragraph-survival"
+    },
+    {
+      "oldId": "j97e7q3qw5kpyphgd5sbf4nhfx8fbw52",
+      "blockKey": "heading-non-solicitation-non-interference"
+    },
+    {
+      "oldId": "j976afsmrjkesev3y9f90qj13n8fa39w",
+      "blockKey": "paragraph-non-solicitation-definitions"
+    },
+    {
+      "oldId": "j97a4cnn4sxd3r4shsjd18cm8h8fbmra",
+      "blockKey": "paragraph-definition-solicit"
+    },
+    {
+      "oldId": "j97fvkzwd9xztvhysfn2yxvck18fbpq2",
+      "blockKey": "paragraph-definition-restricted-period"
+    },
+    {
+      "oldId": "j973p40c5h19pz4tfqw56v9mr18fbh31",
+      "blockKey": "paragraph-definition-restricted-territory"
+    },
+    {
+      "oldId": "j97dhgbymjdmzk2n6d9gvejyad8fbtfa",
+      "blockKey": "paragraph-definition-representatives"
+    },
+    {
+      "oldId": "j97ampg07m8smmysqbwd3ytqrh8fbnjw",
+      "blockKey": "paragraph-definition-deliver-services"
+    },
+    {
+      "oldId": "j973wg4j5rjv7asqj5nt4gbh618fb7ex",
+      "blockKey": "paragraph-definition-provider-personnel"
+    },
+    {
+      "oldId": "j97bvxep22chy1xkttprhqg75n8fak2w",
+      "blockKey": "paragraph-non-solicitation"
+    },
+    {
+      "oldId": "j97bmjdz93zscgdaeb2gtz4kbs8far05",
+      "blockKey": "paragraph-non-interference"
+    },
+    {
+      "oldId": "j976zt28mz0tda66c0fn0cv4kh8fagpa",
+      "blockKey": "paragraph-non-solicitation-remedies"
+    },
+    {
+      "oldId": "j973q8pv2h6n0g4ts50hk218y98fabfc",
+      "blockKey": "paragraph-non-solicitation-remedy"
+    },
+    {
+      "oldId": "j97cg7kmmze4vbydzv6r33h8p58fazpg",
+      "blockKey": "paragraph-non-interference-remedy"
+    },
+    {
+      "oldId": "j97cregcbs56wdxypmsksp4s9s8fa9cw",
+      "blockKey": "paragraph-remedies-characterization"
+    },
+    {
+      "oldId": "j9723jqh27fy2naev6pwwxfgr98fbw6d",
+      "blockKey": "heading-information-security"
+    },
+    {
+      "oldId": "j976n3xc5mrsaz3anmrwqwy70x8fa3bf",
+      "blockKey": "paragraph-security-compliance"
+    },
+    {
+      "oldId": "j97bfk6wbfgs3t129gcsbehpmn8fbtgh",
+      "blockKey": "paragraph-return-personal-information"
+    },
+    {
+      "oldId": "j97b4dcawkskx7v5h6hejc9awh8fa0n8",
+      "blockKey": "paragraph-sharing-highly-sensitive-information"
+    },
+    {
+      "oldId": "j976bqkfw70whyhyg8534jrj058fb5dj",
+      "blockKey": "paragraph-security-definitions"
+    },
+    {
+      "oldId": "j971kmxzkyfmbt9zswb1n1acq58fa16q",
+      "blockKey": "paragraph-definition-personal-information"
+    },
+    {
+      "oldId": "j970425m22azb1bh5tjkhwjj0s8fbj2c",
+      "blockKey": "paragraph-definition-sensitive-personal-information"
+    },
+    {
+      "oldId": "j977tm0p0j0xwt4z0gncee04hs8facfe",
+      "blockKey": "paragraph-definition-highly-sensitive-personal-information"
+    },
+    {
+      "oldId": "j971mtw3cqmwhzgg72hw7jj1v58fbmvz",
+      "blockKey": "heading-miscellaneous"
+    },
+    {
+      "oldId": "j979jkqk5py2jmd4zjg4age35h8fa5zg",
+      "blockKey": "paragraph-entire-contract"
+    },
+    {
+      "oldId": "j9760tb828vd1skjnydyywvb9n8faajz",
+      "blockKey": "paragraph-notices"
+    },
+    {
+      "oldId": "j97891149par82w09fv221xgrs8fa8c7",
+      "blockKey": "paragraph-notices-provider-label"
+    },
+    {
+      "oldId": "j97b2paeqse7a73djnwdd619ds8fb9tp",
+      "blockKey": "paragraph-notices-provider-name"
+    },
+    {
+      "oldId": "j978pmec3ra1zgj8fkscfwzp758fazzf",
+      "blockKey": "paragraph-notices-provider-po-box"
+    },
+    {
+      "oldId": "j970nq82e8je4p4ntd6f7r5xkh8fbfgs",
+      "blockKey": "paragraph-notices-provider-city"
+    },
+    {
+      "oldId": "j972z21h3a5fm2ygres0x4ttts8fbk7p",
+      "blockKey": "paragraph-notices-provider-attention"
+    },
+    {
+      "oldId": "j97ee3wy84cb7zhkq7wd4e5sqd8fa9bt",
+      "blockKey": "paragraph-notices-provider-email"
+    },
+    {
+      "oldId": "j97dvfzfmn5g5cpy1b8dg72mqh8fa47q",
+      "blockKey": "paragraph-notices-billing-email"
+    },
+    {
+      "oldId": "j9767matvwdc0c7nqtpn1m4ck98fagj3",
+      "blockKey": "paragraph-notices-buyer-label"
+    },
+    {
+      "oldId": "j976kgrgejkdww5wg02k27ytms8fbpjm",
+      "blockKey": "paragraph-notices-buyer-attention"
+    },
+    {
+      "oldId": "j979nekx6nrpwgx6mk7kxkmmr18fbhk1",
+      "blockKey": "paragraph-notices-buyer-address"
+    },
+    {
+      "oldId": "j97291er2my0w1tp3b1xnpcegn8fa1fe",
+      "blockKey": "paragraph-notices-buyer-email"
+    },
+    {
+      "oldId": "j97d1w488ay82dhsr4hw242fqh8fa6ww",
+      "blockKey": "paragraph-relationship-of-parties"
+    },
+    {
+      "oldId": "j974y0ddwh3z1abx0qzecas6758fbnjb",
+      "blockKey": "paragraph-insurance"
+    },
+    {
+      "oldId": "j9702te0x7ee2dnj3bphaqrahx8fbwb5",
+      "blockKey": "paragraph-force-majeure"
+    },
+    {
+      "oldId": "j976g2d71ev24s991fbt3cwpsx8fajb3",
+      "blockKey": "paragraph-amendment-waiver"
+    },
+    {
+      "oldId": "j974669s8ny8ndyekh1n635tnd8fab9v",
+      "blockKey": "paragraph-severability"
+    },
+    {
+      "oldId": "j97bpsp9zp3fwn165pcgh11r018fb54k",
+      "blockKey": "paragraph-governing-law"
+    },
+    {
+      "oldId": "j973rbxmxv1e81tk004xx3xc1d8faqwt",
+      "blockKey": "paragraph-attorneys-fees"
+    },
+    {
+      "oldId": "j97e09vzsw7e8tnbxbfcphrfz58farre",
+      "blockKey": "paragraph-assignment"
+    },
+    {
+      "oldId": "j97evktq2tcsg9qe6dkjfqndxs8fbkcd",
+      "blockKey": "paragraph-equitable-relief"
+    },
+    {
+      "oldId": "j97a1pw8qq0vxeahxxvyeznn4s8fa50d",
+      "blockKey": "paragraph-mutual-indemnification"
+    },
+    {
+      "oldId": "j9786ea1h4t52x0vyyq6rgnk5s8fbwrs",
+      "blockKey": "paragraph-counterparts"
+    },
+    {
+      "oldId": "j9747ctynp0fghqdcpy754y6vd8fb66t",
+      "blockKey": "paragraph-signature-page-notice"
+    },
+    {
+      "oldId": "j973sgwnvxcqb8mgh5z9p4ndk58fb4ks",
+      "blockKey": "paragraph-execution"
+    },
+    {
+      "oldId": "j974k7p9rqn3tmyzxxm2k960n58fb07s",
+      "blockKey": "table-signatures"
+    },
+    {
+      "oldId": "j978pz3ya8m6ntkgysxdsr06558fagxc",
+      "blockKey": "heading-contract-section-227"
+    },
+    {
+      "oldId": "j972mw460vyyt2j32zt5pkh3zh8fan9f",
+      "blockKey": "heading-contract-section-228"
+    },
+    {
+      "oldId": "j97aq5te3ma31zq92hnz2ja5vs8fbpdr",
+      "blockKey": "paragraph-exhibit-definitions"
+    },
+    {
+      "oldId": "j970k3dr7ak98h5vpja1vafvw18fbkve",
+      "blockKey": "paragraph-exhibit-services-heading"
+    },
+    {
+      "oldId": "j97f76k6jfj6hmxvfn7y0kejxd8faerw",
+      "blockKey": "table-exhibit-services"
+    },
+    {
+      "oldId": "j97e1t60y2rafxhcrzqppjw18s8fajbm",
+      "blockKey": "paragraph-exhibit-fees-heading"
+    },
+    {
+      "oldId": "j9781qknr56yhdfrbvn0grk7bh8fa45t",
+      "blockKey": "paragraph-exhibit-initial-term"
+    },
+    {
+      "oldId": "j970bqcyrd1gyrps64weyfnhf18fbd0z",
+      "blockKey": "paragraph-exhibit-renewal-term"
+    },
+    {
+      "oldId": "j975xajg9hhkxma35r54nzwyq58fanqw",
+      "blockKey": "paragraph-exhibit-equipment-fee"
+    },
+    {
+      "oldId": "j97e8y1cb60ff5tkf6rcd0qvnh8fazv0",
+      "blockKey": "paragraph-exhibit-annual-adjustment"
+    },
+    {
+      "oldId": "j979wd9a10wr7hsjevw2v57dgd8fazhj",
+      "blockKey": "table-exhibit-fees"
+    }
+  ],
+  "items": [
+    {
+      "oldId": "j57f61hppjzys835a6mzm28scn8fachz",
+      "clauseKey": "access-use",
+      "triggerIds": [
+        "access-use"
+      ]
+    },
+    {
+      "oldId": "j5715b6znzsrnkn28q3qpdfn2x8fa9fb",
+      "clauseKey": "amendment-waiver",
+      "triggerIds": [
+        "amendment-waiver"
+      ]
+    },
+    {
+      "oldId": "j57e88kq8vqpzhffntb081vkjn8fam55",
+      "clauseKey": "amendments-statement-of-work",
+      "triggerIds": [
+        "amendments-statement-of-work"
+      ]
+    },
+    {
+      "oldId": "j572r9x6bmkt8xgdbxxb920as18fbbva",
+      "clauseKey": "annual-fee-increase",
+      "triggerIds": [
+        "annual-fee-increase-main",
+        "annual-fee-increase-exhibit-a"
+      ]
+    },
+    {
+      "oldId": "j57e9hze3ngf29qxs2atb6dg4h8fbffh",
+      "clauseKey": "assignment",
+      "triggerIds": [
+        "assignment"
+      ]
+    },
+    {
+      "oldId": "j575btt7h1hgxcks4tdbeqw8bx8fb30f",
+      "clauseKey": "attorneys-fees",
+      "triggerIds": [
+        "attorneys-fees"
+      ]
+    },
+    {
+      "oldId": "j578n7mpze6h5tc91103mz8wk18fb88w",
+      "clauseKey": "automatic-payment-authorization",
+      "triggerIds": [
+        "automatic-payment-authorization"
+      ]
+    },
+    {
+      "oldId": "j57d3htnthfgnphj78fz58fpah8fb44e",
+      "clauseKey": "buyer-responsibilities",
+      "triggerIds": [
+        "buyer-responsibilities"
+      ]
+    },
+    {
+      "oldId": "j57963nzbfrs6hnk2scapc7g8n8fbpj5",
+      "clauseKey": "certain-definitions",
+      "triggerIds": [
+        "certain-definitions"
+      ]
+    },
+    {
+      "oldId": "j575s21wpaqd4qzjpgp8v6t9s58fbr8d",
+      "clauseKey": "confidential-information",
+      "triggerIds": [
+        "confidential-information"
+      ]
+    },
+    {
+      "oldId": "j5722bz1t4yj7zp0wr9ca1hrmx8fbsqs",
+      "clauseKey": "counterparts",
+      "triggerIds": [
+        "counterparts"
+      ]
+    },
+    {
+      "oldId": "j573wfyec7j4zf62gff2v159qx8fbyx3",
+      "clauseKey": "entire-contract",
+      "triggerIds": [
+        "entire-contract"
+      ]
+    },
+    {
+      "oldId": "j57b8w3j8bb5xc3pmkwktya27x8faaqj",
+      "clauseKey": "equipment-fee",
+      "triggerIds": [
+        "equipment-fee-main",
+        "equipment-fee-exhibit-a"
+      ]
+    },
+    {
+      "oldId": "j570s2zehaqp111eg7fp04q27h8fbs7h",
+      "clauseKey": "equitable-relief",
+      "triggerIds": [
+        "equitable-relief"
+      ]
+    },
+    {
+      "oldId": "j575211c2fbv1mjd1gwp00xrt18fb3nv",
+      "clauseKey": "exhibit-description-of-services",
+      "triggerIds": [
+        "exhibit-description-of-services"
+      ]
+    },
+    {
+      "oldId": "j5720eswh0cyetrb8n8bfgpfhn8fa8wk",
+      "clauseKey": "exhibit-fees",
+      "triggerIds": [
+        "exhibit-fees"
+      ]
+    },
+    {
+      "oldId": "j57e3gp9vskfspxns2ng21tfnh8fbnm4",
+      "clauseKey": "fees",
+      "triggerIds": [
+        "fees"
+      ]
+    },
+    {
+      "oldId": "j572nzhkym2m08b4nzndxb91f98fbzf1",
+      "clauseKey": "fees-and-payment",
+      "triggerIds": [
+        "fees-and-payment"
+      ]
+    },
+    {
+      "oldId": "j575ynh9ew6fscccy4f5fgn1b58fbr1f",
+      "clauseKey": "force-majeure",
+      "triggerIds": [
+        "force-majeure"
+      ]
+    },
+    {
+      "oldId": "j575cmk5affmzc2646qvm5qqbn8fb74x",
+      "clauseKey": "governing-law-dispute-resolution",
+      "triggerIds": [
+        "governing-law-dispute-resolution"
+      ]
+    },
+    {
+      "oldId": "j57b5jd84zmdd04nake2nbrwtd8faeaa",
+      "clauseKey": "information-security",
+      "triggerIds": [
+        "information-security"
+      ]
+    },
+    {
+      "oldId": "j576r5tnh5w2qemnm6mv06n5zx8fabvx",
+      "clauseKey": "insurance",
+      "triggerIds": [
+        "insurance"
+      ]
+    },
+    {
+      "oldId": "j57ckpwvjy82nvmyfkwy5ge2qd8fbnf0",
+      "clauseKey": "intellectual-property",
+      "triggerIds": [
+        "intellectual-property"
+      ]
+    },
+    {
+      "oldId": "j57awfngw7mce3da6zqvtb146s8faw1a",
+      "clauseKey": "limitations-of-liability",
+      "triggerIds": [
+        "limitations-of-liability"
+      ]
+    },
+    {
+      "oldId": "j5715qexgvrr1k8ym02a5dc93n8fawxm",
+      "clauseKey": "marketing-rights",
+      "triggerIds": [
+        "marketing-rights"
+      ]
+    },
+    {
+      "oldId": "j57aky3agevzgkg2x6a7ve8p098faz0q",
+      "clauseKey": "miscellaneous",
+      "triggerIds": [
+        "miscellaneous"
+      ]
+    },
+    {
+      "oldId": "j57d32rdqc0vt2jqcw5dv6yy398faj3p",
+      "clauseKey": "monthly-fee-discount",
+      "triggerIds": [
+        "monthly-fee-discount"
+      ]
+    },
+    {
+      "oldId": "j574tjkvc87rbe2jad96dksqr58fa25g",
+      "clauseKey": "mutual-indemnification-insertion",
+      "triggerIds": [
+        "mutual-indemnification-insertion"
+      ]
+    },
+    {
+      "oldId": "j57fj5b2g3579bwnrfztmdhb398faz9r",
+      "clauseKey": "non-interference",
+      "triggerIds": [
+        "non-interference"
+      ]
+    },
+    {
+      "oldId": "j579k63wz6gkg2nf0csffvtny98fbfke",
+      "clauseKey": "non-solicitation",
+      "triggerIds": [
+        "non-solicitation"
+      ]
+    },
+    {
+      "oldId": "j57fcx7f8v7zgy3eejq9nzma758fbvbj",
+      "clauseKey": "non-solicitation-definitions",
+      "triggerIds": [
+        "non-solicitation-definitions"
+      ]
+    },
+    {
+      "oldId": "j575jhrgejbrgbkyt9c5wmf64x8fbyb6",
+      "clauseKey": "non-solicitation-non-interference",
+      "triggerIds": [
+        "non-solicitation-non-interference"
+      ]
+    },
+    {
+      "oldId": "j5716y1m5pyvkz4rcqe95m5n058fawyc",
+      "clauseKey": "non-solicitation-poaching-penalty-calculation",
+      "triggerIds": [
+        "non-solicitation-poaching-penalty-calculation"
+      ]
+    },
+    {
+      "oldId": "j57bv85vy614czsemxmyxp78m58fa0dg",
+      "clauseKey": "non-solicitation-remedies",
+      "triggerIds": [
+        "non-solicitation-remedies"
+      ]
+    },
+    {
+      "oldId": "j577b1dcyw85kcjb47f5ye03rs8fb1qq",
+      "clauseKey": "notices",
+      "triggerIds": [
+        "notices"
+      ]
+    },
+    {
+      "oldId": "j57dq3yrw8skc3sqf5fk7mevax8fa1d4",
+      "clauseKey": "professional-terms",
+      "triggerIds": [
+        "professional-terms"
+      ]
+    },
+    {
+      "oldId": "j57amy31pmcda9hkaxkp748hch8fbjea",
+      "clauseKey": "provider-ip-buyer-ip",
+      "triggerIds": [
+        "provider-ip-buyer-ip"
+      ]
+    },
+    {
+      "oldId": "j57fbfvm1w81meh13x23wy0dah8fapnc",
+      "clauseKey": "provision-professionals",
+      "triggerIds": [
+        "provision-professionals"
+      ]
+    },
+    {
+      "oldId": "j578445cj7g5rsxafpp7pgdpk18fawx1",
+      "clauseKey": "relationship-of-parties",
+      "triggerIds": [
+        "relationship-of-parties"
+      ]
+    },
+    {
+      "oldId": "j57d8trs6r48ht29c8fg9bvaes8fb1z5",
+      "clauseKey": "replacement-professional",
+      "triggerIds": [
+        "replacement-professional"
+      ]
+    },
+    {
+      "oldId": "j5752wsf04t37n8bfvr49x9eds8fb8mt",
+      "clauseKey": "replacement-professional-initial-term",
+      "triggerIds": [
+        "replacement-professional-initial-term",
+        "replacement-professional-renewal-term"
+      ]
+    },
+    {
+      "oldId": "j57f9vt8xmc9nhsyqbkkfzffkd8fampa",
+      "clauseKey": "resale",
+      "triggerIds": [
+        "resale"
+      ]
+    },
+    {
+      "oldId": "j575bbkpkfcrtxfm11nxds9edd8fbkpe",
+      "clauseKey": "reservation-of-rights",
+      "triggerIds": [
+        "reservation-of-rights"
+      ]
+    },
+    {
+      "oldId": "j577z8f40p1w112tm54997kd1s8fbs1f",
+      "clauseKey": "return-personal-information",
+      "triggerIds": [
+        "return-personal-information"
+      ]
+    },
+    {
+      "oldId": "j5799p6c63z07xsnca7kmq4bvx8fbaqb",
+      "clauseKey": "security-compliance",
+      "triggerIds": [
+        "security-compliance"
+      ]
+    },
+    {
+      "oldId": "j574wbcfmzn196kw6ye3hsqs698fa19x",
+      "clauseKey": "severability",
+      "triggerIds": [
+        "severability"
+      ]
+    },
+    {
+      "oldId": "j574jpff2za7xcxtwexn574g518fbky0",
+      "clauseKey": "sharing-highly-sensitive-personal-information",
+      "triggerIds": [
+        "sharing-highly-sensitive-personal-information-main"
+      ]
+    },
+    {
+      "oldId": "j570ftafjdn61jm5s7crzb7zgx8fawqw",
+      "clauseKey": "survival",
+      "triggerIds": [
+        "survival"
+      ]
+    },
+    {
+      "oldId": "j5701japxtd2krppnzspt4kshh8fbmk8",
+      "clauseKey": "taxes",
+      "triggerIds": [
+        "taxes"
+      ]
+    },
+    {
+      "oldId": "j57fxaaej50wm8tvfs3e9n6h0s8fb1jm",
+      "clauseKey": "term-and-termination",
+      "triggerIds": [
+        "term-and-termination"
+      ]
+    },
+    {
+      "oldId": "j571n295e67r4dwndd33vamx158fay4x",
+      "clauseKey": "term-fee-payment",
+      "triggerIds": [
+        "term-fee-payment-initial-main",
+        "term-fee-payment-renewal-main",
+        "term-fee-payment-initial-exhibit-a",
+        "term-fee-payment-renewal-exhibit-a"
+      ]
+    },
+    {
+      "oldId": "j57asbq1xnc3pfnrr703jdwdz58fak4v",
+      "clauseKey": "term-of-contract",
+      "triggerIds": [
+        "term-of-contract"
+      ]
+    },
+    {
+      "oldId": "j57fw9y0jjf0sj12ps11xqjsgx8fa1ch",
+      "clauseKey": "termination",
+      "triggerIds": [
+        "termination"
+      ]
+    },
+    {
+      "oldId": "j57byp79jngdkv01vy8q7zr9w98fbb6p",
+      "clauseKey": "warranty-disclaimer",
+      "triggerIds": [
+        "warranty-disclaimer"
+      ]
+    },
+    {
+      "oldId": "j576fjb00p8zwmykrtnq0mwtys8fackj",
+      "clauseKey": "work-product-deliverables",
+      "triggerIds": [
+        "work-product-deliverables"
+      ]
+    },
+    {
+      "oldId": "j57384z2jdp66e0n4j0dkzgr9h8fbptk",
+      "clauseKey": "work-product-payment-vesting",
+      "triggerIds": [
+        "work-product-payment-vesting"
+      ]
+    }
+  ],
+  "provisions": [
+    {
+      "key": "resale-payment-restriction",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-resale/segment/1/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-resale/segment/1/atom/0",
+          "offset": 163
+        }
+      }
+    },
+    {
+      "key": "replacement-professional-suitability",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-replacement-professional/segment/3/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-replacement-professional/segment/3/atom/0",
+          "offset": 19
+        }
+      }
+    },
+    {
+      "key": "replacement-professional-defined-term",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-replacement-professional/segment/5/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-replacement-professional/segment/5/atom/2",
+          "offset": 2
+        }
+      }
+    },
+    {
+      "key": "replacement-professional-sow-qualification",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-replacement-professional/segment/6/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-replacement-professional/segment/6/atom/0",
+          "offset": 0
+        }
+      }
+    },
+    {
+      "key": "replacement-professional-decision-maker",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-replacement-professional/segment/8/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-replacement-professional/segment/8/atom/0",
+          "offset": 29
+        }
+      }
+    },
+    {
+      "key": "replacement-professional-renewal-decision-maker",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-replacement-professional/segment/11/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-replacement-professional/segment/11/atom/0",
+          "offset": 29
+        }
+      }
+    },
+    {
+      "key": "fees-payment-due-date",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-fees/segment/2/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-fees/segment/2/atom/0",
+          "offset": 43
+        }
+      }
+    },
+    {
+      "key": "annual-fee-increase-rate-main",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-fees/segment/5/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-fees/segment/5/atom/0",
+          "offset": 18
+        }
+      }
+    },
+    {
+      "key": "term-fee-payment-initial-main-method",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-initial-term-fee/segment/1/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-initial-term-fee/segment/1/atom/0",
+          "offset": 39
+        }
+      }
+    },
+    {
+      "key": "term-fee-payment-initial-main-timing",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-initial-term-fee/segment/3/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-initial-term-fee/segment/3/atom/0",
+          "offset": 49
+        }
+      }
+    },
+    {
+      "key": "term-fee-payment-initial-main-recurring-date",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-initial-term-fee/segment/4/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-initial-term-fee/segment/4/atom/0",
+          "offset": 0
+        }
+      }
+    },
+    {
+      "key": "term-fee-payment-renewal-main-method",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-renewal-term-fee/segment/1/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-renewal-term-fee/segment/1/atom/0",
+          "offset": 39
+        }
+      }
+    },
+    {
+      "key": "term-fee-payment-renewal-main-timing",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-renewal-term-fee/segment/3/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-renewal-term-fee/segment/3/atom/0",
+          "offset": 59
+        }
+      }
+    },
+    {
+      "key": "term-fee-payment-renewal-main-recurring-date",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-renewal-term-fee/segment/4/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-renewal-term-fee/segment/4/atom/0",
+          "offset": 0
+        }
+      }
+    },
+    {
+      "key": "equipment-fee-payment-main-article",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-equipment-fee/segment/1/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-equipment-fee/segment/1/atom/0",
+          "offset": 10
+        }
+      }
+    },
+    {
+      "key": "equipment-fee-payment-main-amount",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-equipment-fee/segment/3/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-equipment-fee/segment/3/atom/0",
+          "offset": 69
+        }
+      }
+    },
+    {
+      "key": "equipment-fee-payment-main-schedule",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-equipment-fee/segment/5/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-equipment-fee/segment/5/atom/0",
+          "offset": 0
+        }
+      }
+    },
+    {
+      "key": "equipment-fee-payment-main-first-due-date",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-equipment-fee/segment/6/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-equipment-fee/segment/6/atom/0",
+          "offset": 61
+        }
+      }
+    },
+    {
+      "key": "equipment-fee-payment-main-remaining-due-dates",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-equipment-fee/segment/7/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-equipment-fee/segment/7/atom/0",
+          "offset": 0
+        }
+      }
+    },
+    {
+      "key": "equipment-fee-refund-main-opening",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-equipment-fee/segment/9/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-equipment-fee/segment/9/atom/0",
+          "offset": 21
+        }
+      }
+    },
+    {
+      "key": "equipment-fee-refund-main-modal",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-equipment-fee/segment/11/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-equipment-fee/segment/11/atom/0",
+          "offset": 0
+        }
+      }
+    },
+    {
+      "key": "equipment-fee-refund-main-timing",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-equipment-fee/segment/13/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-equipment-fee/segment/13/atom/0",
+          "offset": 0
+        }
+      }
+    },
+    {
+      "key": "marketing-rights-prior-written-approval",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-marketing-rights/segment/2/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-marketing-rights/segment/2/atom/0",
+          "offset": 0
+        }
+      }
+    },
+    {
+      "key": "work-product-payment-vesting-text",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-work-product-deliverables/segment/2/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-work-product-deliverables/segment/2/atom/0",
+          "offset": 93
+        }
+      }
+    },
+    {
+      "key": "limitations-of-liability-mutual-opening-party",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-limitations-of-liability-detail/segment/1/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-limitations-of-liability-detail/segment/1/atom/0",
+          "offset": 8
+        }
+      }
+    },
+    {
+      "key": "limitations-of-liability-mutual-opening-other-party",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-limitations-of-liability-detail/segment/3/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-limitations-of-liability-detail/segment/3/atom/0",
+          "offset": 0
+        }
+      }
+    },
+    {
+      "key": "limitations-of-liability-data-security-carveout",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-limitations-of-liability-detail/segment/5/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-limitations-of-liability-detail/segment/5/atom/0",
+          "offset": 0
+        }
+      }
+    },
+    {
+      "key": "limitations-of-liability-mutual-foreseeability",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-limitations-of-liability-detail/segment/7/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-limitations-of-liability-detail/segment/7/atom/0",
+          "offset": 8
+        }
+      }
+    },
+    {
+      "key": "limitations-of-liability-mutual-cap-party",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-limitations-of-liability-detail/segment/9/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-limitations-of-liability-detail/segment/9/atom/0",
+          "offset": 10
+        }
+      }
+    },
+    {
+      "key": "limitations-of-liability-cap-period",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-limitations-of-liability-detail/segment/11/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-limitations-of-liability-detail/segment/11/atom/0",
+          "offset": 7
+        }
+      }
+    },
+    {
+      "key": "sharing-highly-sensitive-personal-information-responsibility",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-sharing-highly-sensitive-information/segment/1/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-sharing-highly-sensitive-information/segment/1/atom/0",
+          "offset": 129
+        }
+      }
+    },
+    {
+      "key": "insurance-coi-certificate-language",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-insurance/segment/1/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-insurance/segment/1/atom/0",
+          "offset": 170
+        }
+      }
+    },
+    {
+      "key": "governing-law-state-primary",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-governing-law/segment/1/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-governing-law/segment/1/atom/0",
+          "offset": 5
+        }
+      }
+    },
+    {
+      "key": "governing-law-state-conflicts",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-governing-law/segment/3/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-governing-law/segment/3/atom/0",
+          "offset": 5
+        }
+      }
+    },
+    {
+      "key": "governing-law-arbitration-state",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-governing-law/segment/5/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-governing-law/segment/5/atom/0",
+          "offset": 5
+        }
+      }
+    },
+    {
+      "key": "governing-law-substantive-state",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-governing-law/segment/7/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-governing-law/segment/7/atom/0",
+          "offset": 5
+        }
+      }
+    },
+    {
+      "key": "governing-law-choice-of-law-state",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-governing-law/segment/9/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-governing-law/segment/9/atom/0",
+          "offset": 5
+        }
+      }
+    },
+    {
+      "key": "attorneys-fees-enforcing-party",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-attorneys-fees/segment/1/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-attorneys-fees/segment/1/atom/0",
+          "offset": 8
+        }
+      }
+    },
+    {
+      "key": "attorneys-fees-recovery-party",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-attorneys-fees/segment/3/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-attorneys-fees/segment/3/atom/0",
+          "offset": 8
+        }
+      }
+    },
+    {
+      "key": "attorneys-fees-other-relief-party",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-attorneys-fees/segment/5/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-attorneys-fees/segment/5/atom/0",
+          "offset": 17
+        }
+      }
+    },
+    {
+      "key": "attorneys-fees-decision-standard",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-attorneys-fees/segment/7/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-attorneys-fees/segment/7/atom/0",
+          "offset": 77
+        }
+      }
+    },
+    {
+      "key": "attorneys-fees-default-notice-party",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-attorneys-fees/segment/9/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-attorneys-fees/segment/9/atom/0",
+          "offset": 8
+        }
+      }
+    },
+    {
+      "key": "attorneys-fees-default-notice-standard",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-attorneys-fees/segment/11/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-attorneys-fees/segment/11/atom/0",
+          "offset": 109
+        }
+      }
+    },
+    {
+      "key": "mutual-indemnification-paragraph",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-mutual-indemnification/segment/0/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-mutual-indemnification/segment/0/atom/0",
+          "offset": 0
+        }
+      }
+    },
+    {
+      "key": "term-fee-payment-initial-exhibit-a-lead-in",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-exhibit-initial-term/segment/1/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-exhibit-initial-term/segment/1/atom/0",
+          "offset": 21
+        }
+      }
+    },
+    {
+      "key": "term-fee-payment-initial-exhibit-a-method",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-exhibit-initial-term/segment/3/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-exhibit-initial-term/segment/3/atom/0",
+          "offset": 105
+        }
+      }
+    },
+    {
+      "key": "term-fee-payment-initial-exhibit-a-recurring-date",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-exhibit-initial-term/segment/5/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-exhibit-initial-term/segment/5/atom/0",
+          "offset": 0
+        }
+      }
+    },
+    {
+      "key": "term-fee-payment-renewal-exhibit-a-autopay",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-exhibit-renewal-term/segment/1/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-exhibit-renewal-term/segment/1/atom/0",
+          "offset": 0
+        }
+      }
+    },
+    {
+      "key": "term-fee-payment-renewal-exhibit-a-method",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-exhibit-renewal-term/segment/3/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-exhibit-renewal-term/segment/3/atom/0",
+          "offset": 105
+        }
+      }
+    },
+    {
+      "key": "term-fee-payment-renewal-exhibit-a-timing",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-exhibit-renewal-term/segment/5/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-exhibit-renewal-term/segment/5/atom/0",
+          "offset": 19
+        }
+      }
+    },
+    {
+      "key": "term-fee-payment-renewal-exhibit-a-recurring-date",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-exhibit-renewal-term/segment/7/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-exhibit-renewal-term/segment/7/atom/0",
+          "offset": 0
+        }
+      }
+    },
+    {
+      "key": "equipment-fee-refundability-exhibit-a",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-exhibit-equipment-fee/segment/1/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-exhibit-equipment-fee/segment/1/atom/0",
+          "offset": 14
+        }
+      }
+    },
+    {
+      "key": "equipment-fee-payment-exhibit-a-amount",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-exhibit-equipment-fee/segment/3/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-exhibit-equipment-fee/segment/3/atom/0",
+          "offset": 69
+        }
+      }
+    },
+    {
+      "key": "equipment-fee-payment-exhibit-a-schedule",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-exhibit-equipment-fee/segment/4/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-exhibit-equipment-fee/segment/4/atom/0",
+          "offset": 0
+        }
+      }
+    },
+    {
+      "key": "annual-fee-increase-rate-exhibit-a",
+      "range": {
+        "start": {
+          "sourceKey": "source:paragraph-exhibit-annual-adjustment/segment/1/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:paragraph-exhibit-annual-adjustment/segment/1/atom/0",
+          "offset": 18
+        }
+      }
+    },
+    {
+      "key": "monthly-fee-discount-text",
+      "range": {
+        "start": {
+          "sourceKey": "source:table-exhibit-fees/cell/1/3/segment/0/atom/0",
+          "offset": 0
+        },
+        "end": {
+          "sourceKey": "source:table-exhibit-fees/cell/1/3/segment/0/atom/0",
+          "offset": 0
+        }
+      }
+    }
+  ]
+}

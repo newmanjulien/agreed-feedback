@@ -1,119 +1,117 @@
+import { validatePlaybook } from '../lib/playbook/audit';
 import { v } from 'convex/values';
-import { internal } from './_generated/api';
-import { internalMutation, mutation } from './_generated/server';
-import { editableCopyField } from './validators';
+import { mutation, type MutationCtx } from './_generated/server';
+import type { Doc } from './_generated/dataModel';
+import schema from './schema';
+import { playbookItem } from './playbookValidators';
+import type { PlaybookItem } from '../lib/playbook/model';
+import { equalPlaybookStructure } from '../lib/playbook/draft';
+import {
+	validatePlaybookItemContent,
+	validateNewConcessions,
+	validateConcessionUpdate,
+	MAX_CONTRACT_BLOCKS,
+	MAX_PLAYBOOK_ITEMS
+} from '../lib/playbook/validation';
 
-const UNDO_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
-
-const saveCopyResult = v.union(
-	v.object({ status: v.literal('updated'), currentValue: v.string() }),
-	v.object({ status: v.literal('unchanged'), currentValue: v.string() }),
-	v.object({ status: v.literal('conflict'), currentValue: v.string() }),
-	v.object({ status: v.literal('missing') })
-);
-const saveTooltipResult = v.union(
-	v.object({ status: v.literal('updated'), currentValue: v.boolean() }),
-	v.object({ status: v.literal('unchanged'), currentValue: v.boolean() }),
-	v.object({ status: v.literal('conflict'), currentValue: v.boolean() }),
-	v.object({ status: v.literal('missing') })
-);
-
-export const saveCopy = mutation({
-	args: {
-		id: v.id('clauseBoxes'),
-		section: editableCopyField,
-		value: v.string(),
-		expectedValue: v.string()
-	},
-	returns: saveCopyResult,
-	handler: async (ctx, { id, section, value, expectedValue }) => {
-		const box = await ctx.db.get('clauseBoxes', id);
-		if (!box) return { status: 'missing' as const };
-		const currentValue = box[section];
-		if (currentValue === value) return { status: 'unchanged' as const, currentValue };
-		if (currentValue !== expectedValue) return { status: 'conflict' as const, currentValue };
-		await ctx.db.patch('clauseBoxes', id, { [section]: value });
-		return { status: 'updated' as const, currentValue: value };
-	}
-});
-
-export const saveTooltip = mutation({
-	args: { id: v.id('clauseBoxes'), enabled: v.boolean(), expectedValue: v.boolean() },
-	returns: saveTooltipResult,
-	handler: async (ctx, { id, enabled, expectedValue }) => {
-		const box = await ctx.db.get('clauseBoxes', id);
-		if (!box) return { status: 'missing' as const };
-		const currentValue = box.showPreferredConcessionsInfoTooltip;
-		if (currentValue === enabled) return { status: 'unchanged' as const, currentValue };
-		if (currentValue !== expectedValue) return { status: 'conflict' as const, currentValue };
-		await ctx.db.patch('clauseBoxes', id, { showPreferredConcessionsInfoTooltip: enabled });
-		return { status: 'updated' as const, currentValue: enabled };
-	}
-});
-
-export const deleteBox = mutation({
-	args: { id: v.id('clauseBoxes'), undoToken: v.string() },
-	returns: v.union(
-		v.object({ status: v.literal('deleted'), clauseKey: v.string() }),
-		v.object({ status: v.literal('already_missing') })
-	),
-	handler: async (ctx, { id, undoToken }) => {
-		const box = await ctx.db.get('clauseBoxes', id);
-		if (!box) {
-			const deleted = await ctx.db
-				.query('deletedClauseBoxes')
-				.withIndex('by_original_id', (q) => q.eq('originalId', id))
-				.first();
-			return deleted?.undoToken === undoToken
-				? { status: 'deleted' as const, clauseKey: deleted.box.clauseKey }
-				: { status: 'already_missing' as const };
+async function validate(ctx: MutationCtx, item: PlaybookItem, saved?: Doc<'playbookItems'>) {
+	try {
+		if (saved && equalPlaybookStructure(saved, item)) {
+			validatePlaybookItemContent(item);
+			return null;
 		}
-		const { _id, _creationTime, ...data } = box;
-		const deletedId = await ctx.db.insert('deletedClauseBoxes', {
-			originalId: id,
-			undoToken,
-			box: data
-		});
-		await ctx.scheduler.runAfter(UNDO_RETENTION_MS, internal.admin.expireDeletedBox, { deletedId });
-		await ctx.db.delete('clauseBoxes', id);
-		return { status: 'deleted' as const, clauseKey: data.clauseKey };
-	}
-});
-
-export const restoreBox = mutation({
-	args: { id: v.id('clauseBoxes'), undoToken: v.string() },
-	returns: v.union(
-		v.object({ status: v.literal('restored') }),
-		v.object({ status: v.literal('conflict') }),
-		v.object({ status: v.literal('missing') })
-	),
-	handler: async (ctx, { id, undoToken }) => {
-		const deleted = await ctx.db
-			.query('deletedClauseBoxes')
-			.withIndex('by_original_id', (q) => q.eq('originalId', id))
-			.first();
-		if (!deleted || deleted.undoToken !== undoToken) return { status: 'missing' as const };
-		const box = deleted.box;
-		const existing = await ctx.db
-			.query('clauseBoxes')
-			.withIndex('by_clause_key', (q) => q.eq('clauseKey', box.clauseKey))
-			.first();
-		if (existing) {
-			await ctx.db.delete('deletedClauseBoxes', deleted._id);
-			return { status: 'conflict' as const };
-		}
-		await ctx.db.insert('clauseBoxes', box);
-		await ctx.db.delete('deletedClauseBoxes', deleted._id);
-		return { status: 'restored' as const };
-	}
-});
-
-export const expireDeletedBox = internalMutation({
-	args: { deletedId: v.id('deletedClauseBoxes') },
-	returns: v.null(),
-	handler: async (ctx, { deletedId }) => {
-		if (await ctx.db.get('deletedClauseBoxes', deletedId))
-			await ctx.db.delete('deletedClauseBoxes', deletedId);
+		const blocks = await ctx.db
+			.query('contractBlocks')
+			.withIndex('by_order')
+			.take(MAX_CONTRACT_BLOCKS + 1);
+		const existing = await ctx.db.query('playbookItems').take(MAX_PLAYBOOK_ITEMS + 1);
+		if (existing.length > MAX_PLAYBOOK_ITEMS)
+			return { status: 'rejected' as const, message: 'Playbook exceeds supported size' };
+		if (saved) validateConcessionUpdate(saved, item);
+		else validateNewConcessions(item.concessions);
+		validatePlaybook(blocks, [...existing.filter((record) => record._id !== saved?._id), item]);
 		return null;
+	} catch (error) {
+		return {
+			status: 'rejected' as const,
+			message: error instanceof Error ? error.message : 'Invalid Playbook Item'
+		};
+	}
+}
+
+const conflict = v.object({ status: v.literal('conflict'), item: schema.doc('playbookItems') });
+const missing = v.object({ status: v.literal('missing') });
+
+/** One atomic snapshot per operation. Replays acknowledge; they never write again. */
+export const savePlaybookItem = mutation({
+	args: {
+		id: v.optional(v.id('playbookItems')),
+		item: playbookItem,
+		expectedRevision: v.number(),
+		operationId: v.string()
+	},
+	returns: v.union(
+		v.object({ status: v.literal('saved'), item: schema.doc('playbookItems') }),
+		conflict,
+		v.object({ status: v.literal('rejected'), message: v.string() }),
+		missing
+	),
+	handler: async (ctx, { id, item, expectedRevision, operationId }) => {
+		if (
+			!Number.isSafeInteger(expectedRevision) ||
+			expectedRevision < 0 ||
+			!/^[0-9a-f-]{36}$/i.test(operationId)
+		)
+			throw new Error('Invalid save operation');
+		if (!id) {
+			const receipt = await ctx.db
+				.query('creationReceipts')
+				.withIndex('by_operationId', (q) => q.eq('operationId', operationId))
+				.unique();
+			if (receipt) {
+				const current = await ctx.db.get('playbookItems', receipt.itemId);
+				if (!current) return { status: 'missing' as const };
+				return {
+					status:
+						current.lastOperationId === operationId ? ('saved' as const) : ('conflict' as const),
+					item: current
+				};
+			}
+			const created = {
+				...item,
+				revision: 1,
+				lastOperationId: operationId
+			};
+			const rejection = await validate(ctx, item);
+			if (rejection) return rejection;
+			const newId = await ctx.db.insert('playbookItems', created);
+			await ctx.db.insert('creationReceipts', { operationId, itemId: newId });
+			return { status: 'saved' as const, item: (await ctx.db.get('playbookItems', newId))! };
+		}
+		const current = await ctx.db.get('playbookItems', id);
+		if (!current) return { status: 'missing' as const };
+		if (current.lastOperationId === operationId) return { status: 'saved' as const, item: current };
+		if ((current.revision ?? 0) !== expectedRevision)
+			return { status: 'conflict' as const, item: current };
+		const rejection = await validate(ctx, item, current);
+		if (rejection) return rejection;
+		await ctx.db.replace('playbookItems', id, {
+			...item,
+			revision: expectedRevision + 1,
+			lastOperationId: operationId
+		});
+		return { status: 'saved' as const, item: (await ctx.db.get('playbookItems', id))! };
+	}
+});
+
+export const deletePlaybookItem = mutation({
+	args: { id: v.id('playbookItems'), expectedRevision: v.number() },
+	returns: v.union(v.object({ status: v.literal('deleted') }), conflict),
+	handler: async (ctx, { id, expectedRevision }) => {
+		const current = await ctx.db.get('playbookItems', id);
+		if (current && (current.revision ?? 0) !== expectedRevision)
+			return { status: 'conflict' as const, item: current };
+		if (current) await ctx.db.delete('playbookItems', id);
+		return { status: 'deleted' as const };
 	}
 });

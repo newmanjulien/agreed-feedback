@@ -1,5 +1,17 @@
+:root {
+	--document-highlight-trigger: rgba(34, 197, 94, 0.16);
+	--document-highlight-trigger-hover: rgba(34, 197, 94, 0.22);
+	--document-highlight-trigger-selected: rgba(34, 197, 94, 0.28);
+	--document-highlight-revision-added: #dcf1b9;
+	--document-highlight-revision-removed: #e5e7eb;
+	--document-highlight-selection: #d2e3fc;
+	--document-highlight-search-match: rgba(250, 204, 21, 0.38);
+	--document-highlight-search-active: rgba(249, 115, 22, 0.72);
+}
+
 .document-page {
 	position: relative;
+	isolation: isolate;
 	width: var(--contract-page-width);
 	height: var(--contract-page-height);
 	padding: var(--contract-page-top-padding) var(--contract-page-horizontal-padding)
@@ -27,14 +39,19 @@
 }
 
 .document-page__content,
-.measurement-surface {
+.layout-profile-surface {
 	width: var(--contract-content-width);
 }
 
 .contract-document {
-	font-family: Arial, Helvetica, sans-serif;
-	color: var(--color-document-ink);
+	font-family: var(--font-sans);
+	color: #171717;
 	user-select: text;
+}
+
+.admin-selection-enabled .contract-document::selection,
+.admin-selection-enabled .contract-document ::selection {
+	background: var(--document-highlight-selection);
 }
 
 .contract-document,
@@ -44,85 +61,31 @@
 	box-sizing: border-box;
 }
 
-/* Clause box passages use the green highlight. */
-.contract-clause {
-	--clause-highlight-background: var(--color-clause-green-highlight);
-	--clause-hover-background: var(--color-clause-green-highlight-hover);
-	--clause-selected-background: var(--color-clause-green-highlight-selected);
+.document-stage[data-clause-hover],
+.document-stage[data-clause-hover] * {
 	cursor: pointer;
-	border-radius: 3px;
-	background: var(--clause-highlight-background);
-	box-decoration-break: clone;
-	-webkit-box-decoration-break: clone;
-	transition: background-color 120ms ease;
 }
 
-.contract-clause:hover {
-	background: var(--clause-hover-background);
-}
-.contract-clause--inactive,
-.contract-clause--inactive:hover {
-	background: transparent;
-	cursor: inherit;
-}
-
-.contract-clause[aria-pressed='true'] {
-	background: var(--clause-selected-background);
-}
-
-.contract-clause:focus-visible {
+.playbook-trigger:focus-visible {
 	outline: 2px solid var(--color-accent);
 	outline-offset: 2px;
 }
 
 /* An insertion slot occupies a complete text line even before it has content. */
-.contract-paragraph.is-empty-insertion-slot .contract-clause {
+.contract-paragraph.is-empty-insertion-slot .playbook-trigger {
 	display: block;
 	width: 100%;
 	min-height: 1.46em;
 }
 
 .contract-revision-removed {
-	box-decoration-break: clone;
-	-webkit-box-decoration-break: clone;
-	background: #e5e7eb;
-	color: var(--color-document-ink);
 	text-decoration: line-through;
 	user-select: none;
 	-webkit-user-select: none;
 }
 
-.contract-revision-removed.revision-bold {
-	font-weight: bold;
-}
-.contract-revision-removed.revision-italic {
-	font-style: italic;
-}
-
 .contract-revision-added {
-	background: rgba(255, 235, 59, 0.25);
 	text-decoration: none;
-	box-decoration-break: clone;
-	-webkit-box-decoration-break: clone;
-}
-
-@media (prefers-reduced-motion: reduce) {
-	.contract-clause {
-		transition: none;
-	}
-}
-
-/*
- * Search highlights
- */
-::highlight(agreed-search-matches) {
-	background: rgba(250, 204, 21, 0.38);
-	color: inherit;
-}
-
-::highlight(agreed-search-active-match) {
-	background: rgba(249, 115, 22, 0.72);
-	color: inherit;
 }
 
 .contract-flow {
@@ -191,32 +154,18 @@
 .contract-table td {
 	height: 44px;
 	padding: 8px;
-	border: 1px solid var(--color-document-ink);
+	border: 1px solid currentColor;
 	text-align: left;
 	vertical-align: top;
 	overflow-wrap: anywhere;
 }
 
 .contract-table th {
-	background: var(--color-hover-subtle);
+	background: var(--color-fill-subtle);
 }
 
-.contract-table .clause-cell {
-	background: var(--color-clause-green-highlight);
-	cursor: pointer;
-}
-
-.contract-table .clause-cell:hover {
-	background: var(--color-clause-green-highlight-hover);
-}
-
-.contract-table .clause-cell:has(.contract-clause[aria-pressed='true']) {
-	background: var(--color-clause-green-highlight-selected);
-}
-
-.contract-table .contract-clause {
+.contract-table .playbook-trigger {
 	display: block;
-	background: transparent;
 }
 
 .signature-table {
@@ -232,11 +181,82 @@
 	background: transparent;
 }
 
-.measurement-surface {
+.layout-profile-surface {
 	position: fixed;
 	top: 0;
 	left: -100000px;
 	height: auto;
 	visibility: hidden;
 	pointer-events: none;
+}
+
+/* One page-local layer paints all text highlights without changing text layout. */
+.document-highlights {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	pointer-events: none;
+	mix-blend-mode: multiply;
+}
+
+.document-stage[data-highlights-ready] .document-page__content::selection,
+.document-stage[data-highlights-ready] .document-page__content ::selection {
+	background: transparent;
+}
+
+.document-highlight--trigger {
+	fill: var(--document-highlight-trigger);
+}
+
+.document-highlight--trigger[data-trigger-state='hover'] {
+	fill: var(--document-highlight-trigger-hover);
+}
+
+.document-highlight--trigger[data-trigger-state='selected'] {
+	fill: var(--document-highlight-trigger-selected);
+}
+
+.document-highlight--revision-added {
+	fill: var(--document-highlight-revision-added);
+}
+
+.document-highlight--revision-removed {
+	fill: var(--document-highlight-revision-removed);
+}
+
+.document-highlight--search-match {
+	fill: var(--document-highlight-search-match);
+}
+
+.document-highlight--search-active {
+	fill: var(--document-highlight-search-active);
+}
+
+.document-highlight--authoring-selection,
+.document-highlight--native-selection {
+	fill: var(--document-highlight-selection);
+}
+
+@media (forced-colors: active) {
+	.document-highlights {
+		mix-blend-mode: normal;
+	}
+	.document-highlight {
+		forced-color-adjust: none;
+		fill: Mark !important;
+		opacity: 0.35;
+	}
+	.document-highlight--native-selection {
+		display: none;
+	}
+	.document-highlight--authoring-selection {
+		fill: Highlight !important;
+		opacity: 0.5;
+	}
+	.document-stage[data-highlights-ready] .document-page__content::selection,
+	.document-stage[data-highlights-ready] .document-page__content ::selection {
+		background: Highlight;
+		color: HighlightText;
+	}
 }

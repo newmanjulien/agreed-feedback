@@ -1,374 +1,505 @@
 <script lang="ts">
-	import { onMount, tick } from 'svelte';
+	import { setAnnotationRegistry } from '$lib/document/annotation-registry';
+	import {
+		annotationOccurrence,
+		annotationAnchorBounds,
+		resolveAnnotationAnchor,
+		type AnnotationActivation,
+		type AnnotationOccurrence
+	} from '$lib/document/annotation-anchor';
+	import { triggerAnnotationId } from '$lib/playbook/document-overlay';
+	import { tick, untrack, onMount, onDestroy, type Snippet } from 'svelte';
+	import type { ContractChange, SourcePoint, SourceRange } from '$lib/playbook/model';
+	import { pointPosition } from '$lib/contract/source-index';
+	import { EMPTY_PREVIEW_CHANGES, type ConcessionSelection } from '$lib/document/runtime/types';
+	import { recordColdStart } from '$lib/document/runtime/render-perf';
+	import { prewarmSavedConcessions } from '$lib/document/runtime/prewarm';
+	import {
+		sourcePointBounds,
+		sourceRangeToDomRanges,
+		sourceOccurrence
+	} from '$lib/document/selection/dom-selection';
+	import {
+		DocumentHighlightController,
+		EMPTY_HIGHLIGHTS,
+		type PageHighlights
+	} from '$lib/document/highlights/controller';
+	import { DocumentClauseInteractions } from '$lib/document/highlights/interactions';
+	import { getContractLayoutProfiles } from '$lib/document/runtime/layout-context.svelte';
+	import { getContractWorkspace } from '$lib/document/runtime/context';
+	import { activeConflicts } from '$lib/playbook/selection-conflicts';
 	import { getDocumentViewportMetrics } from '$lib/document/document-viewport';
 	import { PAGE_FORMAT } from '$lib/document/pagination/page-format';
-	import { paginateDocument } from '$lib/document/pagination/paginate';
-	import type { PageLayout, PageMeasurement } from '$lib/document/pagination/types';
-	import type {
-		ClauseBoxRecord,
-		SelectedConcession,
-		ContractBlock,
-		EditableCopyKey
-	} from '$lib/contract/model';
-	import { resolveContract } from '$lib/contract/resolve';
-	import { hasPublicContent } from '$lib/contract/box-content';
-	import type { Id } from '../../../convex/_generated/dataModel';
-	import '$lib/styles/document.css';
+	import {
+		LayoutProfiler,
+		type LayoutProfileSurface as ProfileSurface
+	} from '$lib/document/pagination/profiler';
+	import { SIDE_PANEL_BREAKPOINT, SIDE_PANEL_RESERVED_WIDTH } from './workspace-layout';
 	import DocumentPage from './DocumentPage.svelte';
-	import ContractWorkspaceLayout from './ContractWorkspaceLayout.svelte';
+	import LayoutProfileSurface from './LayoutProfileSurface.svelte';
 	import LoadingPagination from './LoadingPagination.svelte';
-	import MeasureSurface from './MeasureSurface.svelte';
-	import ClauseBox from './ClauseBox.svelte';
-	import type { AdminPersistence } from '$lib/admin/persistence.svelte';
-	import { SIDE_BOX_BREAKPOINT, SIDE_BOX_RESERVED_WIDTH } from './workspace-layout';
-
+	import ContractWorkspaceLayout from './ContractWorkspaceLayout.svelte';
+	import '$lib/styles/document.css';
+	const annotationRegistry = setAnnotationRegistry();
 	let {
-		blocks,
-		boxes,
-		adminEdits,
-		documentStageElement = $bindable()
+		hasPanel = false,
+		followScroll = false,
+		panelContent,
+		selectedConcessions,
+		onRemoveConcession,
+		selectedAnnotationId = null,
+		selectedRanges = [],
+		previewChanges = EMPTY_PREVIEW_CHANGES,
+		panelSource,
+		picking = false,
+		allowPlaybookNavigation = true,
+		onSelect
 	}: {
-		blocks: ContractBlock[];
-		boxes: ClauseBoxRecord[];
-		adminEdits?: AdminPersistence;
-		documentStageElement?: HTMLDivElement;
+		hasPanel?: boolean;
+		followScroll?: boolean;
+		panelContent: Snippet;
+		selectedConcessions: ConcessionSelection;
+		onRemoveConcession: (itemId: string) => void;
+		selectedAnnotationId?: string | null;
+		selectedRanges?: readonly SourceRange[];
+		previewChanges?: readonly ContractChange[];
+		panelSource?: SourcePoint;
+		picking?: boolean;
+		allowPlaybookNavigation?: boolean;
+		onSelect: (itemId: string, annotationId: string) => boolean | void;
 	} = $props();
-	type PaginationStatus = 'loading' | 'ready' | 'error';
-	let paginationStatus = $state<PaginationStatus>('loading');
-	let paginationComplete = $state(false);
-	let paginationError = $state(false);
-	let paginationRun = 0;
-	let pages = $state<PageLayout[]>([]);
-	let selectedConcessions = $state<Record<string, SelectedConcession>>({});
-	let selectedConcessionByClause = $derived(
-		Object.fromEntries(
-			Object.entries(selectedConcessions).map(([key, item]) => [key, item.concessionKey])
+	const { source, renderer, viewer } = getContractWorkspace();
+	const snapshot = $derived(renderer.snapshot);
+	const displayComplete = $derived(Boolean(snapshot));
+	let highlights = $state<DocumentHighlightController>();
+	let clauseInteractions = $state<DocumentClauseInteractions>();
+	let highlightRects = $state.raw<PageHighlights>(new Map());
+	$effect(() => {
+		const stage = viewer.documentStageElement;
+		if (!stage || !displayComplete) return;
+		const controller = new DocumentHighlightController(stage);
+		const interactions = new DocumentClauseInteractions(stage, controller, selectAnnotation);
+		clauseInteractions = interactions;
+		highlights = controller;
+		const unsubscribe = controller.subscribe((rects) => {
+			highlightRects = rects;
+		});
+		return () => {
+			unsubscribe();
+			interactions.destroy();
+			controller.destroy();
+			clauseInteractions = undefined;
+			highlights = undefined;
+			highlightRects = new Map();
+			authoringRanges.clear();
+		};
+	});
+	$effect(() => {
+		const root = viewer.documentStageElement,
+			commit = snapshot,
+			controller = highlights;
+		void commit;
+		if (!root || !controller) return;
+		controller.contentCommitted(commit?.changedPages);
+	});
+	$effect(() => {
+		void pageScale;
+		highlights?.invalidateLayout();
+	});
+	const authoringRanges = new Map<
+		SourceRange,
+		{
+			sourceIndex: NonNullable<typeof snapshot>['source']['sourceIndex'];
+			ranges: Range[];
+			pages: readonly NonNullable<typeof snapshot>['pages'][number][];
+		}
+	>();
+	$effect(() => {
+		const root = viewer.documentStageElement,
+			commit = snapshot,
+			controller = highlights;
+		if (!root || !commit || !controller) return;
+		const selected = new Set(selectedRanges);
+		for (const range of authoringRanges.keys())
+			if (!selected.has(range)) authoringRanges.delete(range);
+		const ranges = selectedRanges.flatMap((sourceRange) => {
+			const index = commit.source.sourceIndex;
+			let start: number, end: number;
+			try {
+				start = pointPosition(index, sourceRange.start);
+				end = pointPosition(index, sourceRange.end);
+			} catch {
+				authoringRanges.delete(sourceRange);
+				return [];
+			}
+			const keys = new Set(
+				index.units
+					.filter((unit) => unit.position < end && unit.position + unit.length > start)
+					.map((unit) => unit.blockKey)
+			);
+			const pages = commit.pages.filter((page) =>
+				page.placements.some(({ fragment }) => keys.has(fragment.blockKey))
+			);
+			let cached = authoringRanges.get(sourceRange);
+			if (
+				!cached ||
+				cached.sourceIndex !== index ||
+				cached.ranges.some(
+					(range) => !root.contains(range.startContainer) || !root.contains(range.endContainer)
+				) ||
+				cached.pages.length !== pages.length ||
+				cached.pages.some((page, i) => page !== pages[i])
+			) {
+				cached = {
+					sourceIndex: index,
+					ranges: sourceRangeToDomRanges(root, sourceRange, index),
+					pages
+				};
+				authoringRanges.set(sourceRange, cached);
+			}
+			return cached.ranges;
+		});
+		controller.setGroup('authoring', 'authoring-selection', ranges);
+	});
+	$effect(() => {
+		const stage = viewer.documentStageElement;
+		if (!stage) return;
+		let scrollVersion = 0;
+		const onScroll = () => scrollVersion++;
+		window.addEventListener('scroll', onScroll, { passive: true });
+		const unsubscribe = renderer.beforeCommit(() => {
+			const viewportTop = getDocumentViewportMetrics().top;
+			let token: HTMLElement | undefined;
+			// Search only visible pages; the page margin may contain no source-bearing text.
+			for (const page of stage.querySelectorAll<HTMLElement>('[data-page-number]')) {
+				const bounds = page.getBoundingClientRect();
+				if (bounds.bottom <= viewportTop) continue;
+				if (bounds.top >= window.innerHeight) break;
+				for (const span of page.querySelectorAll<HTMLElement>(
+					'[data-source-start-key]:not([data-generated])'
+				)) {
+					if (span.dataset.revision && span.dataset.revision !== 'removed') continue;
+					const bounds = span.getBoundingClientRect();
+					if (bounds.height && bounds.top >= viewportTop && bounds.top < window.innerHeight) {
+						token = span;
+						break;
+					}
+				}
+				if (token) break;
+			}
+			const point = token?.dataset.sourceStartKey
+				? {
+						sourceKey: token.dataset.sourceStartKey,
+						offset: Number(token.dataset.sourceStartOffset ?? 0)
+					}
+				: undefined;
+			if (!point || !token || !stage.contains(token)) return;
+			const occurrence = sourceOccurrence(token);
+			const top = sourcePointBounds(stage, point, true, occurrence)?.top;
+			const scrollY = window.scrollY;
+			const capturedScrollVersion = scrollVersion;
+			void tick().then(() => {
+				if (
+					!stage.isConnected ||
+					window.scrollY !== scrollY ||
+					scrollVersion !== capturedScrollVersion ||
+					top === undefined
+				)
+					return;
+				const after = sourcePointBounds(stage, point, true, occurrence)?.top;
+				if (after !== undefined && Math.abs(after - top) > 0.5)
+					window.scrollBy({ top: after - top, behavior: 'instant' });
+			});
+		});
+		return () => {
+			unsubscribe();
+			window.removeEventListener('scroll', onScroll);
+		};
+	});
+	const pages = $derived(snapshot?.pages ?? []);
+	const requestedModel = $derived.by(() => {
+		try {
+			return {
+				conflicts: source.renderSource
+					? activeConflicts(
+							source.renderSource.sourceIndex,
+							source.renderSource.items,
+							selectedConcessions
+						)
+					: [],
+				error: null
+			};
+		} catch (cause) {
+			return {
+				conflicts: [],
+				error: { message: 'We couldn’t validate the requested contract.', cause }
+			};
+		}
+	});
+	const hasActiveConflicts = $derived(requestedModel.conflicts.length > 0);
+	const sharedProfiles = getContractLayoutProfiles();
+	let surface = $state.raw<ProfileSurface>();
+	const profiler = $derived(
+		sharedProfiles ? sharedProfiles.profiler : surface ? new LayoutProfiler(surface) : undefined
+	);
+	const current = $derived(
+		Boolean(
+			profiler &&
+			source.renderSource &&
+			!requestedModel.error &&
+			renderer.isCurrent({
+				source: source.renderSource,
+				concessions: selectedConcessions,
+				profiler,
+				previewChanges
+			}) &&
+			!renderer.pending &&
+			!renderer.error &&
+			!hasActiveConflicts
 		)
 	);
-	let boxesByClause = $derived(new Map(boxes.map((box) => [box.clauseKey, box] as const)));
-	let activeClauseKeys = $state.raw<ReadonlySet<string>>(new Set());
-	let selectedClauseKey = $state<string | null>(null);
-	let selectionVersion = 0;
-	let selectedOccurrenceKey = $state<string | null>(null);
-	let selectedFragmentKey = $state<string | null>(null);
-	let boxTop = $state(0);
-	let measurement = $state<PageMeasurement>();
-	let clauseBoxElement = $state<HTMLElement>();
+	const canOpenPlaybookItems = $derived(current && allowPlaybookNavigation && !picking);
+	$effect(() => {
+		clauseInteractions?.setEnabled(canOpenPlaybookItems);
+	});
 	let layoutElement = $state<HTMLDivElement>();
 	let layoutWidth = $state(PAGE_FORMAT.width + 30);
-	let pageScale = $derived(
+	let panelTop = $state(0);
+	let selectedOccurrence = $state.raw<AnnotationOccurrence | null>(null);
+	const pageScale = $derived(
 		Math.min(
 			1,
 			Math.max(
 				280,
-				selectedClauseKey && layoutWidth >= SIDE_BOX_BREAKPOINT
-					? layoutWidth - SIDE_BOX_RESERVED_WIDTH
+				layoutWidth >= SIDE_PANEL_BREAKPOINT
+					? layoutWidth - SIDE_PANEL_RESERVED_WIDTH
 					: layoutWidth - 30
 			) / PAGE_FORMAT.width
 		)
 	);
-
-	let displayWidth = $derived(PAGE_FORMAT.width * pageScale);
-	let logicalStackHeight = $derived(
-		pages.length * PAGE_FORMAT.height + Math.max(0, pages.length - 1) * PAGE_FORMAT.gap
+	const displayWidth = $derived(PAGE_FORMAT.width * pageScale);
+	const displayHeight = $derived(
+		(pages.length * PAGE_FORMAT.height + Math.max(0, pages.length - 1) * PAGE_FORMAT.gap) *
+			pageScale
 	);
-	let displayHeight = $derived(logicalStackHeight * pageScale);
-
-	function selectedFragment(): HTMLElement | undefined {
-		if (!selectedOccurrenceKey || !documentStageElement) return;
-		const fragments = Array.from(
-			documentStageElement.querySelectorAll<HTMLElement>('[data-clause-fragment-key]')
-		);
-		const matching = fragments.filter(
-			(fragment) => fragment.dataset.occurrenceKey === selectedOccurrenceKey
-		);
-		return (
-			matching.find((fragment) => fragment.dataset.clauseFragmentKey === selectedFragmentKey) ??
-			matching[0]
+	function annotationAnchor(
+		annotationId = selectedAnnotationId,
+		occurrence = selectedOccurrence,
+		point = panelSource
+	) {
+		const root = viewer.documentStageElement,
+			index = snapshot?.source.sourceIndex;
+		if (!root || !index) return;
+		// A removed effect leaves the owning item open at its first real trigger.
+		const fallbackTrigger = point
+			? source.geometry?.triggersContainingPoint(point).find(
+					(trigger) =>
+						trigger.range.start.sourceKey === point.sourceKey &&
+						trigger.range.start.offset === point.offset
+				)
+			: undefined;
+		const fallback = fallbackTrigger
+			? [...(source.geometry?.triggerIds.get(fallbackTrigger.id) ?? [])][0]
+			: undefined;
+		const id =
+			annotationId ?? (fallback ? triggerAnnotationId(fallback.itemId, fallback.trigger.id) : null);
+		return resolveAnnotationAnchor(
+			annotationRegistry,
+			index,
+			id,
+			occurrence?.annotationId === id ? occurrence : null,
+			point
 		);
 	}
-
-	async function positionBoxAfterRender() {
+	/** Retain source coordinates so focus can return after the editor and preview disappear. */
+	function captureAnnotationFocus() {
+		const id = selectedAnnotationId,
+			occurrence = selectedOccurrence,
+			point = panelSource;
+		return () => {
+			const anchor = annotationAnchor(id, occurrence, point);
+			(anchor?.owner ?? viewer.documentStageElement)?.focus({ preventScroll: true });
+		};
+	}
+	function restoreAnnotationFocus() {
+		captureAnnotationFocus()();
+	}
+	async function positionPanel() {
 		await tick();
-		const fragment = selectedFragment();
-		if (!fragment) {
-			if (selectedOccurrenceKey && paginationComplete) clearSelection();
+		if (!viewer.documentStageElement || !hasPanel) return;
+		const anchor = annotationAnchor();
+		const bounds =
+			(anchor ? annotationAnchorBounds(anchor) : null) ??
+			(panelSource ? sourcePointBounds(viewer.documentStageElement, panelSource, true) : null);
+		const stageTop = viewer.documentStageElement.getBoundingClientRect().top;
+		panelTop = Math.max(0, (bounds?.top ?? getDocumentViewportMetrics().top) - stageTop);
+	}
+	function selectAnnotation(
+		itemId: string,
+		annotationId: string,
+		activation: AnnotationActivation
+	) {
+		if (!canOpenPlaybookItems) return;
+		if (onSelect(itemId, annotationId) === false) return;
+		selectedOccurrence = annotationOccurrence(annotationId, activation);
+		void positionPanel();
+	}
+	$effect(() => {
+		const selected = selectedAnnotationId,
+			open = hasPanel;
+		untrack(() => {
+			if (!open || selectedOccurrence?.annotationId !== selected) selectedOccurrence = null;
+		});
+	});
+	$effect(() => {
+		void snapshot?.id;
+		void selectedAnnotationId;
+		void selectedOccurrence;
+		void panelSource;
+		void hasPanel;
+		void pageScale;
+		void positionPanel();
+	});
+	async function keepPanelVisible() {
+		const panel = layoutElement?.querySelector<HTMLElement>('[data-workspace-panel]');
+		if (!panel || !hasPanel) return;
+		await positionPanel();
+		await tick();
+		if (
+			!hasPanel ||
+			followScroll ||
+			layoutElement?.querySelector('[data-workspace-panel]') !== panel
+		)
 			return;
-		}
-		if (!documentStageElement) return;
-		boxTop =
-			fragment.getBoundingClientRect().top - documentStageElement.getBoundingClientRect().top;
-		selectedFragmentKey = fragment.dataset.clauseFragmentKey ?? selectedFragmentKey;
-		const box = clauseBoxElement;
-		const boxParent = box?.parentElement;
-		if (!box || !boxParent || getComputedStyle(boxParent).position !== 'fixed') return;
-		const bounds = fragment.getBoundingClientRect();
-		const boxBounds = box.getBoundingClientRect();
+		const rail = panel.parentElement;
+		if (!rail || getComputedStyle(rail).position === 'fixed') return;
 		const viewport = getDocumentViewportMetrics();
-		const availableBottom = boxBounds.top - viewport.gap;
-		if (bounds.bottom > availableBottom) window.scrollBy({ top: bounds.bottom - availableBottom });
-		else if (bounds.top < viewport.top) window.scrollBy({ top: bounds.top - viewport.top });
+		const top = panel.getBoundingClientRect().top;
+		if (top < viewport.top || top >= window.innerHeight - viewport.gap)
+			window.scrollBy({ top: top - viewport.top, behavior: 'instant' });
 	}
-
-	function selectClause(clauseKey: string, occurrenceKey: string, fragmentKey: string) {
-		if (!activeClauseKeys.has(clauseKey)) return;
-		clearSelection();
-		selectedClauseKey = clauseKey;
-		selectedOccurrenceKey = occurrenceKey;
-		selectedFragmentKey = fragmentKey;
-	}
-
-	function clearSelection(restoreFocus = false, preserveDeleteFocus = false) {
-		const focusTarget = restoreFocus ? selectedFragment() : undefined;
-		if (!preserveDeleteFocus) selectionVersion++;
-		selectedClauseKey = null;
-		selectedOccurrenceKey = null;
-		selectedFragmentKey = null;
-		if (focusTarget) void tick().then(() => focusTarget.focus({ preventScroll: true }));
-	}
-
+	let wasFollowingScroll = false;
 	$effect(() => {
-		const next = new Set(
-			boxes.filter((box) => adminEdits || hasPublicContent(box)).map((box) => box.clauseKey)
-		);
-		if (next.size !== activeClauseKeys.size || [...next].some((key) => !activeClauseKeys.has(key)))
-			activeClauseKeys = next;
+		const following = followScroll;
+		if (wasFollowingScroll && !following) untrack(() => void keepPanelVisible());
+		wasFollowingScroll = following;
 	});
-
-	// Reconcile only selected replacement content. Ordinary box copy never enters document resolution.
 	$effect(() => {
-		const byClause = boxesByClause;
-		adminEdits?.reconcile(boxes);
-		const selected = selectedConcessions;
-		const next = { ...selected };
-		let changed = false;
-		for (const [key, previous] of Object.entries(selected)) {
-			const box = byClause.get(key);
-			const current = [...(box?.preferredConcessions ?? []), ...(box?.rareConcessions ?? [])].find(
-				(item) => item.concessionKey === previous.concessionKey
-			);
-			if (!current) {
-				delete next[key];
-				changed = true;
-			} else if (!sameReplacements(current, previous)) {
-				next[key] = { concessionKey: current.concessionKey, replacements: current.replacements };
-				changed = true;
-			}
-		}
-		if (changed) selectedConcessions = next;
-		if (selectedClauseKey && !activeClauseKeys.has(selectedClauseKey)) clearSelection(false, true);
-	});
-
-	$effect(() => {
-		if (!adminEdits || !selectedClauseKey) return;
-		return () => adminEdits?.closeEditors();
-	});
-
-	$effect(() => {
-		const visiblePages = pages.length;
-		if (selectedOccurrenceKey && visiblePages) void positionBoxAfterRender();
-	});
-
-	$effect(() => {
-		const element = layoutElement;
-		if (!element) return;
-		layoutWidth = element.getBoundingClientRect().width;
+		const el = layoutElement;
+		if (!el) return;
+		layoutWidth = el.getBoundingClientRect().width;
 		const observer = new ResizeObserver(([entry]) => {
 			layoutWidth = entry.contentBoxSize?.[0]?.inlineSize ?? entry.contentRect.width;
-			void positionBoxAfterRender();
 		});
-		observer.observe(element);
+		observer.observe(el);
 		return () => observer.disconnect();
 	});
-
-	function sameReplacements(a: SelectedConcession, b: SelectedConcession): boolean {
-		if (a.replacements.length !== b.replacements.length) return false;
-		return a.replacements.every((replacement, index) => {
-			const other = b.replacements[index];
-			return (
-				replacement.targetProvisionKey === other.targetProvisionKey &&
-				replacement.content.length === other.content.length &&
-				replacement.content.every((atom, at) => {
-					const old = other.content[at];
-					return (
-						atom.kind === old.kind &&
-						(atom.kind === 'text' && old.kind === 'text'
-							? atom.text === old.text &&
-								atom.marks?.bold === old.marks?.bold &&
-								atom.marks?.italic === old.marks?.italic
-							: atom.kind === 'reference' &&
-								old.kind === 'reference' &&
-								atom.targetItemKey === old.targetItemKey &&
-								atom.endTargetItemKey === old.endTargetItemKey)
-					);
-				})
-			);
-		});
-	}
-
-	async function paginate(
-		currentBlocks: ContractBlock[],
-		selection: Record<string, SelectedConcession>,
-		surface: PageMeasurement
-	) {
-		const run = ++paginationRun;
-		pages = [];
-		paginationComplete = false;
-		paginationError = false;
-		paginationStatus = 'loading';
-		try {
-			await tick();
-			if (run !== paginationRun) return;
-			const document = resolveContract({
-				blocks: currentBlocks,
-				selectedConcessions: selection,
-				view: 'redline'
-			});
-			const iterator = paginateDocument(document, surface);
-			while (run === paginationRun) {
-				const next = iterator.next();
-				if (next.done) break;
-				pages = [...pages, next.value];
-				paginationStatus = 'ready';
-				// A completed page cannot change; let the browser paint before measuring the next.
-				await new Promise<void>((resolve) => requestAnimationFrame(() => setTimeout(resolve, 0)));
-			}
-			if (run !== paginationRun) return;
-			if (!pages.length) throw new Error('Pagination produced no pages.');
-			paginationComplete = true;
-			if (selectedOccurrenceKey) void positionBoxAfterRender();
-		} catch (error) {
-			if (run !== paginationRun) return;
-			console.error('Contract pagination failed.', error);
-			if (pages.length) paginationError = true;
-			else paginationStatus = 'error';
-		}
-	}
-
-	$effect(() => {
-		const surface = measurement;
-		const currentBlocks = blocks;
-		const selection = selectedConcessions;
-		if (surface) void paginate(currentBlocks, selection, surface);
-		return () => {
-			paginationRun++;
-		};
-	});
-
-	function toggleConcession(clauseKey: string, concessionKey: string) {
-		const box = boxesByClause.get(clauseKey);
-		if (box && adminEdits?.isDeleting(box.id)) return;
-		const item = [...(box?.preferredConcessions ?? []), ...(box?.rareConcessions ?? [])].find(
-			(concession) => concession.concessionKey === concessionKey
-		);
-		if (!item) return;
-		const next = { ...selectedConcessions };
-		if (next[clauseKey]?.concessionKey === concessionKey) delete next[clauseKey];
-		else next[clauseKey] = { concessionKey: item.concessionKey, replacements: item.replacements };
-		selectedConcessions = next;
-	}
-
-	function updateTextDraft(id: Id<'clauseBoxes'>, sectionKey: EditableCopyKey, value: string) {
-		adminEdits?.updateCopy(id, sectionKey, value);
-	}
-	function updateTooltipOverride(id: Id<'clauseBoxes'>, value: boolean) {
-		adminEdits?.updateTooltip(id, value);
-	}
-	async function deleteBox(id: Id<'clauseBoxes'>) {
-		if (!adminEdits) return;
-		const clauseKey = selectedClauseKey;
-		if (!clauseKey) return;
-		const version = selectionVersion;
-		const clauses = Array.from(
-			documentStageElement?.querySelectorAll<HTMLElement>('.contract-clause[tabindex="0"]') ?? []
-		);
-		const fragment = selectedFragment();
-		const index = fragment ? clauses.indexOf(fragment) : -1;
-		const next =
-			index < 0
-				? undefined
-				: clauses.slice(index + 1).find((clause) => clause.dataset.clauseKey !== clauseKey);
-		const previous =
-			index < 0
-				? undefined
-				: clauses
-						.slice(0, index)
-						.reverse()
-						.find((clause) => clause.dataset.clauseKey !== clauseKey);
-		const focusAfterDelete = next ?? previous;
-		const nextOccurrenceKey = focusAfterDelete?.dataset.occurrenceKey;
-		const nextFragmentKey = focusAfterDelete?.dataset.clauseFragmentKey;
-		if (!(await adminEdits.deleteBox(id))) return;
-		if (selectedConcessions[clauseKey]) {
-			const selected = { ...selectedConcessions };
-			delete selected[clauseKey];
-			selectedConcessions = selected;
-		}
-		if (selectionVersion !== version || (selectedClauseKey && selectedClauseKey !== clauseKey))
+	function retryRender() {
+		if (requestedModel.error) {
+			renderer.fail(requestedModel.error);
 			return;
-		if (selectedClauseKey === clauseKey) clearSelection(false, true);
-		await tick();
-		if (selectionVersion !== version) return;
-		const availableClauses = Array.from(
-			documentStageElement?.querySelectorAll<HTMLElement>('.contract-clause[tabindex="0"]') ?? []
-		);
-		const focusTarget =
-			availableClauses.find(
-				(clause) =>
-					clause.dataset.occurrenceKey === nextOccurrenceKey &&
-					clause.dataset.clauseFragmentKey === nextFragmentKey
-			) ?? availableClauses.find((clause) => clause.dataset.occurrenceKey === nextOccurrenceKey);
-		(focusTarget ?? documentStageElement)?.focus({ preventScroll: true });
+		}
+		if (profiler && source.renderSource && !hasActiveConflicts)
+			renderer.request({
+				source: source.renderSource,
+				concessions: selectedConcessions,
+				previewChanges,
+				profiler
+			});
 	}
-
+	$effect(() => {
+		const layoutProfiler = profiler,
+			model = source.renderSource,
+			selection = selectedConcessions,
+			preview = previewChanges,
+			blocked = hasActiveConflicts,
+			error = requestedModel.error;
+		untrack(() => {
+			if (error) {
+				renderer.fail(error);
+				return;
+			}
+			if (!layoutProfiler || !model || blocked) {
+				renderer.cancelPending();
+				return;
+			}
+			if (
+				renderer.isCurrent({
+					source: model,
+					concessions: selection,
+					profiler: layoutProfiler,
+					previewChanges: preview
+				})
+			) {
+				renderer.cancelPending();
+				return;
+			}
+			renderer.request({
+				source: model,
+				concessions: selection,
+				previewChanges: preview,
+				profiler: layoutProfiler
+			});
+		});
+	});
 	onMount(() => {
-		function handleResize() {
-			void positionBoxAfterRender();
-		}
-		function handlePointerDown(event: PointerEvent) {
-			if (!selectedClauseKey) return;
-			const inside = event
-				.composedPath()
-				.some(
-					(node) =>
-						node instanceof HTMLElement &&
-						(Boolean(node.dataset.clauseKey) || node.hasAttribute('data-clause-box'))
-				);
-			if (!inside) clearSelection();
-		}
-		function handleKeydown(event: KeyboardEvent) {
-			if (event.key === 'Escape') clearSelection(true);
-		}
-		window.addEventListener('resize', handleResize);
-		document.addEventListener('pointerdown', handlePointerDown);
-		document.addEventListener('keydown', handleKeydown);
-		return () => {
-			window.removeEventListener('resize', handleResize);
-			document.removeEventListener('pointerdown', handlePointerDown);
-			document.removeEventListener('keydown', handleKeydown);
-		};
+		recordColdStart('viewer-mounted');
+		viewer.retry = retryRender;
+		viewer.restoreAnnotationFocus = restoreAnnotationFocus;
+		viewer.captureAnnotationFocus = captureAnnotationFocus;
+	});
+	$effect(() => {
+		const layoutProfiler = profiler,
+			commit = snapshot;
+		if (!current || previewChanges.length || !commit || !layoutProfiler) return;
+		return untrack(() => prewarmSavedConcessions(commit, layoutProfiler));
+	});
+	$effect(() => {
+		viewer.ready = current;
+		if (current) recordColdStart('interaction-ready');
+	});
+	onDestroy(() => {
+		viewer.ready = false;
+		viewer.documentStageElement = undefined;
+		viewer.retry = undefined;
+		viewer.restoreAnnotationFocus = undefined;
+		viewer.captureAnnotationFocus = undefined;
+		annotationRegistry.clear();
+		renderer.destroy();
 	});
 </script>
 
-<MeasureSurface {activeClauseKeys} bind:measurement />
-{#if paginationStatus === 'loading'}
+{#if hasActiveConflicts}
+	<div role="alert" class="mx-auto max-w-xl rounded border border-line bg-surface p-3">
+		These applied concessions conflict with current contract changes. Remove an alternative to
+		continue.
+		{#each requestedModel.conflicts as conflict}
+			{@const item = source.items?.find((item) => item._id === conflict.itemId)}
+			{@const concession = item?.concessions.find(
+				(concession) => concession.id === conflict.concession.id
+			)}
+			<button class="ml-2 underline" onclick={() => onRemoveConcession(conflict.itemId)}
+				>Remove “{concession?.description ?? conflict.concession.id}”{item?.instructions?.summary
+					? ` — ${item.instructions.summary}`
+					: ''}</button
+			>{/each}
+	</div>
+{/if}
+{#if !sharedProfiles}<LayoutProfileSurface bind:surface />{/if}
+{#if !pages.length && !renderer.error}
 	<LoadingPagination />
-{:else if paginationStatus === 'error'}
+{:else if !pages.length}
 	<div
 		class="flex min-h-[calc(100vh-100px)] flex-col items-center justify-center gap-1.5 text-center text-ink-secondary"
 		role="alert"
 	>
 		<strong>We couldn’t display this contract.</strong>
-		<span class="text-ink-muted">Please refresh to try again.</span>
+		<button type="button" class="underline" onclick={retryRender}>Retry</button>
 	</div>
 {:else}
 	<div
 		class="viewer-root w-full"
-		data-pagination-status={paginationError
-			? 'error'
-			: paginationComplete
-				? 'ready'
-				: 'progressive'}
+		data-document-commit={snapshot?.id}
 		data-page-count={pages.length}
 		style:--contract-page-width={`${PAGE_FORMAT.width}px`}
 		style:--contract-page-height={`${PAGE_FORMAT.height}px`}
@@ -389,51 +520,28 @@
 					class="page-stack absolute top-0 left-0 flex w-(--contract-page-width) origin-top-left flex-col gap-(--contract-page-gap)"
 					style:transform={`scale(${pageScale})`}
 				>
-					{#each pages as page}
+					{#each pages as page (page.number)}
 						<DocumentPage
 							{page}
-							{selectedOccurrenceKey}
-							{activeClauseKeys}
-							onClauseSelect={selectClause}
+							highlights={highlightRects.get(page.number) ?? EMPTY_HIGHLIGHTS}
+							{selectedAnnotationId}
+							{canOpenPlaybookItems}
+							onAnnotationSelect={selectAnnotation}
 						/>
 					{/each}
 				</div>
 			</div>
 		{/snippet}
-		{#snippet clauseBoxContent()}
-			{#if selectedClauseKey && boxesByClause.has(selectedClauseKey)}
-				{#key selectedClauseKey}
-					<ClauseBox
-						box={boxesByClause.get(selectedClauseKey)!}
-						adminMode={Boolean(adminEdits)}
-						deleting={adminEdits?.isDeleting(boxesByClause.get(selectedClauseKey)!.id) ?? false}
-						undoPending={adminEdits?.undo?.pending ?? false}
-						textDrafts={adminEdits?.drafts[boxesByClause.get(selectedClauseKey)!.id] ?? {}}
-						tooltipOverride={adminEdits?.tooltipOverrides[boxesByClause.get(selectedClauseKey)!.id]}
-						{updateTextDraft}
-						{updateTooltipOverride}
-						onBlurTextDraft={(id, section) => adminEdits?.blurCopy(id, section)}
-						{selectedConcessionByClause}
-						onToggleConcession={toggleConcession}
-						onDelete={deleteBox}
-						onDismiss={() => clearSelection(true)}
-						bind:element={clauseBoxElement}
-					/>
-				{/key}
-			{/if}
-		{/snippet}
 		<ContractWorkspaceLayout
-			hasClauseBox={selectedClauseKey !== null && boxesByClause.has(selectedClauseKey)}
+			{hasPanel}
+			{followScroll}
 			displayedPageWidth={displayWidth}
 			documentHeight={displayHeight}
-			{boxTop}
+			{panelTop}
 			bind:layoutElement
-			bind:documentStageElement
+			bind:documentStageElement={viewer.documentStageElement}
 			{documentContent}
-			{clauseBoxContent}
+			{panelContent}
 		/>
 	</div>
-	{#if paginationError}<p role="alert" class="mt-5 text-center text-ink-muted">
-			Some pages couldn’t be laid out. Please refresh to try again.
-		</p>{/if}
 {/if}

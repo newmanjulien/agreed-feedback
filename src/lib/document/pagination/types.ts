@@ -1,41 +1,62 @@
 import type { ResolvedRun } from '$lib/contract/model';
+import type { AnnotationMembership } from '$lib/playbook/document-overlay';
+import type { PreparedBlock } from './prepare';
 
-export interface InlineToken extends Omit<ResolvedRun, 'text'> {
-	value: string;
+export interface InlineToken extends Readonly<Omit<ResolvedRun, 'text' | 'annotations'>> {
+	readonly value: string;
+	readonly annotations?: readonly AnnotationMembership[];
 }
 
 export type PageFragment = HeadingFragment | ParagraphFragment | TableFragment;
 
+export interface FragmentInterval {
+	readonly start: number;
+	readonly end: number;
+}
+
 export interface HeadingFragment {
-	type: 'heading';
-	blockKey: string;
-	anchor: string;
-	level: 1 | 2 | 3;
-	tokens: InlineToken[];
+	readonly interval?: FragmentInterval;
+	readonly type: 'heading';
+	readonly blockKey: string;
+	readonly anchor: string;
+	readonly level: 1 | 2 | 3;
+	readonly tokens: readonly InlineToken[];
 }
 
 export interface ParagraphFragment {
-	type: 'paragraph';
-	blockKey: string;
-	tokens: InlineToken[];
-	isContinuation: boolean;
-	isFinal: boolean;
-	emptyInsertionSlot?: boolean;
+	readonly interval?: FragmentInterval;
+	readonly type: 'paragraph';
+	readonly blockKey: string;
+	readonly tokens: readonly InlineToken[];
+	readonly isContinuation: boolean;
+	readonly isFinal: boolean;
+	readonly emptyInsertionSlot?: boolean;
 }
 
 export interface TableFragment {
-	type: 'table';
-	blockKey: string;
-	variant?: 'signature';
-	headerRowCount: number;
-	rows: { tokens: InlineToken[] }[][];
+	/** Runtime canonical columns, shared by every fragment of a profiled table. */
+	readonly columnWidths?: readonly number[];
+	/** Body-row interval; repeated headers are outside this interval. */
+	readonly interval?: FragmentInterval;
+	readonly type: 'table';
+	readonly blockKey: string;
+	readonly variant?: 'signature';
+	readonly headerRowCount: number;
+	readonly rows: readonly (readonly { readonly tokens: readonly InlineToken[] }[])[];
 }
 
-export interface PageLayout {
-	number: number;
-	fragments: PageFragment[];
+/** Content identity accompanies placement; geometry alone never authorizes page reuse. */
+export interface LayoutPlacement {
+	readonly prepared: PreparedBlock;
+	readonly fragment: PageFragment;
 }
 
-export interface PageMeasurement {
-	fits(fragments: PageFragment[], pageIndex: number): boolean;
+/** Complete candidate page produced by pure pagination. */
+export interface PaginatedPage {
+	readonly number: number;
+	readonly placements: readonly LayoutPlacement[];
+}
+
+export function fragmentKey(fragment: PageFragment): string {
+	return `${fragment.blockKey}:${fragment.interval?.start ?? 0}:${fragment.interval?.end ?? 'whole'}`;
 }

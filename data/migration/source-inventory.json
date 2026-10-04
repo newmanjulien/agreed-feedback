@@ -1,0 +1,276 @@
+{
+  "contractBlocks": {
+    "count": 113,
+    "fields": {
+      "": {
+        "object": 113
+      },
+      "_creationTime": {
+        "number": 113
+      },
+      "_id": {
+        "string": 113
+      },
+      "anchor": {
+        "string": 17
+      },
+      "blockKey": {
+        "string": 113
+      },
+      "content": {
+        "array": 110
+      },
+      "content[]": {
+        "object": 241
+      },
+      "content[].clauseKey": {
+        "string": 159
+      },
+      "content[].content": {
+        "array": 241
+      },
+      "content[].content[]": {
+        "object": 396
+      },
+      "content[].content[].endTargetItemKey": {
+        "string": 1
+      },
+      "content[].content[].kind": {
+        "string": 396
+      },
+      "content[].content[].marks": {
+        "object": 49
+      },
+      "content[].content[].marks.bold": {
+        "boolean": 40
+      },
+      "content[].content[].marks.italic": {
+        "boolean": 39
+      },
+      "content[].content[].targetItemKey": {
+        "string": 31
+      },
+      "content[].content[].text": {
+        "string": 365
+      },
+      "content[].occurrenceKey": {
+        "string": 159
+      },
+      "content[].provisionKey": {
+        "string": 55
+      },
+      "headerRowCount": {
+        "number": 3
+      },
+      "kind": {
+        "string": 113
+      },
+      "level": {
+        "number": 17
+      },
+      "numbering": {
+        "object": 83
+      },
+      "numbering.activationProvisionKey": {
+        "string": 1
+      },
+      "numbering.itemKey": {
+        "string": 83
+      },
+      "numbering.parentItemKey": {
+        "string": 68
+      },
+      "numbering.sequenceKey": {
+        "string": 83
+      },
+      "numbering.style": {
+        "string": 83
+      },
+      "order": {
+        "number": 113
+      },
+      "rows": {
+        "array": 3
+      },
+      "rows[]": {
+        "array": 9
+      },
+      "rows[][]": {
+        "object": 22
+      },
+      "rows[][].content": {
+        "array": 22
+      },
+      "rows[][].content[]": {
+        "object": 22
+      },
+      "rows[][].content[].clauseKey": {
+        "string": 1
+      },
+      "rows[][].content[].content": {
+        "array": 22
+      },
+      "rows[][].content[].content[]": {
+        "object": 21
+      },
+      "rows[][].content[].content[].kind": {
+        "string": 21
+      },
+      "rows[][].content[].content[].text": {
+        "string": 21
+      },
+      "rows[][].content[].occurrenceKey": {
+        "string": 1
+      },
+      "rows[][].content[].provisionKey": {
+        "string": 1
+      },
+      "variant": {
+        "string": 1
+      }
+    }
+  },
+  "clauseBoxes": {
+    "count": 56,
+    "fields": {
+      "": {
+        "object": 56
+      },
+      "_creationTime": {
+        "number": 56
+      },
+      "_id": {
+        "string": 56
+      },
+      "changesNeedEscalation": {
+        "string": 56
+      },
+      "clauseKey": {
+        "string": 56
+      },
+      "commonObjections": {
+        "string": 56
+      },
+      "howToExplainToBuyers": {
+        "string": 56
+      },
+      "negotiation": {
+        "string": 56
+      },
+      "preferredConcessions": {
+        "array": 56
+      },
+      "preferredConcessions[]": {
+        "object": 18
+      },
+      "preferredConcessions[].concessionKey": {
+        "string": 18
+      },
+      "preferredConcessions[].copy": {
+        "object": 18
+      },
+      "preferredConcessions[].copy.after": {
+        "string": 3
+      },
+      "preferredConcessions[].copy.before": {
+        "string": 18
+      },
+      "preferredConcessions[].copy.detail": {
+        "array": 18
+      },
+      "preferredConcessions[].copy.detail[]": {
+        "string": 1
+      },
+      "preferredConcessions[].replacements": {
+        "array": 18
+      },
+      "preferredConcessions[].replacements[]": {
+        "object": 43
+      },
+      "preferredConcessions[].replacements[].content": {
+        "array": 43
+      },
+      "preferredConcessions[].replacements[].content[]": {
+        "object": 45
+      },
+      "preferredConcessions[].replacements[].content[].kind": {
+        "string": 45
+      },
+      "preferredConcessions[].replacements[].content[].targetItemKey": {
+        "string": 1
+      },
+      "preferredConcessions[].replacements[].content[].text": {
+        "string": 44
+      },
+      "preferredConcessions[].replacements[].targetProvisionKey": {
+        "string": 43
+      },
+      "rareConcessions": {
+        "array": 56
+      },
+      "rareConcessions[]": {
+        "object": 8
+      },
+      "rareConcessions[].concessionKey": {
+        "string": 8
+      },
+      "rareConcessions[].copy": {
+        "object": 8
+      },
+      "rareConcessions[].copy.after": {
+        "string": 3
+      },
+      "rareConcessions[].copy.before": {
+        "string": 8
+      },
+      "rareConcessions[].copy.detail": {
+        "array": 8
+      },
+      "rareConcessions[].replacements": {
+        "array": 8
+      },
+      "rareConcessions[].replacements[]": {
+        "object": 23
+      },
+      "rareConcessions[].replacements[].content": {
+        "array": 23
+      },
+      "rareConcessions[].replacements[].content[]": {
+        "object": 23
+      },
+      "rareConcessions[].replacements[].content[].kind": {
+        "string": 23
+      },
+      "rareConcessions[].replacements[].content[].text": {
+        "string": 23
+      },
+      "rareConcessions[].replacements[].targetProvisionKey": {
+        "string": 23
+      },
+      "showPreferredConcessionsInfoTooltip": {
+        "boolean": 56
+      },
+      "summary": {
+        "string": 56
+      }
+    }
+  },
+  "deletedClauseBoxes": {
+    "count": 0,
+    "fields": {}
+  },
+  "_tables": {
+    "count": 3,
+    "fields": {
+      "": {
+        "object": 3
+      },
+      "id": {
+        "number": 3
+      },
+      "name": {
+        "string": 3
+      }
+    }
+  }
+}

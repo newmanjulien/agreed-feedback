@@ -1,0 +1,189 @@
+# Production data reconciliation
+
+Completed 2026-10-04 against the supplied full Convex export. **Result: 0 unexplained user-facing data mismatches.** Production and development deployments were not contacted or modified. This is an offline transformation and verification; a live development rehearsal remains required.
+
+The database export, not the previous seed, is authoritative. The complete export is retained byte-for-byte in `data/migration/source`. Its document hashes, every record's reconciliation status, and scenario names are in `data/migration/reconciliation.json`. The exact before/after field differences are in `data/migration/corrected-discrepancies.json` (`expected` is the database value; `actual` is the former seed value).
+
+## Counts
+
+| Logical entity / property | Current database | Previous seed | Restored seed |
+|---|---:|---:|---:|
+| Contract blocks | 113 | 113 | 113 |
+| Clause boxes → Playbook Items | 56 | 56 | 56 |
+| Deleted clause records | 0 | 0 | 0 |
+| Occurrences → Triggers | 62 | 61 | 62 |
+| Concessions | 26 | 21 | 26 |
+| Preferred concessions | 18 | 15 | 18 |
+| Rare concessions | 8 | 6 | 8 |
+| Replacement rules → Contract Changes | 66 | 55 | 66 |
+| True importance/tooltip flags | 4 | 4 | 4 |
+| False importance/tooltip flags | 52 | 52 | 52 |
+| Concession after-notes | 6 | 0 | 6 |
+| Nonempty concession detail entries | 1 | 0 | 1 |
+| Text atoms with emphasis marks | 49 | 0 | 49 |
+| Baseline reference atoms | 31 | 31 | 31 |
+| Replacement reference atoms | 1 | 1 | 1 |
+
+The 113 blocks comprise 17 headings, 93 paragraphs, and 3 tables. All 56 records retain all five instruction strings, including empty strings. All 26 concessions retain their detail arrays (25 empty, one with one entry). There are 14 items with concessions and 42 without. Seven items have multiple concessions. Four items have multiple triggers (2, 2, 2, and 4). Two triggers are empty insertion slots; one is in a table. Five changes address the table slot. One change activates an optional numbered paragraph. The largest concession has 11 changes.
+
+All **766 source user-facing text values** are accounted for: 280 instruction strings, 386 baseline text atoms, 67 replacement text atoms, 26 concession descriptions, 6 after-notes, and 1 detail entry. Empty strings, punctuation, Unicode characters, whitespace, and line breaks are preserved in stored data. The extra empty coordinate anchors introduced by the refactor carry no invented copy.
+
+## Tables, shapes, and relationships
+
+The export contains `contractBlocks` (113), `clauseBoxes` (56), and `deletedClauseBoxes` (0). `_tables` contains three table metadata records, not additional business records. No storage, user, selection, or other application tables appear in this export. `data/migration/source-inventory.json` enumerates every observed nested field, type, and occurrence count.
+
+- `contractBlocks`: `_id`, `_creationTime`, `blockKey`, `kind`, `order`; optional `numbering`; headings have `anchor`, `level`, `content`; paragraphs have `content`; tables have `headerRowCount`, `rows`, and optional `variant`. Numbering has `itemKey`, `sequenceKey`, `style`, optional `parentItemKey`, and one `activationProvisionKey`.
+- Old content is an ordered array of segments. Each has `content` and optional `clauseKey`, `occurrenceKey`, and `provisionKey`. Inline atoms are text (`text`, optional bold/italic `marks`) or references (`targetItemKey`, optional `endTargetItemKey`). Table cells use the same segment shape.
+- `clauseBoxes`: `_id`, `_creationTime`, `clauseKey`, `summary`, `howToExplainToBuyers`, `commonObjections`, `negotiation`, `changesNeedEscalation`, `showPreferredConcessionsInfoTooltip`, `preferredConcessions`, `rareConcessions`. A concession has `concessionKey`, `copy` (`before`, `detail`, optional `after`), and `replacements` (`targetProvisionKey`, `content`).
+- Relationships use logical string keys, not exported Convex IDs: 62 occurrences refer to 56 clause keys; 66 replacement rules refer to 56 available provision anchors (some provisions are shared by alternatives); numbering references resolve through item keys and parent/sequence keys. One baseline reference spans a start/end range. No dangling references or ambiguous change ownership were found.
+- The empty deletion table has no document shapes to infer from records; its supplied generated-schema file is preserved in the source evidence.
+
+## Mapping into the refactored architecture
+
+| Database representation | Result |
+|---|---|
+| Segmented inline content | Flattened immutable source atoms with deterministic `sourceKey` coordinates; text and marks retained |
+| `clauseKey` + `occurrenceKey` | One Playbook Item per clause; one coordinate Trigger per occurrence; original occurrence keys retained as trigger IDs |
+| `provisionKey` / `targetProvisionKey` | Source ranges for changes, including zero-length insertion anchors; exact mapping retained in `data/migration/mapping.json` |
+| `summary`, explanation, objections, negotiation | Same strings under `instructions` |
+| `changesNeedEscalation` | Exact string under `instructions.changesNeedApproval`; escalation copy is not rewritten as approval copy |
+| `showPreferredConcessionsInfoTooltip` | Same boolean under `importantToNegotiate`; preferred-section info indicator preserved |
+| Preferred / rare arrays | One concession array with exact `tier`, preserving order within each tier |
+| `concessionKey` | Same value under concession `id` |
+| `copy.before` | Exact `description` |
+| `copy.detail`, `copy.after` | Optional backwards-compatible `detail` and `after`; displayed in rep and admin panels and retained by saves |
+| Replacement inline atoms | Exact `replacement` atoms, retaining reference targets |
+| `numbering.activationProvisionKey` | `optional: true` paragraph plus normal nonempty insertion; conditional numbering and subsequent references remain dynamic |
+| `marks.bold`, `marks.italic` | Optional validated text marks carried through composition, tokens, layout cache identity, and visible/measurement DOM spans |
+
+Schema changes are confined to the shared validators; the existing schema and inferred TypeScript types automatically pick them up. No old segment/provision model was reintroduced into runtime persistence. New-concession authoring limits and read-only retained-concession validation remain intact. Existing larger production concessions are preserved as existing seed records, not recreated through the limited authoring flow.
+
+## Discrepancies corrected
+
+- Restored five absent concessions: Net 20 payment terms, Net 30 VIP terms, insurance coverage outline, prior written marketing approval, and monthly autopay after the Initial Term. These contain 10 replacement rules.
+- Restored the missing renewal-term trigger and its replacement rule for `replacement-mutual-agreement`, bringing the net increase to 11 rules.
+- Restored full production trigger coverage for fees, insurance, and marketing rights. Recomputed the annual-increase coordinates from the production segmentation.
+- Corrected 22 instruction fields across 15 items, including escalation wording, missing objections and negotiation guidance, the cash-flow/Initial-Term distinction for monthly billing, sensitive-data guidance, and an exact whitespace discrepancy in the entire-contract summary.
+- Restored four changed concession descriptions and the production replacement content/coordinates for annual increase, both replacement-professional concessions, sensitive-data responsibility, and monthly autopay.
+- Restored `term-fee-payment-monthly-autopay` to **rare**; monthly billing only after the Initial Term is the separate **preferred** concession.
+- Restored six after-notes, one detail entry, all 26 detail arrays, and 49 bold/italic mark objects. The 36 changed block records reflect emphasis and segmentation/anchors; concatenated baseline wording and reference targets already matched production and were not rewritten.
+- Removed trimming/paragraph normalization from the shared instruction text display; preserved empty instruction strings through semantic draft serialization. Notes/details now participate in concession equality, so saves cannot silently drop them.
+
+In total, 16 Playbook Item rows and 36 contract-block rows differ from the former seed. The detailed ledger uses concession IDs, rather than shifting array positions, to identify corrections.
+
+## Verification results
+
+| Check | Result |
+|---|---|
+| Every transformed block/item compared against the export | 169/169 records; 0 mismatches |
+| Counts, all scalar values, array order, enums, flags, optional fields, references | Pass |
+| Shared Convex persisted validators and complete geometry/reference audit | Pass |
+| Independent old provision-rule output oracle | 29 scenarios: baseline, all 26 concessions individually, two existing combinations; effective text/emphasis and accepted-redline text match |
+| Frozen rendering fixtures | 58 effective/redline states pass; includes token/fragment conservation and server-rendered provenance |
+| Draft/edit/save serialization | 56/56 round trips preserve exact business data |
+| Actual existing-item mutation handler with in-memory DB adapter | 56/56 replacement payloads preserve data; this is not a live Convex transaction test |
+| Server-rendered rep panels | 56/56 contain all nonempty instruction, concession, detail, and after-note strings unchanged |
+| `npm run seed:reconcile` | Pass; machine-readable report written |
+| `npm run seed:verify` | Pass, including source reconciliation |
+| `npm run check` | 0 errors, 0 warnings |
+| `npm run build` | Pass, including Svelte checking and Vercel adapter build; nothing deployed |
+| Edited source/script formatting | Pass |
+| Repository-wide `npm run format:check` | Fails on 13 pre-existing, byte-unchanged files listed below |
+| Production and mismatched-dev seed guards | Both reject before any Convex operation; `scripts/seed-convex.mjs` is byte-identical to the input |
+| Live development import / browser interaction / production audit | Not run; deployment access was not used |
+
+The 13 existing formatting failures are `src/convex/_generated/ai/ai-files.state.json`, `src/convex/_generated/ai/guidelines.md`, `src/convex/_generated/api.d.ts`, `src/convex/_generated/api.js`, `src/convex/_generated/dataModel.d.ts`, `src/convex/_generated/server.d.ts`, `src/convex/_generated/server.js`, `src/convex/tsconfig.json`, `src/lib/components/document/ContractViewer.svelte`, `src/lib/components/ui/modal/help-content.ts`, `src/lib/document/annotation-registry.ts`, `src/lib/document/runtime/source.svelte.ts`, and `src/lib/document/search/document-search.ts`.
+
+Before refreshing fixtures, the original seed passed all 48 original states under the updated backwards-compatible renderer. The restored seed then passed the independent old provision-rule oracle. Only after those checks were the hashes refreshed and 10 states added for the five restored concessions. Hash changes reflect the restored emphasis, source coordinates, trigger memberships, replacement rules, and effect provenance. Original hashes remain in `data/migration/prior-compositor.json`. `scripts/refresh-production-references.mjs` refuses to refresh unless source reconciliation and the independent output oracle pass; normal verification never updates hashes.
+
+## Development rehearsal
+
+Use a **fresh, empty development deployment**. The existing seed command intentionally refuses to overwrite differing records or restore an intentionally emptied item table. An older deployment with the old `contractBlocks` shape may reject the new schema before import.
+
+```sh
+npm ci
+npm run seed:reconcile
+npm run seed:verify
+npm run check
+npm run build
+```
+
+Configure a new development deployment with `npx convex dev`, using `.env.example` as guidance. Confirm `CONVEX_DEPLOYMENT=dev:...` and the matching `PUBLIC_CONVEX_URL`. Then:
+
+```sh
+npm run convex:seed
+npm run db:audit -- --seed https://YOUR-DEV-DEPLOYMENT.convex.cloud
+npm run dev
+```
+
+The new `--seed` audit is read-only and compares exact business records against the local seed after aligning logical trigger identities. It excludes only Convex system IDs/timestamps and revision/operation/obsolete authoring metadata. Audit before making intentional edits. Exercise the restored concessions, preferred/rare categories, both replacement-professional triggers, the two insertion slots, after-notes/details, and saving an instruction edit without losing concession copy. Visually inspect pagination now that stored emphasis is rendered.
+
+`npm run seed:restore-export` regenerates local seed files and the logical mapping from `data/migration/source`; it never contacts a database. For a later export, replace the source fixture with that full export, regenerate, reconcile, review the diff, and rerun validation. Unexpected tables, fields, deletion history, or unsupported occurrence layouts deliberately fail instead of being silently discarded.
+
+## Production cutover requirements
+
+**There is no production reseed/import path in `npm run convex:seed`, and its guards have not been weakened.** A normal frontend deployment does not load seed data. The old and new `contractBlocks` document shapes are incompatible, so pushing the final schema over the old populated table is not a complete migration plan.
+
+1. Rehearse the full procedure in development. Freeze writes during the eventual maintenance window, take a new complete production backup, and reconcile that export as well if production has changed since this supplied export. Retain the old code, data, and configuration for rollback.
+2. Prefer a separately provisioned **empty production target**, deploy the refactored Convex schema/functions there, and use a separate deliberate CLI import into that confirmed target. Keep the application in maintenance until both tables have loaded and the exact read-only audit passes. The CLI supports explicit `--deployment`; verify the target in the dashboard before running it. For a confirmed empty target only, the import sequence is:
+
+   ```sh
+   npx convex import --deployment CONFIRMED-PRODUCTION-TARGET --table playbookItems data/convex/playbookItems.jsonl
+   npx convex import --deployment CONFIRMED-PRODUCTION-TARGET --table contractBlocks data/convex/contractBlocks.jsonl
+   npm run db:audit -- --seed https://CONFIRMED-PRODUCTION-TARGET.convex.cloud
+   ```
+
+   These are operator instructions, not commands executed for this task. No append, replace-all, or confirmation-skipping flags are proposed. A fresh `creationReceipts` table is correctly empty; there were no such records in the old export.
+3. If retaining the **same production deployment**, a separately reviewed transitional schema/data-load mechanism is required: temporarily accept both contract-block shapes while writes are frozen, load/replace the transformed tables deliberately, verify them, then enforce the final schema and deploy the corresponding app. Archive the old clause/deletion tables until rollback is no longer needed. Do not push the final strict schema into old data, remove development guards, or casually use `--replace-all`. This transitional production mechanism is identified here but is not implemented or executed.
+4. Switch the frontend's Convex URL only after the new target passes audit; release maintenance after checking rep/admin behavior. Keep the old target available for rollback. For an in-place approach, rollback needs both the original schema/code and the backup, not just an old frontend build.
+
+## Exact-preservation limits and omissions
+
+**No exported user-facing data is absent from the resulting seed.** The original source files and mapping remain included for auditability.
+
+Convex `_id`, `_creationTime`, and `_tables.id` are not loaded as business values. They remain in the source evidence; imports generate new document IDs/times. Legacy clause/provision keys are represented through trigger IDs, source ranges, and the explicit mapping rather than restoring old tables. The empty deleted-clause table contributes no records. `creationReceipts` is new transport infrastructure, not missing production content.
+
+No exported relationship uses Convex document IDs, and no external-ID dependency was found in the supplied application. Dependencies in systems outside these two inputs cannot be established here; check those before cutover. Browser interaction, measured browser pagination, a live Convex transaction round trip, and a production import remain rehearsal tasks. Redline presentation retains the refactor's diff algorithm; its accepted text matches production rules, but old-client visual rendering cannot be compared without the old application code.
+
+## Every changed or added project file
+
+| File | Why |
+|---|---|
+| `README.md` | Correct current counts; document restoration, reconciliation, and report |
+| `package.json` | Add offline restore/reconcile commands |
+| `data/convex/contractBlocks.jsonl` | Rebuild source coordinates and retain production emphasis |
+| `data/convex/playbookItems.jsonl` | Restore exact production instructions, concessions, triggers, tiers, flags, and notes |
+| `src/convex/playbookValidators.ts` | Accept optional concession detail/after copy |
+| `src/convex/sourceValidators.ts` | Accept optional bold/italic text marks |
+| `src/lib/playbook/draft.ts` | Preserve notes, details, marks, and empty strings through semantic saves/equality |
+| `src/lib/contract/model.ts` | Carry marks on resolved text runs |
+| `src/lib/contract/compose.ts` | Preserve emphasis through source slicing/replacement and redlining |
+| `src/lib/document/pagination/prepare.ts` | Include emphasis in geometry cache identity |
+| `src/lib/components/document/SourceText.svelte` | Render emphasis consistently in visible and measurement spans |
+| `src/lib/components/playbook/ConcessionRow.svelte` | Display exact description, detail entries, and after-note |
+| `src/lib/components/playbook/RepPlaybookPanel.svelte` | Pass restored concession copy to display |
+| `src/lib/components/playbook/PlaybookEditor.svelte` | Show retained detail/after copy in admin view |
+| `src/lib/components/playbook/PlaybookText.svelte` | Preserve displayed whitespace and line breaks |
+| `scripts/production-seed.mjs` | Deterministic, fail-closed conversion from the full export |
+| `scripts/reconcile-production-seed.mjs` | Record/output/UI/save reconciliation and machine report |
+| `scripts/refresh-production-references.mjs` | Explicit reference refresh gated on independently verified restoration |
+| `scripts/verify-seed-data.mjs` | Require production reconciliation and corrected counts |
+| `scripts/verify-overlay-parity.mjs` | Include marks in display hashes; share canonical hashing with gated refresh |
+| `scripts/audit-convex.mjs` | Add read-only `--seed` exact comparison for live rehearsal/cutover |
+| `data/reference/compositor.json` | Verified restored-data hashes plus coverage for five missing concessions |
+| `data/migration/mapping.json` | Old IDs/logical keys → new blocks, triggers, and provision ranges |
+| `data/migration/reconciliation.json` | Complete record-level status, counts, source hashes, and verification results |
+| `data/migration/corrected-discrepancies.json` | Exact field-level differences from the former seed |
+| `data/migration/source-inventory.json` | Complete observed shapes/types/counts for all exported tables |
+| `data/migration/prior-compositor.json` | Preserve original pre-restoration hashes |
+| `data/migration/source/README.md` | Unmodified export documentation |
+| `data/migration/source/_tables/documents.jsonl` | Unmodified export table inventory |
+| `data/migration/source/contractBlocks/documents.jsonl` | Unmodified authoritative contract records |
+| `data/migration/source/contractBlocks/generated_schema.jsonl` | Unmodified exported shape evidence |
+| `data/migration/source/clauseBoxes/documents.jsonl` | Unmodified authoritative clause records |
+| `data/migration/source/clauseBoxes/generated_schema.jsonl` | Unmodified exported shape evidence |
+| `data/migration/source/deletedClauseBoxes/documents.jsonl` | Unmodified empty deletion table |
+| `data/migration/source/deletedClauseBoxes/generated_schema.jsonl` | Unmodified exported deletion-table shape evidence |
+| `docs/production-data-reconciliation.md` | This report, complete change list, and cutover instructions |
+
+`src/convex/schema.ts`, generated TypeScript models, mutation implementations, and production-seeding safety code did not require edits: they consume the shared validators and semantic draft helpers. No dependencies changed. The deliverable excludes installed dependencies, generated build/cache folders, macOS metadata, and `.env.local`; configure environment values from your original secure setup or `.env.example`.

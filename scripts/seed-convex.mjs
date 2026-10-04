@@ -37,17 +37,17 @@ async function readRows(name) {
 	return source.split('\n').map((row) => JSON.parse(row));
 }
 const expectedBlocks = await readRows('contractBlocks');
-const expectedBoxes = await readRows('clauseBoxes');
+const expectedItems = await readRows('playbookItems');
 
 // Deploy schema and read functions; no records are changed by this command.
 run('run', 'contract:getBlocks', '{}', '--push', ...target);
 const client = new ConvexHttpClient(url);
 const actual = async () => {
-	const [blocks, boxes] = await Promise.all([
+	const [blocks, items] = await Promise.all([
 		client.query(anyApi.contract.getBlocks, {}),
-		client.query(anyApi.clauseBoxes.list, {})
+		client.query(anyApi.playbookItems.list, {})
 	]);
-	return { blocks, boxes: boxes.map(({ id, ...box }) => box) };
+	return { blocks, items: items.map(({ _id, _creationTime, ...item }) => item) };
 };
 function status(rows, expected, table) {
 	if (!rows.length) return 'missing';
@@ -56,17 +56,17 @@ function status(rows, expected, table) {
 }
 const before = await actual();
 const blockStatus = status(before.blocks, expectedBlocks, 'contractBlocks');
-const boxStatus = status(before.boxes, expectedBoxes, 'clauseBoxes');
+const itemStatus = status(before.items, expectedItems, 'playbookItems');
 
-if (blockStatus === 'complete' && boxStatus === 'missing') {
-	throw new Error('Contract blocks exist but no boxes remain. Refusing to restore deleted boxes.');
+if (blockStatus === 'complete' && itemStatus === 'missing') {
+	throw new Error('Contract blocks exist but no items remain. Refusing to restore deleted items.');
 }
-// Import boxes first so an interrupted initial import can resume without
-// confusing an intentionally empty box table with a fresh deployment.
-if (boxStatus === 'missing') {
-	run('import', '--table', 'clauseBoxes', ...target, 'data/convex/clauseBoxes.jsonl');
-	if (status((await actual()).boxes, expectedBoxes, 'clauseBoxes') !== 'complete') {
-		throw new Error('Clause box import did not complete.');
+// Import items first so an interrupted initial import can resume without
+// confusing an intentionally empty item table with a fresh deployment.
+if (itemStatus === 'missing') {
+	run('import', '--table', 'playbookItems', ...target, 'data/convex/playbookItems.jsonl');
+	if (status((await actual()).items, expectedItems, 'playbookItems') !== 'complete') {
+		throw new Error('Playbook Item import did not complete.');
 	}
 }
 if (blockStatus === 'missing') {
@@ -78,10 +78,10 @@ if (blockStatus === 'missing') {
 const after = await actual();
 if (
 	status(after.blocks, expectedBlocks, 'contractBlocks') !== 'complete' ||
-	status(after.boxes, expectedBoxes, 'clauseBoxes') !== 'complete'
+	status(after.items, expectedItems, 'playbookItems') !== 'complete'
 ) {
 	throw new Error('Contract import is incomplete.');
 }
 console.log(
-	`Seed baseline round trip verified: ${after.blocks.length} blocks, ${after.boxes.length} boxes.`
+	`Seed baseline round trip verified: ${after.blocks.length} blocks, ${after.items.length} items.`
 );

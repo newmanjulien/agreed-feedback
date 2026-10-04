@@ -4,12 +4,17 @@
 	import CaretUpIcon from 'phosphor-svelte/lib/CaretUpIcon';
 	import MagnifyingGlassIcon from 'phosphor-svelte/lib/MagnifyingGlassIcon';
 	import type { DocumentSearchSession } from '$lib/document/search/search-session.svelte';
-	import UtilityPanelSurface from '$lib/components/chrome/UtilityPanelSurface.svelte';
 	import SquareIconButton from '$lib/components/ui/SquareIconButton.svelte';
 
-	let { session }: { session: DocumentSearchSession } = $props();
-
-	let inputElement: HTMLInputElement;
+	let {
+		session,
+		panelElement = $bindable(),
+		inputElement = $bindable()
+	}: {
+		session: DocumentSearchSession;
+		panelElement?: HTMLElement;
+		inputElement?: HTMLInputElement;
+	} = $props();
 
 	function handleInput(event: Event) {
 		session.setQuery((event.currentTarget as HTMLInputElement).value);
@@ -23,20 +28,25 @@
 	}
 
 	onMount(() => {
-		void tick().then(() => inputElement.focus());
+		void tick().then(() => inputElement?.focus());
 	});
 </script>
 
-<UtilityPanelSurface title="Search" panelId="document-search">
+<section
+	bind:this={panelElement}
+	id="document-search"
+	class="pointer-events-auto w-full rounded-base border border-line bg-surface p-2.5 text-ink shadow-none"
+	aria-label="Search"
+	data-utility-panel="document-search"
+>
 	<label
-		class="flex items-center gap-2.5 rounded-field border border-line bg-surface px-3 py-2.5 text-ink-secondary transition-colors hover:border-line-strong focus-within:border-accent focus-within:outline-2 focus-within:outline-offset-1 focus-within:outline-accent/18 motion-reduce:transition-none"
+		class="flex items-center gap-2.5 rounded-base border border-line bg-surface px-3 py-2.5 text-ink-secondary transition-colors hover:border-line-strong focus-within:border-accent focus-within:outline-2 focus-within:outline-offset-1 focus-within:outline-accent/18 motion-reduce:transition-none"
 	>
 		<span class="sr-only">Find in document</span>
 		<MagnifyingGlassIcon aria-hidden="true" size={20} weight="regular" />
 		<input
 			class="min-w-0 flex-1 border-0 bg-transparent p-0 text-[15px] leading-[1.45] text-ink outline-none placeholder:text-ink-muted [&::-webkit-search-cancel-button]:hidden"
 			bind:this={inputElement}
-			data-search-input
 			type="search"
 			value={session.query}
 			placeholder="Find in document"
@@ -47,11 +57,7 @@
 		/>
 	</label>
 
-	{#if !session.supported}
-		<p class="mt-3 mb-0 text-sm leading-[1.4]" role="status">
-			Search highlighting is unavailable in this browser.
-		</p>
-	{:else if session.query}
+	{#if session.query}
 		<div class="mt-3 flex min-h-9 items-center justify-between">
 			<p class="m-0 text-sm leading-[1.4]" role="status" aria-live="polite">
 				{#if session.resultCount}
@@ -81,4 +87,4 @@
 			</div>
 		</div>
 	{/if}
-</UtilityPanelSurface>
+</section>

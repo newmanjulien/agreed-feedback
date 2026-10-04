@@ -9,9 +9,10 @@
  */
 
 import type * as admin from "../admin.js";
-import type * as clauseBoxes from "../clauseBoxes.js";
 import type * as contract from "../contract.js";
-import type * as validators from "../validators.js";
+import type * as playbookItems from "../playbookItems.js";
+import type * as playbookValidators from "../playbookValidators.js";
+import type * as sourceValidators from "../sourceValidators.js";
 
 import type {
   ApiFromModules,
@@ -21,9 +22,10 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   admin: typeof admin;
-  clauseBoxes: typeof clauseBoxes;
   contract: typeof contract;
-  validators: typeof validators;
+  playbookItems: typeof playbookItems;
+  playbookValidators: typeof playbookValidators;
+  sourceValidators: typeof sourceValidators;
 }>;
 
 /**

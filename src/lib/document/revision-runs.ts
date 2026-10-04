@@ -5,18 +5,12 @@ export interface RevisionRun {
 	tokens: InlineToken[];
 }
 
-export function groupRevisionRuns(tokens: InlineToken[]): RevisionRun[] {
+export function groupRevisionRuns(tokens: readonly InlineToken[]): RevisionRun[] {
 	const runs: RevisionRun[] = [];
 	for (const token of tokens) {
 		const previous = runs.at(-1);
 		const revision = token.revision ?? 'normal';
-		if (
-			previous &&
-			previous.revision === revision &&
-			(revision !== 'removed' ||
-				(previous.tokens[0].marks?.bold === token.marks?.bold &&
-					previous.tokens[0].marks?.italic === token.marks?.italic))
-		) {
+		if (previous && previous.revision === revision) {
 			previous.tokens.push(token);
 		} else {
 			runs.push({ revision, tokens: [token] });

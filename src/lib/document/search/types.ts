@@ -3,6 +3,17 @@ export interface TextMatch {
 	end: number;
 }
 
+/** A paginated semantic location, independent of mounted text nodes. Offsets are UTF-16. */
+export interface SearchPoint {
+	pageNumber: number;
+	fragmentKey: string;
+	row?: number;
+	cell?: number;
+	tokenIndex: number;
+	offset: number;
+}
+
 export interface DocumentSearchResult {
-	range: Range;
+	start: SearchPoint;
+	end: SearchPoint;
 }

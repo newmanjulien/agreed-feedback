@@ -17,6 +17,8 @@
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"seed:restore-export": "node scripts/production-seed.mjs",
+		"seed:reconcile": "node scripts/reconcile-production-seed.mjs",
 		"seed:verify": "node scripts/verify-seed-data.mjs",
 		"convex:seed": "npm run seed:verify && node scripts/seed-convex.mjs",
 		"db:audit": "node scripts/audit-convex.mjs",
@@ -24,6 +26,7 @@
 		"format:check": "prettier --check src scripts"
 	},
 	"dependencies": {
+		"@floating-ui/dom": "^1.8.0",
 		"convex": "^1.46.0",
 		"convex-svelte": "^0.14.0",
 		"phosphor-svelte": "^3.1.0"
@@ -41,5 +44,10 @@
 		"tailwindcss": "^4.3.3",
 		"typescript": "^6.0.3",
 		"vite": "^8.0.16"
+	},
+	"overrides": {
+		"@sveltejs/kit": {
+			"cookie": "0.7.2"
+		}
 	}
 }

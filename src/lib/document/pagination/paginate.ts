@@ -1,197 +1,149 @@
-import type { ResolvedBlock } from '$lib/contract/model';
-import { tokenizeInline } from './tokenize';
-import type {
-	HeadingFragment,
-	InlineToken,
-	PageFragment,
-	PageLayout,
-	ParagraphFragment,
-	PageMeasurement,
-	TableFragment
-} from './types';
+import { paragraphSlice, type PreparedBlock } from './prepare';
+import { fitsPage, pageCapacity } from './page-format';
+import {
+	maximumParagraphLineEnd,
+	maximumTableRowEnd,
+	paragraphFirstLineHeight,
+	paragraphFragmentHeight,
+	tableFragmentHeight,
+	type LayoutProfiles
+} from './profile';
+import type { LayoutPlacement, PageFragment, PaginatedPage } from './types';
 
-function paragraphFragment(
-	blockKey: string,
-	tokens: InlineToken[],
-	start: number,
-	end: number,
-	emptyInsertionSlot = false
-): ParagraphFragment {
-	return {
-		type: 'paragraph',
-		blockKey,
-		tokens: tokens.slice(start, end),
-		isContinuation: start > 0,
-		isFinal: end === tokens.length,
-		emptyInsertionSlot
+export interface PaginationOptions {
+	capacity?: (pageIndex: number) => number;
+}
+
+/** Complete, synchronous page assignment from request-local, validated geometry.
+ * Always starts at block zero. There is no measurement, cache, scheduling or prior layout.
+ */
+export function paginatePreparedDocument(
+	blocks: readonly PreparedBlock[],
+	profiles: LayoutProfiles,
+	{ capacity = pageCapacity }: PaginationOptions = {}
+): PaginatedPage[] {
+	const pages: PaginatedPage[] = [];
+	if (!blocks.length) return pages;
+	const capacityAt = (pageIndex: number) => {
+		const value = capacity(pageIndex);
+		if (!Number.isFinite(value) || value <= 0)
+			throw new Error('Pagination requires a finite, positive page capacity.');
+		return value;
 	};
-}
-
-function headingPreview(
-	blocks: readonly ResolvedBlock[],
-	blockIndex: number
-): ParagraphFragment | undefined {
-	const next = blocks[blockIndex + 1];
-	if (!next || next.kind !== 'paragraph') return undefined;
-
-	const tokens = tokenizeInline(next.content);
-	if (tokens.length === 0) return undefined;
-	return paragraphFragment(next.blockKey, tokens, 0, Math.min(tokens.length, 4));
-}
-
-function largestFittingParagraphEnd(
-	blockKey: string,
-	tokens: InlineToken[],
-	start: number,
-	pageFragments: PageFragment[],
-	pageIndex: number,
-	measurement: PageMeasurement
-): number {
-	let low = start + 1;
-	let high = tokens.length - 1;
-	let best = start;
-
-	while (low <= high) {
-		const middle = Math.floor((low + high) / 2);
-		const candidate = paragraphFragment(blockKey, tokens, start, middle);
-		if (measurement.fits([...pageFragments, candidate], pageIndex)) {
-			best = middle;
-			low = middle + 1;
-		} else {
-			high = middle - 1;
-		}
+	const profileFor = (block: PreparedBlock) => {
+		const profile = profiles.get(block);
+		if (!profile || profile.kind !== block.fragment.type)
+			throw new Error(`Missing or mismatched layout profile for "${block.fragment.blockKey}".`);
+		return profile;
+	};
+	let page: { number: number; placements: LayoutPlacement[] } = { number: 1, placements: [] };
+	let remaining = capacityAt(0);
+	const fits = (height: number) => fitsPage(height, remaining);
+	function newPage() {
+		if (!page.placements.length) throw new Error('Pagination cannot emit an empty page.');
+		pages.push(page);
+		page = { number: page.number + 1, placements: [] };
+		remaining = capacityAt(page.number - 1);
 	}
-
-	return best;
-}
-
-export function* paginateDocument(
-	blocks: readonly ResolvedBlock[],
-	measurement: PageMeasurement
-): Generator<PageLayout> {
-	let page: PageLayout = { number: 1, fragments: [] };
-	const currentPage = () => page;
-	function* newPage(): Generator<PageLayout> {
-		if (!page.fragments.length)
-			throw new Error('Pagination attempted to create two empty pages in a row.');
-		yield page;
-		page = { number: page.number + 1, fragments: [] };
+	function accept(prepared: PreparedBlock, fragment: PageFragment, height: number) {
+		page.placements.push({ prepared, fragment });
+		remaining -= height;
 	}
-
-	for (const [blockIndex, block] of blocks.entries()) {
-		const blockKey = block.blockKey;
-		if (block.kind === 'heading') {
-			const heading: HeadingFragment = {
-				type: 'heading',
-				blockKey,
-				anchor: block.anchor,
-				level: block.level,
-				tokens: tokenizeInline(block.content)
-			};
-			const preview = headingPreview(blocks, blockIndex);
-			const keepTogether = preview ? [heading, preview] : [heading];
-
+	for (let index = 0; index < blocks.length; index++) {
+		const block = blocks[index];
+		const whole = block.fragment;
+		const profile = profileFor(block);
+		if (whole.type === 'heading' && profile.kind === 'heading') {
+			const next = blocks[index + 1];
+			const following = next?.fragment.type === 'paragraph' ? profileFor(next) : undefined;
+			const required =
+				profile.outerHeight +
+				(following?.kind === 'paragraph' ? paragraphFirstLineHeight(following) : 0);
+			if (!fits(required) && page.placements.length) newPage();
+			if (!fits(required))
+				throw new Error(
+					`Heading "${whole.anchor}" cannot fit with its required spacing and following line on an empty page.`
+				);
+			accept(block, whole, profile.outerHeight);
+		} else if (whole.type === 'table' && profile.kind === 'table') {
+			const rowCount = whole.rows.length - whole.headerRowCount;
 			if (
-				currentPage().fragments.length > 0 &&
-				!measurement.fits([...currentPage().fragments, ...keepTogether], page.number - 1)
-			) {
-				yield* newPage();
-			}
-
-			if (!measurement.fits([...currentPage().fragments, heading], page.number - 1)) {
-				throw new Error(`Heading "${block.anchor}" does not fit on an empty page.`);
-			}
-
-			currentPage().fragments.push(heading);
-			continue;
-		}
-
-		if (block.kind === 'table') {
-			const table: TableFragment = {
-				type: 'table',
-				blockKey,
-				variant: block.variant,
-				headerRowCount: block.headerRowCount,
-				rows: block.rows.map((row) => row.map((cell) => ({ tokens: tokenizeInline(cell.content) })))
+				profile.headerRowCount !== whole.headerRowCount ||
+				profile.bodyRowHeights.length !== rowCount
+			)
+				throw new Error(`Table layout profile does not match "${whole.blockKey}".`);
+			const height = tableFragmentHeight(profile, 0, rowCount);
+			const table = {
+				...whole,
+				interval: { start: 0, end: rowCount },
+				columnWidths: profile.columnWidths
 			};
-			const fits = (fragment: TableFragment) =>
-				measurement.fits([...currentPage().fragments, fragment], page.number - 1);
-			if (fits(table)) {
-				currentPage().fragments.push(table);
+			// Preserve the move-whole-table rule before considering body-row splits.
+			if (!fits(height) && page.placements.length && fitsPage(height, capacityAt(page.number)))
+				newPage();
+			if (!rowCount && !fits(height) && page.placements.length) newPage();
+			if (fits(height)) {
+				accept(block, table, height);
 				continue;
 			}
-			if (currentPage().fragments.length && measurement.fits([table], page.number)) {
-				yield* newPage();
-				currentPage().fragments.push(table);
-				continue;
-			}
-
-			const headers = table.rows.slice(0, table.headerRowCount);
-			const body = table.rows.slice(table.headerRowCount);
-			if (!body.length) {
-				if (currentPage().fragments.length) yield* newPage();
-				if (!fits(table)) throw new Error(`Table header in "${blockKey}" exceeds a page.`);
-				currentPage().fragments.push(table);
-				continue;
-			}
-			for (let start = 0; start < body.length;) {
-				const fragment = (end: number): TableFragment => ({
-					...table,
-					rows: [...headers, ...body.slice(start, end)]
-				});
-				let end = start + 1;
-				if (!fits(fragment(end))) {
-					if (currentPage().fragments.length) yield* newPage();
-					if (!fits(fragment(end)))
-						throw new Error(`A row in "${blockKey}" exceeds an empty page.`);
+			if (!rowCount) throw new Error(`Table header in "${whole.blockKey}" exceeds an empty page.`);
+			const headers = whole.rows.slice(0, whole.headerRowCount);
+			for (let start = 0; start < rowCount;) {
+				const end = maximumTableRowEnd(profile, start, remaining);
+				if (end === start) {
+					if (!page.placements.length)
+						throw new Error(
+							`Table headers and body row ${start} in "${whole.blockKey}" exceed an empty page.`
+						);
+					newPage();
+					continue;
 				}
-				while (end < body.length && fits(fragment(end + 1))) end++;
-				currentPage().fragments.push(fragment(end));
+				accept(
+					block,
+					{
+						...table,
+						interval: { start, end },
+						rows: [
+							...headers,
+							...whole.rows.slice(whole.headerRowCount + start, whole.headerRowCount + end)
+						]
+					},
+					tableFragmentHeight(profile, start, end)
+				);
 				start = end;
-				if (start < body.length) yield* newPage();
+				if (start < rowCount) newPage();
 			}
-			continue;
-		}
-
-		const tokens = tokenizeInline(block.content);
-		let start = 0;
-
-		while (start < tokens.length) {
-			const complete = paragraphFragment(
-				blockKey,
-				tokens,
-				start,
-				tokens.length,
-				block.emptyInsertionSlot
-			);
-			if (measurement.fits([...currentPage().fragments, complete], page.number - 1)) {
-				currentPage().fragments.push(complete);
-				start = tokens.length;
+		} else if (whole.type === 'paragraph' && profile.kind === 'paragraph') {
+			if (profile.tokenCount !== whole.tokens.length)
+				throw new Error(`Paragraph layout profile does not match "${whole.blockKey}".`);
+			if (!profile.lines.length) {
+				const height = paragraphFragmentHeight(profile, 0, 0);
+				if (!fits(height) && page.placements.length) newPage();
+				if (!fits(height))
+					throw new Error(`Paragraph spacing in "${whole.blockKey}" exceeds an empty page.`);
+				accept(block, paragraphSlice(whole, 0, whole.tokens.length), height);
 				continue;
 			}
-
-			const end = largestFittingParagraphEnd(
-				blockKey,
-				tokens,
-				start,
-				currentPage().fragments,
-				page.number - 1,
-				measurement
-			);
-
-			if (end === start) {
-				if (currentPage().fragments.length === 0) {
-					throw new Error(`A token in "${blockKey}" is wider or taller than an empty page.`);
+			for (let start = 0; start < profile.lines.length;) {
+				const end = maximumParagraphLineEnd(profile, start, remaining);
+				if (end === start) {
+					if (!page.placements.length)
+						throw new Error(
+							`Visual line ${start} and its spacing in "${whole.blockKey}" exceed an empty page.`
+						);
+					newPage();
+					continue;
 				}
-				yield* newPage();
-				continue;
+				accept(
+					block,
+					paragraphSlice(whole, profile.lines[start].startToken, profile.lines[end - 1].endToken),
+					paragraphFragmentHeight(profile, start, end)
+				);
+				start = end;
+				if (start < profile.lines.length) newPage();
 			}
-
-			currentPage().fragments.push(paragraphFragment(blockKey, tokens, start, end));
-			start = end;
-			yield* newPage();
 		}
 	}
-
-	if (page.fragments.length) yield page;
+	if (page.placements.length) pages.push(page);
+	return pages;
 }

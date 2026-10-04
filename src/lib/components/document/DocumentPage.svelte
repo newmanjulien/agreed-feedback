@@ -1,17 +1,26 @@
 <script lang="ts">
+	import type { AnnotationActivation } from '$lib/document/annotation-anchor';
+	import { PAGE_FORMAT } from '$lib/document/pagination/page-format';
+	import type { HighlightRect } from '$lib/document/highlights/geometry';
 	import BlockFragment from './BlockFragment.svelte';
-	import type { PageLayout } from '$lib/document/pagination/types';
+	import { fragmentKey, type PaginatedPage } from '$lib/document/pagination/types';
 
 	let {
 		page,
-		selectedOccurrenceKey,
-		activeClauseKeys,
-		onClauseSelect
+		highlights = [],
+		selectedAnnotationId,
+		canOpenPlaybookItems,
+		onAnnotationSelect
 	}: {
-		page: PageLayout;
-		selectedOccurrenceKey: string | null;
-		activeClauseKeys: ReadonlySet<string>;
-		onClauseSelect: (clauseKey: string, occurrenceKey: string, clauseFragmentKey: string) => void;
+		page: PaginatedPage;
+		highlights?: readonly HighlightRect[];
+		selectedAnnotationId: string | null;
+		canOpenPlaybookItems: boolean;
+		onAnnotationSelect: (
+			itemId: string,
+			annotationId: string,
+			activation: AnnotationActivation
+		) => void;
 	} = $props();
 </script>
 
@@ -19,18 +28,34 @@
 	class="document-page"
 	class:first-page={page.number === 1}
 	aria-label={`Page ${page.number}`}
+	data-page-number={page.number}
 >
 	<div class="document-page__content contract-document contract-flow">
-		{#each page.fragments as fragment}
+		{#each page.placements as { fragment } (fragmentKey(fragment))}
 			<BlockFragment
 				{fragment}
-				pageNumber={page.number}
-				{selectedOccurrenceKey}
-				{activeClauseKeys}
-				{onClauseSelect}
+				{selectedAnnotationId}
+				{canOpenPlaybookItems}
+				{onAnnotationSelect}
 			/>
 		{/each}
 	</div>
+	<svg
+		class="document-highlights"
+		aria-hidden="true"
+		viewBox={`0 0 ${PAGE_FORMAT.width} ${PAGE_FORMAT.height}`}
+	>
+		{#each highlights as rect}
+			<rect
+				x={rect.x}
+				y={rect.y}
+				width={rect.width}
+				height={rect.height}
+				class={`document-highlight document-highlight--${rect.kind}`}
+				data-trigger-state={rect.triggerState}
+			/>
+		{/each}
+	</svg>
 	<div class="document-page__number" aria-hidden="true">
 		{page.number}
 	</div>

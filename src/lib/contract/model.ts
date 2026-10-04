@@ -1,30 +1,17 @@
-import type { Infer } from 'convex/values';
-import type {
-	clauseBox,
-	clauseBoxRecord,
-	contractBlock,
-	editableCopyField
-} from '../../convex/validators';
-
-// Persisted shapes belong to the Convex schema. Document rendering uses only domain fields.
-export type ContractBlock = Infer<typeof contractBlock>;
-export type ClauseBoxData = Infer<typeof clauseBox>;
-export type ClauseBoxRecord = Infer<typeof clauseBoxRecord>;
-export type Concession = ClauseBoxData['preferredConcessions'][number];
-export type SelectedConcession = Pick<Concession, 'concessionKey' | 'replacements'>;
-export type InlineSegment = Extract<ContractBlock, { kind: 'paragraph' }>['content'][number];
-export type InlineAtom = InlineSegment['content'][number];
-export type Numbering = NonNullable<ContractBlock['numbering']>;
-export type TextMarks = Extract<InlineAtom, { kind: 'text' }>['marks'];
-export type EditableCopyKey = Infer<typeof editableCopyField>;
+export type ContractBlock = import('./source-model').BaselineBlock;
+export type InlineAtom = import('./source-model').ReplacementAtom;
 export type ContractView = 'effective' | 'redline';
-
 export interface ResolvedRun {
 	text: string;
-	marks?: TextMarks;
+	marks?: { bold?: boolean; italic?: boolean };
+	source?: import('./source-model').SourceRange;
+	sourceKind?: 'text' | 'reference' | 'number';
+	generated?: 'replacement' | 'activation-number' | 'separator' | 'empty-hit-target';
 	revision?: 'removed' | 'added';
-	clauseKey?: string;
-	occurrenceKey?: string;
+	/** Visual provenance only; generated text is never baseline-selectable. */
+	visualSource?: import('./source-model').SourceRange;
+	generatedOffset?: number;
+	annotations?: import('../playbook/document-overlay').AnnotationMembership[];
 }
 export type ResolvedBlock =
 	| { kind: 'heading'; blockKey: string; anchor: string; level: 1 | 2 | 3; content: ResolvedRun[] }

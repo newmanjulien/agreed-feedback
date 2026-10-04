@@ -1,0 +1,1228 @@
+{
+  "sourceHashes": {
+    "_tables/documents.jsonl": "a3defdda9349df545c008a274aa6e26050a41198541b5fcc2a8b4164f99cccbb",
+    "contractBlocks/documents.jsonl": "ae3876e9eee4ad73f813480d25a348cab4fed3f2c60913e5bdc56b3ddb0c966e",
+    "clauseBoxes/documents.jsonl": "fc44f152308255bc6126f42b1b30079531613277d32ce8343926a8f2b391eff8",
+    "deletedClauseBoxes/documents.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "source": "Attached full Convex export",
+  "tables": [
+    {
+      "name": "clauseBoxes",
+      "count": 56
+    },
+    {
+      "name": "contractBlocks",
+      "count": 113
+    },
+    {
+      "name": "deletedClauseBoxes",
+      "count": 0
+    }
+  ],
+  "oldCounts": {
+    "contractBlocks": 113,
+    "playbookItems": 56,
+    "triggers": 62,
+    "concessions": 26,
+    "preferred": 18,
+    "rare": 8,
+    "changes": 66,
+    "importantFlags": 4,
+    "afterNotes": 6,
+    "detailEntries": 1,
+    "markedAtoms": 49,
+    "references": 31,
+    "replacementReferences": 1
+  },
+  "newCounts": {
+    "contractBlocks": 113,
+    "playbookItems": 56,
+    "triggers": 62,
+    "concessions": 26,
+    "preferred": 18,
+    "rare": 8,
+    "changes": 66,
+    "importantFlags": 4,
+    "afterNotes": 6,
+    "detailEntries": 1,
+    "markedAtoms": 49,
+    "references": 31,
+    "replacementReferences": 1
+  },
+  "records": [
+    {
+      "entity": "contractBlock",
+      "key": "heading-oceans-xyz-llc",
+      "oldId": "j9750bbn0k8f9x8rhekhsj1sr58fbz4a",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "heading-contract-section-1",
+      "oldId": "j9723wcbm66ns6nm80w8p646ex8fbcn4",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-agreement-introduction",
+      "oldId": "j97a67dzk0axjeyeg774zp20dd8fan7c",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "heading-contract-section-5",
+      "oldId": "j973fs5gtqpanfyr5vtwjqe5an8fanbd",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-services-recital",
+      "oldId": "j97bm7jxxr6tppw9gefdsadp198fajny",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "heading-contract-section-9",
+      "oldId": "j97ebxy6p7q3pr9dzwmw71nffn8fbk1b",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-agreement-recital",
+      "oldId": "j9788g6pvp3rfzj585rfwwqjrs8fbhpe",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "heading-access-use",
+      "oldId": "j97bf94ax33m1cpjw3sstcert58fbhzc",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-provision-professionals",
+      "oldId": "j979arw7zc90myb6rgfq3bngfs8fbjgt",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-resale",
+      "oldId": "j97bqp6ne1tpjhzknf0dn83cmh8fa2kn",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-amendments-statement-of-work",
+      "oldId": "j97bnqvs3qhtdkvx8jm979htrx8fakxn",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-replacement-professional",
+      "oldId": "j975sahna217n309agvhs42fdd8facq8",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-reservation-of-rights",
+      "oldId": "j970g5tzwmrme693zdhrdreyf18fansq",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "heading-buyer-responsibilities",
+      "oldId": "j978fcnj9j1a25r4em3h75z0nx8faktn",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-buyer-orientation",
+      "oldId": "j971ppazcpzdzj0yxabtxrdj3x8fbgdb",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-buyer-meetings",
+      "oldId": "j970ff0s61pyctt9bvqtghtzph8fb1va",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-provider-meetings",
+      "oldId": "j97bcv0dy8vdsx8qqfgqvwdpyd8fa5vb",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-buyer-systems",
+      "oldId": "j9752zx25kt5e4208pyd7ftt4s8fawc0",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "heading-fees-and-payment",
+      "oldId": "j97392g30hxjrnjvp6mg35t1118faz9e",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-fees",
+      "oldId": "j978heknc1pbnq1bd67j0j4sr98fa96z",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-initial-term-fee",
+      "oldId": "j976e4zjp69785xma4mw5jv2ys8fawkf",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-renewal-term-fee",
+      "oldId": "j975gywnsktqp76sy3m8fdj9xn8fa29q",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-equipment-fee",
+      "oldId": "j97cmnkp2e12wxfj6510zzcfkh8fb3zk",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-automatic-payment-authorization",
+      "oldId": "j972r2nxhpnk4x0hzadft0wszs8facm8",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-taxes",
+      "oldId": "j972xs7c2mjq8c19d7ttje0z258fb6fx",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "heading-confidential-information",
+      "oldId": "j97dc34d9khzc5yetykc5h6vb58fbn90",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-confidential-information-detail",
+      "oldId": "j97eh0cppkbyw3884ws1ws59rn8fbyxq",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "heading-intellectual-property",
+      "oldId": "j974bsatpkj42v80ma81cdadx98fb8re",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-provider-ip-buyer-ip",
+      "oldId": "j97f78yw5serj9yykp9res774h8fbnp8",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-marketing-rights",
+      "oldId": "j97d2kzc1w1c8qnacrkvk1hmb98fat50",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-work-product-deliverables",
+      "oldId": "j972m913chgrs66bgc36h1reen8fahag",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "heading-warranty-disclaimer",
+      "oldId": "j975ve75s6k93tes4jqgn5xhsx8fbnb1",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-warranties-disclaimer",
+      "oldId": "j97136gsvs2mqn8qa04jkpz5z18fazef",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-professional-qualifications",
+      "oldId": "j978a37xdwj8m0fcn0kenf71qd8fbkcz",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "heading-limitations-of-liability",
+      "oldId": "j97dpwr35r7rk7y9zymvmewbh18fan5g",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-limitations-of-liability-detail",
+      "oldId": "j9703mds5dexybq4vtnf8kv9fs8fbptv",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "heading-term-and-termination",
+      "oldId": "j97f10r5c3nd739nfhdr9tsg2d8fa1a7",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-term-of-contract",
+      "oldId": "j971jbwe4z8sjft1h6gdymgq458fb7kg",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-contract-term",
+      "oldId": "j9778kte4vy7r4xx0n8v2xcchd8fadt0",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-professional-terms",
+      "oldId": "j978mjynr7dgrn5cgzgbhwyzmn8fa3bd",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-initial-term-commitment",
+      "oldId": "j975hjfr452p5y63g5bxxz6g958fb31c",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-liability-for-payment",
+      "oldId": "j978s6kea6yydk9nn41kmf1rgh8fb3ew",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-early-termination-fees-rebates",
+      "oldId": "j970t6b8dg2qv1x1db9qdrtkpd8fasdh",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-termination",
+      "oldId": "j973ebfs4ranrdb4vbxs7kjcq18fbv59",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-provider-termination",
+      "oldId": "j97ch2n1f7wf5gam3anmfj8bfd8fbty5",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-insolvency-termination",
+      "oldId": "j978w4g2d2jzd92rhse26qf0cx8faxvk",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-nonrenewal-termination",
+      "oldId": "j97008estm0h4hf75j4g59m23d8fab8a",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-professional-termination",
+      "oldId": "j971x4rf8hg4ys4616w1sc3dh18fah01",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-professional-conduct",
+      "oldId": "j979nk9akhav8xx4rvmnttkrgh8fbt1z",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-buyer-policies",
+      "oldId": "j974efy1tq5g41jbrxabwnd5m18fbmgn",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-professional-conviction",
+      "oldId": "j977mw7g93q805zschbrsf0h198fbrs5",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-survival",
+      "oldId": "j972d64rb9cg7nys2k5q394n218faygg",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "heading-non-solicitation-non-interference",
+      "oldId": "j97e7q3qw5kpyphgd5sbf4nhfx8fbw52",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-non-solicitation-definitions",
+      "oldId": "j976afsmrjkesev3y9f90qj13n8fa39w",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-definition-solicit",
+      "oldId": "j97a4cnn4sxd3r4shsjd18cm8h8fbmra",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-definition-restricted-period",
+      "oldId": "j97fvkzwd9xztvhysfn2yxvck18fbpq2",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-definition-restricted-territory",
+      "oldId": "j973p40c5h19pz4tfqw56v9mr18fbh31",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-definition-representatives",
+      "oldId": "j97dhgbymjdmzk2n6d9gvejyad8fbtfa",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-definition-deliver-services",
+      "oldId": "j97ampg07m8smmysqbwd3ytqrh8fbnjw",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-definition-provider-personnel",
+      "oldId": "j973wg4j5rjv7asqj5nt4gbh618fb7ex",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-non-solicitation",
+      "oldId": "j97bvxep22chy1xkttprhqg75n8fak2w",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-non-interference",
+      "oldId": "j97bmjdz93zscgdaeb2gtz4kbs8far05",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-non-solicitation-remedies",
+      "oldId": "j976zt28mz0tda66c0fn0cv4kh8fagpa",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-non-solicitation-remedy",
+      "oldId": "j973q8pv2h6n0g4ts50hk218y98fabfc",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-non-interference-remedy",
+      "oldId": "j97cg7kmmze4vbydzv6r33h8p58fazpg",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-remedies-characterization",
+      "oldId": "j97cregcbs56wdxypmsksp4s9s8fa9cw",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "heading-information-security",
+      "oldId": "j9723jqh27fy2naev6pwwxfgr98fbw6d",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-security-compliance",
+      "oldId": "j976n3xc5mrsaz3anmrwqwy70x8fa3bf",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-return-personal-information",
+      "oldId": "j97bfk6wbfgs3t129gcsbehpmn8fbtgh",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-sharing-highly-sensitive-information",
+      "oldId": "j97b4dcawkskx7v5h6hejc9awh8fa0n8",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-security-definitions",
+      "oldId": "j976bqkfw70whyhyg8534jrj058fb5dj",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-definition-personal-information",
+      "oldId": "j971kmxzkyfmbt9zswb1n1acq58fa16q",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-definition-sensitive-personal-information",
+      "oldId": "j970425m22azb1bh5tjkhwjj0s8fbj2c",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-definition-highly-sensitive-personal-information",
+      "oldId": "j977tm0p0j0xwt4z0gncee04hs8facfe",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "heading-miscellaneous",
+      "oldId": "j971mtw3cqmwhzgg72hw7jj1v58fbmvz",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-entire-contract",
+      "oldId": "j979jkqk5py2jmd4zjg4age35h8fa5zg",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-notices",
+      "oldId": "j9760tb828vd1skjnydyywvb9n8faajz",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-notices-provider-label",
+      "oldId": "j97891149par82w09fv221xgrs8fa8c7",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-notices-provider-name",
+      "oldId": "j97b2paeqse7a73djnwdd619ds8fb9tp",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-notices-provider-po-box",
+      "oldId": "j978pmec3ra1zgj8fkscfwzp758fazzf",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-notices-provider-city",
+      "oldId": "j970nq82e8je4p4ntd6f7r5xkh8fbfgs",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-notices-provider-attention",
+      "oldId": "j972z21h3a5fm2ygres0x4ttts8fbk7p",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-notices-provider-email",
+      "oldId": "j97ee3wy84cb7zhkq7wd4e5sqd8fa9bt",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-notices-billing-email",
+      "oldId": "j97dvfzfmn5g5cpy1b8dg72mqh8fa47q",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-notices-buyer-label",
+      "oldId": "j9767matvwdc0c7nqtpn1m4ck98fagj3",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-notices-buyer-attention",
+      "oldId": "j976kgrgejkdww5wg02k27ytms8fbpjm",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-notices-buyer-address",
+      "oldId": "j979nekx6nrpwgx6mk7kxkmmr18fbhk1",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-notices-buyer-email",
+      "oldId": "j97291er2my0w1tp3b1xnpcegn8fa1fe",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-relationship-of-parties",
+      "oldId": "j97d1w488ay82dhsr4hw242fqh8fa6ww",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-insurance",
+      "oldId": "j974y0ddwh3z1abx0qzecas6758fbnjb",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-force-majeure",
+      "oldId": "j9702te0x7ee2dnj3bphaqrahx8fbwb5",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-amendment-waiver",
+      "oldId": "j976g2d71ev24s991fbt3cwpsx8fajb3",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-severability",
+      "oldId": "j974669s8ny8ndyekh1n635tnd8fab9v",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-governing-law",
+      "oldId": "j97bpsp9zp3fwn165pcgh11r018fb54k",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-attorneys-fees",
+      "oldId": "j973rbxmxv1e81tk004xx3xc1d8faqwt",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-assignment",
+      "oldId": "j97e09vzsw7e8tnbxbfcphrfz58farre",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-equitable-relief",
+      "oldId": "j97evktq2tcsg9qe6dkjfqndxs8fbkcd",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-mutual-indemnification",
+      "oldId": "j97a1pw8qq0vxeahxxvyeznn4s8fa50d",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-counterparts",
+      "oldId": "j9786ea1h4t52x0vyyq6rgnk5s8fbwrs",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-signature-page-notice",
+      "oldId": "j9747ctynp0fghqdcpy754y6vd8fb66t",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-execution",
+      "oldId": "j973sgwnvxcqb8mgh5z9p4ndk58fb4ks",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "table-signatures",
+      "oldId": "j974k7p9rqn3tmyzxxm2k960n58fb07s",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "heading-contract-section-227",
+      "oldId": "j978pz3ya8m6ntkgysxdsr06558fagxc",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "heading-contract-section-228",
+      "oldId": "j972mw460vyyt2j32zt5pkh3zh8fan9f",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-exhibit-definitions",
+      "oldId": "j97aq5te3ma31zq92hnz2ja5vs8fbpdr",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-exhibit-services-heading",
+      "oldId": "j970k3dr7ak98h5vpja1vafvw18fbkve",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "table-exhibit-services",
+      "oldId": "j97f76k6jfj6hmxvfn7y0kejxd8faerw",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-exhibit-fees-heading",
+      "oldId": "j97e1t60y2rafxhcrzqppjw18s8fajbm",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-exhibit-initial-term",
+      "oldId": "j9781qknr56yhdfrbvn0grk7bh8fa45t",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-exhibit-renewal-term",
+      "oldId": "j970bqcyrd1gyrps64weyfnhf18fbd0z",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-exhibit-equipment-fee",
+      "oldId": "j975xajg9hhkxma35r54nzwyq58fanqw",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "paragraph-exhibit-annual-adjustment",
+      "oldId": "j97e8y1cb60ff5tkf6rcd0qvnh8fazv0",
+      "mismatches": 0
+    },
+    {
+      "entity": "contractBlock",
+      "key": "table-exhibit-fees",
+      "oldId": "j979wd9a10wr7hsjevw2v57dgd8fazhj",
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "access-use",
+      "oldId": "j57f61hppjzys835a6mzm28scn8fachz",
+      "triggers": 1,
+      "concessions": 0,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "amendment-waiver",
+      "oldId": "j5715b6znzsrnkn28q3qpdfn2x8fa9fb",
+      "triggers": 1,
+      "concessions": 0,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "amendments-statement-of-work",
+      "oldId": "j57e88kq8vqpzhffntb081vkjn8fam55",
+      "triggers": 1,
+      "concessions": 0,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "annual-fee-increase",
+      "oldId": "j572r9x6bmkt8xgdbxxb920as18fbbva",
+      "triggers": 2,
+      "concessions": 1,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "assignment",
+      "oldId": "j57e9hze3ngf29qxs2atb6dg4h8fbffh",
+      "triggers": 1,
+      "concessions": 0,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "attorneys-fees",
+      "oldId": "j575btt7h1hgxcks4tdbeqw8bx8fb30f",
+      "triggers": 1,
+      "concessions": 2,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "automatic-payment-authorization",
+      "oldId": "j578n7mpze6h5tc91103mz8wk18fb88w",
+      "triggers": 1,
+      "concessions": 0,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "buyer-responsibilities",
+      "oldId": "j57d3htnthfgnphj78fz58fpah8fb44e",
+      "triggers": 1,
+      "concessions": 0,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "certain-definitions",
+      "oldId": "j57963nzbfrs6hnk2scapc7g8n8fbpj5",
+      "triggers": 1,
+      "concessions": 0,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "confidential-information",
+      "oldId": "j575s21wpaqd4qzjpgp8v6t9s58fbr8d",
+      "triggers": 1,
+      "concessions": 0,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "counterparts",
+      "oldId": "j5722bz1t4yj7zp0wr9ca1hrmx8fbsqs",
+      "triggers": 1,
+      "concessions": 0,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "entire-contract",
+      "oldId": "j573wfyec7j4zf62gff2v159qx8fbyx3",
+      "triggers": 1,
+      "concessions": 0,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "equipment-fee",
+      "oldId": "j57b8w3j8bb5xc3pmkwktya27x8faaqj",
+      "triggers": 2,
+      "concessions": 3,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "equitable-relief",
+      "oldId": "j570s2zehaqp111eg7fp04q27h8fbs7h",
+      "triggers": 1,
+      "concessions": 0,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "exhibit-description-of-services",
+      "oldId": "j575211c2fbv1mjd1gwp00xrt18fb3nv",
+      "triggers": 1,
+      "concessions": 0,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "exhibit-fees",
+      "oldId": "j5720eswh0cyetrb8n8bfgpfhn8fa8wk",
+      "triggers": 1,
+      "concessions": 0,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "fees",
+      "oldId": "j57e3gp9vskfspxns2ng21tfnh8fbnm4",
+      "triggers": 1,
+      "concessions": 2,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "fees-and-payment",
+      "oldId": "j572nzhkym2m08b4nzndxb91f98fbzf1",
+      "triggers": 1,
+      "concessions": 0,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "force-majeure",
+      "oldId": "j575ynh9ew6fscccy4f5fgn1b58fbr1f",
+      "triggers": 1,
+      "concessions": 0,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "governing-law-dispute-resolution",
+      "oldId": "j575cmk5affmzc2646qvm5qqbn8fb74x",
+      "triggers": 1,
+      "concessions": 1,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "information-security",
+      "oldId": "j57b5jd84zmdd04nake2nbrwtd8faeaa",
+      "triggers": 1,
+      "concessions": 0,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "insurance",
+      "oldId": "j576r5tnh5w2qemnm6mv06n5zx8fabvx",
+      "triggers": 1,
+      "concessions": 1,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "intellectual-property",
+      "oldId": "j57ckpwvjy82nvmyfkwy5ge2qd8fbnf0",
+      "triggers": 1,
+      "concessions": 0,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "limitations-of-liability",
+      "oldId": "j57awfngw7mce3da6zqvtb146s8faw1a",
+      "triggers": 1,
+      "concessions": 3,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "marketing-rights",
+      "oldId": "j5715qexgvrr1k8ym02a5dc93n8fawxm",
+      "triggers": 1,
+      "concessions": 1,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "miscellaneous",
+      "oldId": "j57aky3agevzgkg2x6a7ve8p098faz0q",
+      "triggers": 1,
+      "concessions": 0,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "monthly-fee-discount",
+      "oldId": "j57d32rdqc0vt2jqcw5dv6yy398faj3p",
+      "triggers": 1,
+      "concessions": 5,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "mutual-indemnification-insertion",
+      "oldId": "j574tjkvc87rbe2jad96dksqr58fa25g",
+      "triggers": 1,
+      "concessions": 1,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "non-interference",
+      "oldId": "j57fj5b2g3579bwnrfztmdhb398faz9r",
+      "triggers": 1,
+      "concessions": 0,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "non-solicitation",
+      "oldId": "j579k63wz6gkg2nf0csffvtny98fbfke",
+      "triggers": 1,
+      "concessions": 0,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "non-solicitation-definitions",
+      "oldId": "j57fcx7f8v7zgy3eejq9nzma758fbvbj",
+      "triggers": 1,
+      "concessions": 0,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "non-solicitation-non-interference",
+      "oldId": "j575jhrgejbrgbkyt9c5wmf64x8fbyb6",
+      "triggers": 1,
+      "concessions": 0,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "non-solicitation-poaching-penalty-calculation",
+      "oldId": "j5716y1m5pyvkz4rcqe95m5n058fawyc",
+      "triggers": 1,
+      "concessions": 0,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "non-solicitation-remedies",
+      "oldId": "j57bv85vy614czsemxmyxp78m58fa0dg",
+      "triggers": 1,
+      "concessions": 0,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "notices",
+      "oldId": "j577b1dcyw85kcjb47f5ye03rs8fb1qq",
+      "triggers": 1,
+      "concessions": 0,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "professional-terms",
+      "oldId": "j57dq3yrw8skc3sqf5fk7mevax8fa1d4",
+      "triggers": 1,
+      "concessions": 0,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "provider-ip-buyer-ip",
+      "oldId": "j57amy31pmcda9hkaxkp748hch8fbjea",
+      "triggers": 1,
+      "concessions": 0,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "provision-professionals",
+      "oldId": "j57fbfvm1w81meh13x23wy0dah8fapnc",
+      "triggers": 1,
+      "concessions": 0,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "relationship-of-parties",
+      "oldId": "j578445cj7g5rsxafpp7pgdpk18fawx1",
+      "triggers": 1,
+      "concessions": 0,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "replacement-professional",
+      "oldId": "j57d8trs6r48ht29c8fg9bvaes8fb1z5",
+      "triggers": 1,
+      "concessions": 0,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "replacement-professional-initial-term",
+      "oldId": "j5752wsf04t37n8bfvr49x9eds8fb8mt",
+      "triggers": 2,
+      "concessions": 2,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "resale",
+      "oldId": "j57f9vt8xmc9nhsyqbkkfzffkd8fampa",
+      "triggers": 1,
+      "concessions": 1,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "reservation-of-rights",
+      "oldId": "j575bbkpkfcrtxfm11nxds9edd8fbkpe",
+      "triggers": 1,
+      "concessions": 0,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "return-personal-information",
+      "oldId": "j577z8f40p1w112tm54997kd1s8fbs1f",
+      "triggers": 1,
+      "concessions": 0,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "security-compliance",
+      "oldId": "j5799p6c63z07xsnca7kmq4bvx8fbaqb",
+      "triggers": 1,
+      "concessions": 0,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "severability",
+      "oldId": "j574wbcfmzn196kw6ye3hsqs698fa19x",
+      "triggers": 1,
+      "concessions": 0,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "sharing-highly-sensitive-personal-information",
+      "oldId": "j574jpff2za7xcxtwexn574g518fbky0",
+      "triggers": 1,
+      "concessions": 1,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "survival",
+      "oldId": "j570ftafjdn61jm5s7crzb7zgx8fawqw",
+      "triggers": 1,
+      "concessions": 0,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "taxes",
+      "oldId": "j5701japxtd2krppnzspt4kshh8fbmk8",
+      "triggers": 1,
+      "concessions": 0,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "term-and-termination",
+      "oldId": "j57fxaaej50wm8tvfs3e9n6h0s8fb1jm",
+      "triggers": 1,
+      "concessions": 0,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "term-fee-payment",
+      "oldId": "j571n295e67r4dwndd33vamx158fay4x",
+      "triggers": 4,
+      "concessions": 2,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "term-of-contract",
+      "oldId": "j57asbq1xnc3pfnrr703jdwdz58fak4v",
+      "triggers": 1,
+      "concessions": 0,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "termination",
+      "oldId": "j57fw9y0jjf0sj12ps11xqjsgx8fa1ch",
+      "triggers": 1,
+      "concessions": 0,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "warranty-disclaimer",
+      "oldId": "j57byp79jngdkv01vy8q7zr9w98fbb6p",
+      "triggers": 1,
+      "concessions": 0,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "work-product-deliverables",
+      "oldId": "j576fjb00p8zwmykrtnq0mwtys8fackj",
+      "triggers": 1,
+      "concessions": 0,
+      "mismatches": 0
+    },
+    {
+      "entity": "clauseBox → playbookItem",
+      "key": "work-product-payment-vesting",
+      "oldId": "j57384z2jdp66e0n4j0dkzgr9h8fbptk",
+      "triggers": 1,
+      "concessions": 0,
+      "mismatches": 0
+    }
+  ],
+  "outputScenarios": [
+    "baseline",
+    "annual-fee-increase-five-percent",
+    "attorneys-fees-mutual",
+    "attorneys-fees-mutual-prevailing-party",
+    "equipment-fee-quarterly-installments",
+    "equipment-fee-half-amount",
+    "equipment-fee-refundable-at-end",
+    "fees-net-20-days",
+    "fees-net-30-days",
+    "governing-law-delaware",
+    "insurance-coi-outline",
+    "limitations-of-liability-mutual",
+    "limitations-of-liability-cap-12-months",
+    "limitations-of-liability-data-security-carveout",
+    "marketing-rights-prior-written-approval",
+    "monthly-fee-first-month-discount-1000",
+    "monthly-fee-first-month-discount-1750",
+    "monthly-fee-first-month-discount-100-percent",
+    "monthly-fee-initial-term-monthly-discount-500",
+    "monthly-fee-initial-term-monthly-discount-1000",
+    "mutual-indemnification",
+    "replacement-commercially-viable",
+    "replacement-mutual-agreement",
+    "resale-ordinary-course-billing",
+    "sharing-highly-sensitive-personal-information-split-responsibility",
+    "term-fee-payment-monthly-autopay-after-initial-term",
+    "term-fee-payment-monthly-autopay",
+    "combined preferred",
+    "combined alternatives"
+  ],
+  "editSaveRoundTrips": 56,
+  "simulatedMutationRoundTrips": 56,
+  "serverRenderedPanels": 56,
+  "mismatches": [],
+  "unexplainedUserFacingMismatches": 0,
+  "excludedSystemFields": [
+    "_id",
+    "_creationTime",
+    "_tables.id"
+  ],
+  "notes": [
+    "Convex document IDs and creation times are retained in source evidence but regenerated by seed import.",
+    "No deleted records exist. No source user-facing field is omitted.",
+    "Numbering activation is represented by optional paragraphs and nonempty insertions.",
+    "All data/convex files are derived from the export; existing seed wording is never an input."
+  ]
+}

@@ -5,39 +5,43 @@
 
 	let {
 		searchOpen,
+		searchEnabled = true,
 		searchElement = $bindable(),
 		onSearchToggle,
-		onOpenGuide
+		onOpenHelp
 	}: {
 		searchOpen: boolean;
+		searchEnabled?: boolean;
 		searchElement?: HTMLButtonElement;
-		onSearchToggle: (trigger: HTMLButtonElement) => void;
-		onOpenGuide: () => void;
+		onSearchToggle?: (trigger: HTMLButtonElement) => void;
+		onOpenHelp: () => void;
 	} = $props();
 	const itemClass = 'flex flex-col items-center gap-1 text-[11px] leading-[1.2] text-ink-secondary';
 </script>
 
 <nav class="pointer-events-auto flex w-16 flex-col items-center" aria-label="Document tools">
 	<div class="flex flex-col items-center gap-[18px]">
+		{#if onSearchToggle}
+			<div class={itemClass}>
+				<SquareIconButton
+					bind:element={searchElement}
+					type="button"
+					disabled={!searchEnabled}
+					aria-label="Search"
+					aria-pressed={searchOpen}
+					aria-controls="document-search"
+					onclick={() => searchElement && onSearchToggle?.(searchElement)}
+				>
+					<MagnifyingGlassIcon aria-hidden="true" size={22} weight="regular" />
+				</SquareIconButton>
+				<span aria-hidden="true">Search</span>
+			</div>
+		{/if}
 		<div class={itemClass}>
-			<SquareIconButton
-				bind:element={searchElement}
-				type="button"
-				aria-label="Search"
-				aria-pressed={searchOpen}
-				aria-controls="document-search"
-				data-utility-trigger="search"
-				onclick={() => searchElement && onSearchToggle(searchElement)}
-			>
-				<MagnifyingGlassIcon aria-hidden="true" size={22} weight="regular" />
-			</SquareIconButton>
-			<span aria-hidden="true">Search</span>
-		</div>
-		<div class={itemClass}>
-			<SquareIconButton type="button" aria-label="How Agreed works" onclick={onOpenGuide}>
+			<SquareIconButton type="button" aria-label="Help: How Agreed works" onclick={onOpenHelp}>
 				<InfoIcon aria-hidden="true" size={22} weight="regular" />
 			</SquareIconButton>
-			<span aria-hidden="true">Guide</span>
+			<span aria-hidden="true">Help</span>
 		</div>
 	</div>
 </nav>

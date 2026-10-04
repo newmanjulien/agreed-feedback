@@ -1,95 +1,94 @@
 <script lang="ts">
+	import { getAnnotationRegistry } from '$lib/document/annotation-registry';
 	import type { InlineToken } from '$lib/document/pagination/types';
+	import { annotationSegment, type AnnotationSegment } from '$lib/playbook/document-overlay';
+	import type { AnnotationActivation } from '$lib/document/annotation-anchor';
 	import RevisionText from './RevisionText.svelte';
+	import { protectedInteraction } from '$lib/components/ui/interactions';
+	const protect = protectedInteraction();
 
-	interface Segment {
-		clauseKey?: string;
-		occurrenceKey?: string;
-		fragmentKey?: string;
+	const registry = getAnnotationRegistry();
+	function registerOwner(owner: HTMLElement, memberships: readonly string[]) {
+		let release = registry?.register(owner, memberships);
+		return {
+			update(next: readonly string[]) {
+				release?.();
+				release = registry?.register(owner, next);
+			},
+			destroy() {
+				release?.();
+			}
+		};
+	}
+
+	interface Segment extends AnnotationSegment {
 		tokens: InlineToken[];
 	}
 
 	let {
 		tokens,
-		blockFragmentKey,
-		selectedOccurrenceKey,
-		activeClauseKeys,
-		onClauseSelect
+		profileMode = false,
+		selectedAnnotationId,
+		canOpenPlaybookItems,
+		onAnnotationSelect
 	}: {
-		tokens: InlineToken[];
-		blockFragmentKey: string;
-		selectedOccurrenceKey: string | null;
-		activeClauseKeys: ReadonlySet<string>;
-		onClauseSelect: (clauseKey: string, occurrenceKey: string, fragmentKey: string) => void;
+		tokens: readonly InlineToken[];
+		profileMode?: boolean;
+		selectedAnnotationId: string | null;
+		canOpenPlaybookItems: boolean;
+		onAnnotationSelect: (
+			itemId: string,
+			annotationId: string,
+			activation: AnnotationActivation
+		) => void;
 	} = $props();
 
-	function segmentTokensByClause(items: InlineToken[], keyBase: string): Segment[] {
+	function segmentTokensByAnnotation(items: readonly InlineToken[]): Segment[] {
 		const segments: Segment[] = [];
 		for (const token of items) {
+			const descriptor = annotationSegment(token.annotations);
 			const previous = segments.at(-1);
-			if (previous && previous.occurrenceKey === token.occurrenceKey) {
+			if (previous && previous.membershipKey === descriptor.membershipKey)
 				previous.tokens.push(token);
-				continue;
-			}
-			const segmentIndex = segments.length;
-			segments.push({
-				...(token.clauseKey && token.occurrenceKey
-					? {
-							clauseKey: token.clauseKey,
-							occurrenceKey: token.occurrenceKey,
-							fragmentKey: `${keyBase}:clause-${segmentIndex}`
-						}
-					: {}),
-				tokens: [token]
-			});
+			else segments.push({ ...descriptor, tokens: [token] });
 		}
 		return segments;
 	}
 
-	function handleKeydown(
-		event: KeyboardEvent,
-		clauseKey: string,
-		occurrenceKey: string,
-		fragmentKey: string
-	) {
-		if (event.key !== 'Enter' && event.key !== ' ') return;
+	function handleKeydown(event: KeyboardEvent, itemId: string, annotationId: string) {
+		if (!canOpenPlaybookItems || (event.key !== 'Enter' && event.key !== ' ')) return;
 		event.preventDefault();
-		onClauseSelect(clauseKey, occurrenceKey, fragmentKey);
+		if (event.repeat) return;
+		onAnnotationSelect(itemId, annotationId, { owner: event.currentTarget as HTMLElement });
 	}
 
-	function handleClick(clauseKey: string, occurrenceKey: string, fragmentKey: string) {
-		const selection = window.getSelection();
-		if (selection && !selection.isCollapsed) return;
-		onClauseSelect(clauseKey, occurrenceKey, fragmentKey);
-	}
-
-	let segments = $derived(segmentTokensByClause(tokens, blockFragmentKey));
+	let segments = $derived(segmentTokensByAnnotation(tokens));
 </script>
 
 {#each segments as segment}
-	{#if segment.clauseKey && segment.occurrenceKey && segment.fragmentKey && activeClauseKeys.has(segment.clauseKey)}
+	{#if segment.target}
+		<!-- Role and tabindex change together; keep the text nodes stable for search ranges. -->
+		<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 		<span
-			class="contract-clause"
-			role="button"
-			tabindex="0"
-			aria-label={segment.tokens.every((token) => !token.value.trim())
-				? 'Open clause options'
+			use:protect
+			use:registerOwner={profileMode ? [] : segment.membershipIds}
+			class="playbook-trigger"
+			role={canOpenPlaybookItems ? 'button' : undefined}
+			tabindex={canOpenPlaybookItems ? 0 : undefined}
+			aria-label={canOpenPlaybookItems && segment.tokens.every((token) => !token.value.trim())
+				? 'Open playbook item'
 				: undefined}
-			aria-pressed={selectedOccurrenceKey === segment.occurrenceKey}
-			data-clause-key={segment.clauseKey}
-			data-occurrence-key={segment.occurrenceKey}
-			data-clause-fragment-key={segment.fragmentKey}
-			onclick={() => handleClick(segment.clauseKey!, segment.occurrenceKey!, segment.fragmentKey!)}
-			onkeydown={(event) =>
-				handleKeydown(event, segment.clauseKey!, segment.occurrenceKey!, segment.fragmentKey!)}
+			aria-pressed={canOpenPlaybookItems
+				? selectedAnnotationId !== null && segment.membershipIds.includes(selectedAnnotationId)
+				: undefined}
+			data-item-id={segment.target.itemId}
+			data-annotation-id={segment.target.id}
+			data-annotation-memberships={JSON.stringify(segment.membershipIds)}
+			onkeydown={(event) => handleKeydown(event, segment.target!.itemId, segment.target!.id)}
 		>
-			<RevisionText tokens={segment.tokens} />
+			<RevisionText tokens={segment.tokens} {profileMode} />
 		</span>
-	{:else if segment.clauseKey && segment.occurrenceKey}
-		<span class="contract-clause contract-clause--inactive"
-			><RevisionText tokens={segment.tokens} /></span
-		>
 	{:else}
-		<RevisionText tokens={segment.tokens} />
+		<RevisionText tokens={segment.tokens} {profileMode} />
 	{/if}
 {/each}

@@ -54,18 +54,13 @@ function referenceAddress(start: string, end?: string): string {
 
 /** Sequences are counted in document order. A child address uses its parent's active address. */
 export function numberAddresses(
-	blocks: readonly ContractBlock[],
-	activeProvisions: ReadonlySet<string>
+	blocks: readonly Pick<ContractBlock, 'numbering'>[]
 ): Map<string, Address> {
 	const result = new Map<string, Address>();
 	const positions = new Map<string, number>();
 	for (const block of blocks) {
 		const item = block.numbering;
-		if (
-			!item ||
-			(item.activationProvisionKey && !activeProvisions.has(item.activationProvisionKey))
-		)
-			continue;
+		if (!item) continue;
 		const parent = item.parentItemKey ? result.get(item.parentItemKey)?.address : '';
 		if (item.parentItemKey && !parent) throw new Error(`Missing parent address: ${item.itemKey}`);
 		const position = (positions.get(item.sequenceKey) ?? 0) + 1;

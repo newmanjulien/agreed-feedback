@@ -1,44 +1,51 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import { RAIL_SAFE_GUTTER, BOX_MIN_WIDTH, BOX_GAP, RIGHT_GUTTER } from './workspace-layout';
+	import { protectedInteraction } from '$lib/components/ui/interactions';
+	const protect = protectedInteraction();
+	import { RAIL_SAFE_GUTTER, PANEL_MIN_WIDTH, PANEL_GAP, RIGHT_GUTTER } from './workspace-layout';
 
 	let {
-		hasClauseBox,
+		hasPanel,
+		followScroll = false,
 		displayedPageWidth,
 		documentHeight,
-		boxTop,
+		panelTop,
 		layoutElement = $bindable(),
 		documentStageElement = $bindable(),
 		documentContent,
-		clauseBoxContent
+		panelContent
 	}: {
-		hasClauseBox: boolean;
+		hasPanel: boolean;
+		followScroll?: boolean;
 		displayedPageWidth: number;
 		documentHeight: number;
-		boxTop: number;
+		panelTop: number;
 		layoutElement?: HTMLDivElement;
 		documentStageElement?: HTMLDivElement;
 		documentContent: Snippet;
-		clauseBoxContent: Snippet;
+		panelContent: Snippet;
 	} = $props();
 </script>
 
 <div
-	class="contract-workspace-layout"
+	class="contract-workspace-layout relative w-full @container"
 	bind:this={layoutElement}
-	class:has-clause-box={hasClauseBox}
 	style:--page-width={`${displayedPageWidth}px`}
 	style:--page-half-width={`${displayedPageWidth / 2}px`}
-	style:--box-top={`${boxTop}px`}
+	style:--panel-top={`${panelTop}px`}
 	style:--rail-safe-gutter={`${RAIL_SAFE_GUTTER}px`}
-	style:--box-min-width={`${BOX_MIN_WIDTH}px`}
-	style:--box-gap={`${BOX_GAP}px`}
+	style:--panel-min-width={`${PANEL_MIN_WIDTH}px`}
+	style:--panel-gap={`${PANEL_GAP}px`}
 	style:--right-gutter={`${RIGHT_GUTTER}px`}
 	style:min-height={`${documentHeight}px`}
 >
-	<div class="document-column" style:width={`${displayedPageWidth}px`}>
+	<!-- Keep the container threshold in sync with SIDE_PANEL_BREAKPOINT. -->
+	<div
+		class={`mx-auto ${hasPanel ? '@min-[1150px]:ml-(--page-left) @min-[1150px]:mr-0' : ''}`}
+		style:width={`${displayedPageWidth}px`}
+	>
 		<div
-			class="document-stage"
+			class="document-stage relative"
 			bind:this={documentStageElement}
 			tabindex="-1"
 			style:width={`${displayedPageWidth}px`}
@@ -48,78 +55,55 @@
 		</div>
 	</div>
 
-	{#if hasClauseBox}
-		<div class="clause-box-anchor">
-			{@render clauseBoxContent()}
+	{#if hasPanel}
+		<div
+			class="panel-rail pointer-events-none absolute top-(--panel-top) right-(--panel-gap) z-5 w-(--panel-width) animate-[panel-in_140ms_ease_both] @min-[1150px]:right-auto @min-[1150px]:left-[calc(var(--page-left)+var(--page-width)+var(--panel-gap))] @max-[1150px]:fixed @max-[1150px]:inset-x-0 @max-[1150px]:top-auto @max-[1150px]:bottom-0 @max-[1150px]:z-30 @max-[1150px]:w-auto @max-[1150px]:animate-[sheet-in_140ms_ease_both] motion-reduce:animate-none"
+			class:follow-scroll={followScroll}
+			data-workspace-panel-rail
+		>
+			<div use:protect class="workspace-panel pointer-events-auto" data-workspace-panel>
+				{@render panelContent()}
+			</div>
 		</div>
 	{/if}
 </div>
 
 <style>
+	@container (min-width: 1150px) {
+		.panel-rail.follow-scroll {
+			bottom: 0;
+		}
+
+		.follow-scroll > .workspace-panel {
+			position: sticky;
+			top: calc(var(--app-header-height) + var(--document-viewport-gap));
+		}
+
+		.follow-scroll > .workspace-panel > :global(aside) {
+			max-height: calc(100dvh - var(--app-header-height) - 2 * var(--document-viewport-gap));
+			overflow-y: auto;
+			overscroll-behavior: contain;
+		}
+	}
+
 	.contract-workspace-layout {
-		--box-max-width: 480px;
-		--box-width: clamp(
-			var(--box-min-width),
+		--panel-max-width: 480px;
+		--panel-width: clamp(
+			var(--panel-min-width),
 			calc(
-				100cqw - var(--rail-safe-gutter) - var(--page-width) - var(--box-gap) - var(--right-gutter)
+				100cqw - var(--rail-safe-gutter) - var(--page-width) - var(--panel-gap) -
+					var(--right-gutter)
 			),
-			var(--box-max-width)
+			var(--panel-max-width)
 		);
 		--centered-page-left: calc(50cqw - var(--page-half-width));
 		--right-anchored-page-left: calc(
-			100cqw - var(--right-gutter) - var(--box-width) - var(--box-gap) - var(--page-width)
+			100cqw - var(--right-gutter) - var(--panel-width) - var(--panel-gap) - var(--page-width)
 		);
 		--page-left: min(var(--centered-page-left), var(--right-anchored-page-left));
-		--page-shift: calc(var(--page-left) - var(--centered-page-left));
-		position: relative;
-		width: 100%;
-		container-type: inline-size;
 	}
 
-	.document-column {
-		margin-inline: auto;
-		transition: transform 180ms ease;
-	}
-
-	.document-stage {
-		position: relative;
-	}
-
-	.clause-box-anchor {
-		position: absolute;
-		top: var(--box-top);
-		right: var(--box-gap);
-		z-index: 5;
-		width: var(--box-width);
-		animation: box-in 140ms ease both;
-	}
-
-	/* Keep this threshold in sync with SIDE_BOX_BREAKPOINT and ClauseBox's sheet layout. */
-	@container (width >= 1150px) {
-		.has-clause-box .document-column {
-			transform: translateX(var(--page-shift));
-		}
-
-		.has-clause-box .clause-box-anchor {
-			right: auto;
-			left: calc(var(--page-left) + var(--page-width) + var(--box-gap));
-		}
-	}
-
-	@container (width < 1150px) {
-		.has-clause-box .clause-box-anchor {
-			position: fixed;
-			top: auto;
-			right: 0;
-			bottom: 0;
-			left: 0;
-			z-index: 30;
-			width: auto;
-			animation-name: sheet-in;
-		}
-	}
-
-	@keyframes box-in {
+	@keyframes -global-panel-in {
 		from {
 			opacity: 0;
 			transform: translateY(3px);
@@ -130,7 +114,7 @@
 		}
 	}
 
-	@keyframes sheet-in {
+	@keyframes -global-sheet-in {
 		from {
 			opacity: 0;
 			transform: translateY(16px);
@@ -138,16 +122,6 @@
 		to {
 			opacity: 1;
 			transform: translateY(0);
-		}
-	}
-
-	@media (prefers-reduced-motion: reduce) {
-		.document-column {
-			transition: none;
-		}
-
-		.clause-box-anchor {
-			animation: none;
 		}
 	}
 </style>

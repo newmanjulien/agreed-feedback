@@ -1,0 +1,1437 @@
+{
+  "legend": "expected = authoritative production value restored; actual = previous refactored seed value. Absent properties represent missing values, not empty strings.",
+  "countsBefore": {
+    "contractBlocks": 113,
+    "playbookItems": 56,
+    "triggers": 61,
+    "concessions": 21,
+    "preferred": 15,
+    "rare": 6,
+    "changes": 55,
+    "importantFlags": 4,
+    "afterNotes": 0,
+    "detailEntries": 0,
+    "markedAtoms": 0,
+    "references": 31,
+    "replacementReferences": 1
+  },
+  "countsAfter": {
+    "contractBlocks": 113,
+    "playbookItems": 56,
+    "triggers": 62,
+    "concessions": 26,
+    "preferred": 18,
+    "rare": 8,
+    "changes": 66,
+    "importantFlags": 4,
+    "afterNotes": 6,
+    "detailEntries": 1,
+    "markedAtoms": 49,
+    "references": 31,
+    "replacementReferences": 1
+  },
+  "blocks": [
+    {
+      "blockKey": "heading-oceans-xyz-llc",
+      "corrected": [
+        {
+          "path": "/content/0/marks",
+          "expected": {
+            "bold": true
+          }
+        }
+      ]
+    },
+    {
+      "blockKey": "heading-contract-section-1",
+      "corrected": [
+        {
+          "path": "/content/0/marks",
+          "expected": {
+            "bold": true
+          }
+        }
+      ]
+    },
+    {
+      "blockKey": "paragraph-agreement-introduction",
+      "corrected": [
+        {
+          "path": "/content/1/marks",
+          "expected": {
+            "bold": true,
+            "italic": true
+          }
+        },
+        {
+          "path": "/content/3/marks",
+          "expected": {
+            "bold": true,
+            "italic": true
+          }
+        },
+        {
+          "path": "/content/5/marks",
+          "expected": {
+            "bold": true,
+            "italic": true
+          }
+        },
+        {
+          "path": "/content/7/marks",
+          "expected": {
+            "bold": true,
+            "italic": true
+          }
+        },
+        {
+          "path": "/content/9/marks",
+          "expected": {
+            "bold": true,
+            "italic": true
+          }
+        },
+        {
+          "path": "/content/11/marks",
+          "expected": {
+            "bold": true,
+            "italic": true
+          }
+        }
+      ]
+    },
+    {
+      "blockKey": "paragraph-provision-professionals",
+      "corrected": [
+        {
+          "path": "/content/5/marks",
+          "expected": {
+            "bold": true,
+            "italic": true
+          }
+        },
+        {
+          "path": "/content/7/marks",
+          "expected": {
+            "bold": true,
+            "italic": true
+          }
+        }
+      ]
+    },
+    {
+      "blockKey": "paragraph-resale",
+      "corrected": [
+        {
+          "path": "/content/1/marks",
+          "expected": {
+            "bold": true,
+            "italic": true
+          }
+        },
+        {
+          "path": "/content/3/marks",
+          "expected": {
+            "bold": true,
+            "italic": true
+          }
+        }
+      ]
+    },
+    {
+      "blockKey": "paragraph-replacement-professional",
+      "corrected": [
+        {
+          "path": "/content/1/marks",
+          "expected": {
+            "bold": true
+          }
+        },
+        {
+          "path": "/content/7/marks",
+          "expected": {
+            "bold": true,
+            "italic": true
+          }
+        },
+        {
+          "path": "/content/13/text",
+          "expected": " In the event that a Replacement Professional is provided and Services are performed by the Replacement Professional, the Provider shall issue to the Customer a service credit proportionate to the period during which the Professional or the Replacement Professional was unable to render the Services (the “Service Credit”). This Service Credit shall be applicable towards future Services performed under the terms and conditions of this Agreement. During the Renewal Term (as defined below), should the Customer determine that the Professional is not suitable for the role, then, upon written notice and detailed explanation from the Customer regarding the unsuitability of the Professional, the Provider will use its best efforts to provide the Customer with a reasonably suitable Replacement Professional, ",
+          "actual": " In the event that a Replacement Professional is provided and Services are performed by the Replacement Professional, the Provider shall issue to the Customer a service credit proportionate to the period during which the Professional or the Replacement Professional was unable to render the Services (the “Service Credit”). This Service Credit shall be applicable towards future Services performed under the terms and conditions of this Agreement. During the Renewal Term (as defined below), should the Customer determine that the Professional is not suitable for the role, then, upon written notice and detailed explanation from the Customer regarding the unsuitability of the Professional, the Provider will use its best efforts to provide the Customer with a reasonably suitable Replacement Professional, as determined by the Provider, within fifteen (15) business days. If the Customer declines the Services of the proposed Replacement Professional, the Customer shall be responsible for all remaining Fees during the applicable Renewal Term."
+        },
+        {
+          "path": "/content/14",
+          "expected": {
+            "kind": "text",
+            "text": "as determined by the Provider",
+            "sourceKey": "source:paragraph-replacement-professional/segment/11/atom/0"
+          }
+        },
+        {
+          "path": "/content/15",
+          "expected": {
+            "kind": "text",
+            "text": ", within fifteen (15) business days. If the Customer declines the Services of the proposed Replacement Professional, the Customer shall be responsible for all remaining Fees during the applicable Renewal Term.",
+            "sourceKey": "source:paragraph-replacement-professional/segment/12/atom/0"
+          }
+        }
+      ]
+    },
+    {
+      "blockKey": "paragraph-reservation-of-rights",
+      "corrected": [
+        {
+          "path": "/content/2/marks",
+          "expected": {
+            "bold": true,
+            "italic": true
+          }
+        }
+      ]
+    },
+    {
+      "blockKey": "paragraph-fees",
+      "corrected": [
+        {
+          "path": "/content/1/marks",
+          "expected": {
+            "bold": true
+          }
+        },
+        {
+          "path": "/content/3/marks",
+          "expected": {
+            "bold": true,
+            "italic": true
+          }
+        },
+        {
+          "path": "/content/8/text",
+          "expected": "Customer shall make all payments hereunder in US dollars",
+          "actual": "Customer shall make all payments hereunder in US dollars on or before the due date set forth below."
+        },
+        {
+          "path": "/content/9/text",
+          "expected": " on or before the due date set forth below.",
+          "actual": " If Customer fails to make any payment when due, without limiting Provider's other rights and remedies: (i) Provider may charge a late fee on the past due amount at the rate of Fifty Dollars and No Cents ($50.00) per day beginning when the invoice is fourteen (14) days overdue; (ii) Customer shall reimburse Provider for all reasonable costs incurred by Provider in collecting any late payments or interest, including attorneys' fees, court costs, and collection agency fees; and (iii) Provider may suspend Customer's access to any portion or all of the Services until such amounts are paid in full. For the avoidance of doubt, no Services by any Professional engaged hereunder shall commence unless and until initial payment is initiated by Customer, as confirmed by Provider. "
+        },
+        {
+          "path": "/content/9/sourceKey",
+          "expected": "source:paragraph-fees/segment/2/atom/0",
+          "actual": "source:paragraph-fees/segment/1/atom/8"
+        },
+        {
+          "path": "/content/10/text",
+          "expected": " If Customer fails to make any payment when due, without limiting Provider's other rights and remedies: (i) Provider may charge a late fee on the past due amount at the rate of Fifty Dollars and No Cents ($50.00) per day beginning when the invoice is fourteen (14) days overdue; (ii) Customer shall reimburse Provider for all reasonable costs incurred by Provider in collecting any late payments or interest, including attorneys' fees, court costs, and collection agency fees; and (iii) Provider may suspend Customer's access to any portion or all of the Services until such amounts are paid in full. For the avoidance of doubt, no Services by any Professional engaged hereunder shall commence unless and until initial payment is initiated by Customer, as confirmed by Provider. ",
+          "actual": "The Monthly Fee applicable to each Professional shall increase "
+        },
+        {
+          "path": "/content/10/sourceKey",
+          "expected": "source:paragraph-fees/segment/3/atom/0",
+          "actual": "source:paragraph-fees/segment/1/atom/9"
+        },
+        {
+          "path": "/content/11/text",
+          "expected": "The Monthly Fee applicable to each Professional shall increase ",
+          "actual": "by "
+        },
+        {
+          "path": "/content/11/sourceKey",
+          "expected": "source:paragraph-fees/segment/3/atom/1",
+          "actual": "source:paragraph-fees/segment/2/atom/0"
+        },
+        {
+          "path": "/content/12/text",
+          "expected": "by ",
+          "actual": "seven percent (7%)"
+        },
+        {
+          "path": "/content/12/sourceKey",
+          "expected": "source:paragraph-fees/segment/4/atom/0",
+          "actual": "source:paragraph-fees/segment/3/atom/0"
+        },
+        {
+          "path": "/content/13/text",
+          "expected": "seven percent (7%)",
+          "actual": " on each annual anniversary of the Initial Term Start Date, including during any Renewal Term."
+        },
+        {
+          "path": "/content/13/sourceKey",
+          "expected": "source:paragraph-fees/segment/5/atom/0",
+          "actual": "source:paragraph-fees/segment/4/atom/0"
+        },
+        {
+          "path": "/content/14/text",
+          "expected": " on each annual anniversary of the Initial Term Start Date, including during any Renewal Term.",
+          "actual": " Such increase shall apply automatically without the need for further notice or amendment and shall be reflected in the applicable invoice for the Renewal Term or annual billing cycle, as applicable."
+        },
+        {
+          "path": "/content/14/sourceKey",
+          "expected": "source:paragraph-fees/segment/6/atom/0",
+          "actual": "source:paragraph-fees/segment/4/atom/1"
+        },
+        {
+          "path": "/content/15",
+          "expected": {
+            "kind": "text",
+            "text": " Such increase shall apply automatically without the need for further notice or amendment and shall be reflected in the applicable invoice for the Renewal Term or annual billing cycle, as applicable.",
+            "sourceKey": "source:paragraph-fees/segment/6/atom/1"
+          }
+        }
+      ]
+    },
+    {
+      "blockKey": "paragraph-initial-term-fee",
+      "corrected": [
+        {
+          "path": "/content/0/marks",
+          "expected": {
+            "italic": true
+          }
+        }
+      ]
+    },
+    {
+      "blockKey": "paragraph-renewal-term-fee",
+      "corrected": [
+        {
+          "path": "/content/0/marks",
+          "expected": {
+            "italic": true
+          }
+        }
+      ]
+    },
+    {
+      "blockKey": "paragraph-equipment-fee",
+      "corrected": [
+        {
+          "path": "/content/0/marks",
+          "expected": {
+            "italic": true
+          }
+        },
+        {
+          "path": "/content/6/marks",
+          "expected": {
+            "bold": true,
+            "italic": true
+          }
+        }
+      ]
+    },
+    {
+      "blockKey": "paragraph-confidential-information-detail",
+      "corrected": [
+        {
+          "path": "/content/1/marks",
+          "expected": {
+            "bold": true,
+            "italic": true
+          }
+        }
+      ]
+    },
+    {
+      "blockKey": "paragraph-marketing-rights",
+      "corrected": [
+        {
+          "path": "/content/2/marks",
+          "expected": {
+            "bold": true,
+            "italic": true
+          }
+        },
+        {
+          "path": "/content/3/text",
+          "expected": "”) solely for the purpose of marketing and promoting the Services provided under this Agreement.",
+          "actual": "”) solely for the purpose of marketing and promoting the Services provided under this Agreement. The Provider agrees to use the Marks in strict accordance with any brand guidelines provided by the Customer. The Provider further agrees not to alter, modify, or change the Marks in any manner without the prior written consent of the Customer."
+        },
+        {
+          "path": "/content/4",
+          "expected": {
+            "kind": "text",
+            "text": "",
+            "sourceKey": "source:paragraph-marketing-rights/segment/2/atom/0"
+          }
+        },
+        {
+          "path": "/content/5",
+          "expected": {
+            "kind": "text",
+            "text": " The Provider agrees to use the Marks in strict accordance with any brand guidelines provided by the Customer. The Provider further agrees not to alter, modify, or change the Marks in any manner without the prior written consent of the Customer.",
+            "sourceKey": "source:paragraph-marketing-rights/segment/3/atom/0"
+          }
+        }
+      ]
+    },
+    {
+      "blockKey": "paragraph-work-product-deliverables",
+      "corrected": [
+        {
+          "path": "/content/2/marks",
+          "expected": {
+            "bold": true,
+            "italic": true
+          }
+        },
+        {
+          "path": "/content/4/marks",
+          "expected": {
+            "bold": true,
+            "italic": true
+          }
+        },
+        {
+          "path": "/content/6/marks",
+          "expected": {
+            "bold": true,
+            "italic": true
+          }
+        },
+        {
+          "path": "/content/8/marks",
+          "expected": {
+            "bold": true,
+            "italic": true
+          }
+        }
+      ]
+    },
+    {
+      "blockKey": "paragraph-contract-term",
+      "corrected": [
+        {
+          "path": "/content/0/marks",
+          "expected": {
+            "italic": true
+          }
+        }
+      ]
+    },
+    {
+      "blockKey": "paragraph-initial-term-commitment",
+      "corrected": [
+        {
+          "path": "/content/0/marks",
+          "expected": {
+            "italic": true
+          }
+        }
+      ]
+    },
+    {
+      "blockKey": "paragraph-liability-for-payment",
+      "corrected": [
+        {
+          "path": "/content/0/marks",
+          "expected": {
+            "italic": true
+          }
+        }
+      ]
+    },
+    {
+      "blockKey": "paragraph-early-termination-fees-rebates",
+      "corrected": [
+        {
+          "path": "/content/0/marks",
+          "expected": {
+            "italic": true
+          }
+        }
+      ]
+    },
+    {
+      "blockKey": "paragraph-professional-termination",
+      "corrected": [
+        {
+          "path": "/content/4/marks",
+          "expected": {
+            "italic": true
+          }
+        }
+      ]
+    },
+    {
+      "blockKey": "paragraph-definition-solicit",
+      "corrected": [
+        {
+          "path": "/content/4/marks",
+          "expected": {
+            "bold": true,
+            "italic": true
+          }
+        }
+      ]
+    },
+    {
+      "blockKey": "paragraph-definition-restricted-period",
+      "corrected": [
+        {
+          "path": "/content/1/marks",
+          "expected": {
+            "bold": true,
+            "italic": true
+          }
+        }
+      ]
+    },
+    {
+      "blockKey": "paragraph-definition-restricted-territory",
+      "corrected": [
+        {
+          "path": "/content/1/marks",
+          "expected": {
+            "bold": true,
+            "italic": true
+          }
+        }
+      ]
+    },
+    {
+      "blockKey": "paragraph-definition-representatives",
+      "corrected": [
+        {
+          "path": "/content/1/marks",
+          "expected": {
+            "bold": true,
+            "italic": true
+          }
+        }
+      ]
+    },
+    {
+      "blockKey": "paragraph-definition-deliver-services",
+      "corrected": [
+        {
+          "path": "/content/1/marks",
+          "expected": {
+            "bold": true,
+            "italic": true
+          }
+        }
+      ]
+    },
+    {
+      "blockKey": "paragraph-definition-provider-personnel",
+      "corrected": [
+        {
+          "path": "/content/1/marks",
+          "expected": {
+            "bold": true,
+            "italic": true
+          }
+        }
+      ]
+    },
+    {
+      "blockKey": "paragraph-security-compliance",
+      "corrected": [
+        {
+          "path": "/content/1/marks",
+          "expected": {
+            "bold": true
+          }
+        }
+      ]
+    },
+    {
+      "blockKey": "paragraph-definition-personal-information",
+      "corrected": [
+        {
+          "path": "/content/1/marks",
+          "expected": {
+            "bold": true,
+            "italic": true
+          }
+        }
+      ]
+    },
+    {
+      "blockKey": "paragraph-definition-sensitive-personal-information",
+      "corrected": [
+        {
+          "path": "/content/1/marks",
+          "expected": {
+            "bold": true,
+            "italic": true
+          }
+        }
+      ]
+    },
+    {
+      "blockKey": "paragraph-definition-highly-sensitive-personal-information",
+      "corrected": [
+        {
+          "path": "/content/1/marks",
+          "expected": {
+            "bold": true,
+            "italic": true
+          }
+        },
+        {
+          "path": "/content/3/marks",
+          "expected": {
+            "bold": true
+          }
+        }
+      ]
+    },
+    {
+      "blockKey": "paragraph-notices",
+      "corrected": [
+        {
+          "path": "/content/2/marks",
+          "expected": {
+            "bold": true,
+            "italic": true
+          }
+        }
+      ]
+    },
+    {
+      "blockKey": "paragraph-insurance",
+      "corrected": [
+        {
+          "path": "/content/1/text",
+          "expected": " Upon request, Provider shall provide a Certificate of Insurance to Customer showing evidence of Provider’s current Professional Liability and General Liability policies.",
+          "actual": " Upon request, Provider shall provide a Certificate of Insurance to Customer showing evidence of Provider’s current Professional Liability and General Liability policies. Insurance coverage shall not be less than One Million Dollars and No Cents ($1,000,000.00) per occurrence and Two Million Dollars and No Cents ($2,000,000.00) in aggregate covering acts or omissions, which may give rise to liability for Services performed under this Agreement."
+        },
+        {
+          "path": "/content/2",
+          "expected": {
+            "kind": "text",
+            "text": " Insurance coverage shall not be less than One Million Dollars and No Cents ($1,000,000.00) per occurrence and Two Million Dollars and No Cents ($2,000,000.00) in aggregate covering acts or omissions, which may give rise to liability for Services performed under this Agreement.",
+            "sourceKey": "source:paragraph-insurance/segment/2/atom/0"
+          }
+        }
+      ]
+    },
+    {
+      "blockKey": "paragraph-governing-law",
+      "corrected": [
+        {
+          "path": "/content/13/marks",
+          "expected": {
+            "bold": true
+          }
+        }
+      ]
+    },
+    {
+      "blockKey": "paragraph-signature-page-notice",
+      "corrected": [
+        {
+          "path": "/content/0/marks",
+          "expected": {
+            "italic": true
+          }
+        }
+      ]
+    },
+    {
+      "blockKey": "heading-contract-section-228",
+      "corrected": [
+        {
+          "path": "/content/0/marks",
+          "expected": {
+            "bold": true
+          }
+        }
+      ]
+    },
+    {
+      "blockKey": "paragraph-exhibit-services-heading",
+      "corrected": [
+        {
+          "path": "/content/0/marks",
+          "expected": {
+            "bold": true
+          }
+        }
+      ]
+    },
+    {
+      "blockKey": "paragraph-exhibit-fees-heading",
+      "corrected": [
+        {
+          "path": "/content/0/marks",
+          "expected": {
+            "bold": true
+          }
+        }
+      ]
+    }
+  ],
+  "items": [
+    {
+      "clauseKey": "annual-fee-increase",
+      "concessionOrderBefore": [
+        "annual-fee-increase-five-percent"
+      ],
+      "concessionOrderAfter": [
+        "annual-fee-increase-five-percent"
+      ],
+      "corrected": [
+        {
+          "path": "/triggers/0/range/start/sourceKey",
+          "expected": "source:paragraph-fees/segment/4/atom/0",
+          "actual": "source:paragraph-fees/segment/2/atom/0"
+        },
+        {
+          "path": "/triggers/0/range/end/sourceKey",
+          "expected": "source:paragraph-fees/segment/5/atom/0",
+          "actual": "source:paragraph-fees/segment/3/atom/0"
+        },
+        {
+          "path": "/instructions/changesNeedApproval",
+          "expected": "Escalate to Ben.",
+          "actual": "Requires Ben's approval."
+        },
+        {
+          "path": "/concessions/annual-fee-increase-five-percent/detail",
+          "expected": []
+        },
+        {
+          "path": "/concessions/annual-fee-increase-five-percent/after",
+          "expected": "(Language changed in 3. Fees and Payment and in Exhibit A)"
+        },
+        {
+          "path": "/concessions/annual-fee-increase-five-percent/changes/0/range/start/sourceKey",
+          "expected": "source:paragraph-fees/segment/5/atom/0",
+          "actual": "source:paragraph-fees/segment/3/atom/0"
+        },
+        {
+          "path": "/concessions/annual-fee-increase-five-percent/changes/0/range/end/sourceKey",
+          "expected": "source:paragraph-fees/segment/5/atom/0",
+          "actual": "source:paragraph-fees/segment/3/atom/0"
+        }
+      ]
+    },
+    {
+      "clauseKey": "attorneys-fees",
+      "concessionOrderBefore": [
+        "attorneys-fees-mutual",
+        "attorneys-fees-mutual-prevailing-party"
+      ],
+      "concessionOrderAfter": [
+        "attorneys-fees-mutual",
+        "attorneys-fees-mutual-prevailing-party"
+      ],
+      "corrected": [
+        {
+          "path": "/instructions/changesNeedApproval",
+          "expected": "Escalate to Ben.",
+          "actual": "Requires Ben's approval."
+        },
+        {
+          "path": "/concessions/attorneys-fees-mutual/detail",
+          "expected": []
+        },
+        {
+          "path": "/concessions/attorneys-fees-mutual-prevailing-party/detail",
+          "expected": []
+        }
+      ]
+    },
+    {
+      "clauseKey": "entire-contract",
+      "concessionOrderBefore": [],
+      "concessionOrderAfter": [],
+      "corrected": [
+        {
+          "path": "/instructions/summary",
+          "expected": "This says that this contract (plus its Exhibits) is the entire deal  and it overrides any earlier conversations or promises, written or verbal. If there's a conflict between the main contract and an Exhibit, the main contract wins.",
+          "actual": "This says that this contract (plus its Exhibits) is the entire deal  and it overrides any earlier conversations or promises, written or verbal. If there's a conflict between the main contract and an Exhibit, the main contract wins."
+        }
+      ]
+    },
+    {
+      "clauseKey": "equipment-fee",
+      "concessionOrderBefore": [
+        "equipment-fee-quarterly-installments",
+        "equipment-fee-half-amount",
+        "equipment-fee-refundable-at-end"
+      ],
+      "concessionOrderAfter": [
+        "equipment-fee-quarterly-installments",
+        "equipment-fee-half-amount",
+        "equipment-fee-refundable-at-end"
+      ],
+      "corrected": [
+        {
+          "path": "/instructions/changesNeedApproval",
+          "expected": "Escalate to Ben.",
+          "actual": "Requires Ben's approval."
+        },
+        {
+          "path": "/concessions/equipment-fee-quarterly-installments/detail",
+          "expected": []
+        },
+        {
+          "path": "/concessions/equipment-fee-quarterly-installments/after",
+          "expected": "(Language changed in 3. Fees and Payment and in Exhibit A)"
+        },
+        {
+          "path": "/concessions/equipment-fee-half-amount/detail",
+          "expected": []
+        },
+        {
+          "path": "/concessions/equipment-fee-half-amount/after",
+          "expected": "(Language changed in 3. Fees and Payment and in Exhibit A)"
+        },
+        {
+          "path": "/concessions/equipment-fee-refundable-at-end/detail",
+          "expected": []
+        },
+        {
+          "path": "/concessions/equipment-fee-refundable-at-end/after",
+          "expected": "(Language changed in 3. Fees and Payment and in Exhibit A)"
+        }
+      ]
+    },
+    {
+      "clauseKey": "fees",
+      "concessionOrderBefore": [],
+      "concessionOrderAfter": [
+        "fees-net-20-days",
+        "fees-net-30-days"
+      ],
+      "corrected": [
+        {
+          "path": "/triggers/0/range/end/sourceKey",
+          "expected": "source:paragraph-fees/segment/3/atom/1",
+          "actual": "source:paragraph-fees/segment/0/atom/0"
+        },
+        {
+          "path": "/triggers/0/range/end/offset",
+          "expected": 63,
+          "actual": 5
+        },
+        {
+          "path": "/instructions/commonObjections",
+          "expected": "Popular redline request for net terms as opposed to payment due upon receipt.",
+          "actual": ""
+        },
+        {
+          "path": "/instructions/negotiation",
+          "expected": "Generally denied. Occasionally approved for twenty (20) days, or in rare cases thirty (30) days for VIPs.",
+          "actual": ""
+        },
+        {
+          "path": "/instructions/changesNeedApproval",
+          "expected": "Escalate to Ben. Escalate to Mara if the requested number of days is unusually large.",
+          "actual": ""
+        },
+        {
+          "path": "/concessions/fees-net-20-days",
+          "expected": {
+            "id": "fees-net-20-days",
+            "tier": "preferred",
+            "description": "Change payment timing from due upon receipt to Net 20 days from Customer’s receipt of the invoice.",
+            "detail": [],
+            "changes": [
+              {
+                "range": {
+                  "start": {
+                    "sourceKey": "source:paragraph-fees/segment/2/atom/0",
+                    "offset": 0
+                  },
+                  "end": {
+                    "sourceKey": "source:paragraph-fees/segment/2/atom/0",
+                    "offset": 43
+                  }
+                },
+                "replacement": [
+                  {
+                    "kind": "text",
+                    "text": ". Provider shall issue invoices to Customer for all Fees due under this Agreement, each of which shall be payable no later than twenty (20) days from Customer’s receipt of such invoice."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "path": "/concessions/fees-net-30-days",
+          "expected": {
+            "id": "fees-net-30-days",
+            "tier": "rare",
+            "description": "For a VIP exception, change payment timing from due upon receipt to Net 30 days from Customer’s receipt of the invoice.",
+            "detail": [],
+            "changes": [
+              {
+                "range": {
+                  "start": {
+                    "sourceKey": "source:paragraph-fees/segment/2/atom/0",
+                    "offset": 0
+                  },
+                  "end": {
+                    "sourceKey": "source:paragraph-fees/segment/2/atom/0",
+                    "offset": 43
+                  }
+                },
+                "replacement": [
+                  {
+                    "kind": "text",
+                    "text": ". Provider shall issue invoices to Customer for all Fees due under this Agreement, each of which shall be payable no later than thirty (30) days from Customer’s receipt of such invoice."
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "clauseKey": "governing-law-dispute-resolution",
+      "concessionOrderBefore": [
+        "governing-law-delaware"
+      ],
+      "concessionOrderAfter": [
+        "governing-law-delaware"
+      ],
+      "corrected": [
+        {
+          "path": "/instructions/changesNeedApproval",
+          "expected": "Escalate to Ben.",
+          "actual": "Requires Ben's approval."
+        },
+        {
+          "path": "/concessions/governing-law-delaware/detail",
+          "expected": []
+        }
+      ]
+    },
+    {
+      "clauseKey": "insurance",
+      "concessionOrderBefore": [],
+      "concessionOrderAfter": [
+        "insurance-coi-outline"
+      ],
+      "corrected": [
+        {
+          "path": "/triggers/0/range/end/sourceKey",
+          "expected": "source:paragraph-insurance/segment/2/atom/0",
+          "actual": "source:paragraph-insurance/segment/0/atom/0"
+        },
+        {
+          "path": "/triggers/0/range/end/offset",
+          "expected": 278,
+          "actual": 10
+        },
+        {
+          "path": "/instructions/commonObjections",
+          "expected": "Clients occasionally ask to include the insurance coverage outline directly in the contract.",
+          "actual": ""
+        },
+        {
+          "path": "/instructions/negotiation",
+          "expected": "We can agree to include the insurance coverage outline directly in the contract.",
+          "actual": ""
+        },
+        {
+          "path": "/concessions/insurance-coi-outline",
+          "expected": {
+            "id": "insurance-coi-outline",
+            "tier": "preferred",
+            "description": "Add explicit contract language tying the Certificate of Insurance to the Professional Liability and General Liability coverage limits stated in this Section.",
+            "detail": [],
+            "changes": [
+              {
+                "range": {
+                  "start": {
+                    "sourceKey": "source:paragraph-insurance/segment/1/atom/0",
+                    "offset": 0
+                  },
+                  "end": {
+                    "sourceKey": "source:paragraph-insurance/segment/1/atom/0",
+                    "offset": 170
+                  }
+                },
+                "replacement": [
+                  {
+                    "kind": "text",
+                    "text": " Upon request, Provider shall provide a Certificate of Insurance to Customer showing evidence of Provider’s current Professional Liability and General Liability policies, including the coverage limits set forth in this Section."
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "clauseKey": "limitations-of-liability",
+      "concessionOrderBefore": [
+        "limitations-of-liability-mutual",
+        "limitations-of-liability-cap-12-months",
+        "limitations-of-liability-data-security-carveout"
+      ],
+      "concessionOrderAfter": [
+        "limitations-of-liability-mutual",
+        "limitations-of-liability-cap-12-months",
+        "limitations-of-liability-data-security-carveout"
+      ],
+      "corrected": [
+        {
+          "path": "/instructions/changesNeedApproval",
+          "expected": "One of the most common redlines, of which we rarely accept any changes. Escalate to Ben always. Ben to escalate to Ian for items of significance.",
+          "actual": "One of the most common redlines, of which we rarely accept any changes. Any change requires Ben's approval. Ben must obtain Ian's approval for items of significance."
+        },
+        {
+          "path": "/concessions/limitations-of-liability-mutual/detail",
+          "expected": []
+        },
+        {
+          "path": "/concessions/limitations-of-liability-cap-12-months/detail",
+          "expected": []
+        },
+        {
+          "path": "/concessions/limitations-of-liability-data-security-carveout/detail",
+          "expected": []
+        }
+      ]
+    },
+    {
+      "clauseKey": "marketing-rights",
+      "concessionOrderBefore": [],
+      "concessionOrderAfter": [
+        "marketing-rights-prior-written-approval"
+      ],
+      "corrected": [
+        {
+          "path": "/triggers/0/range/end/sourceKey",
+          "expected": "source:paragraph-marketing-rights/segment/3/atom/0",
+          "actual": "source:paragraph-marketing-rights/segment/0/atom/0"
+        },
+        {
+          "path": "/triggers/0/range/end/offset",
+          "expected": 245,
+          "actual": 17
+        },
+        {
+          "path": "/instructions/commonObjections",
+          "expected": "Popular redline to make marketing rights require the client’s written approval. Clients occasionally ask to remove the marketing rights provision completely.",
+          "actual": ""
+        },
+        {
+          "path": "/instructions/negotiation",
+          "expected": "Always grant a request to require the client’s prior written approval.",
+          "actual": ""
+        },
+        {
+          "path": "/instructions/changesNeedApproval",
+          "expected": "Escalate to Ben if the client requests complete removal of marketing rights.",
+          "actual": ""
+        },
+        {
+          "path": "/concessions/marketing-rights-prior-written-approval",
+          "expected": {
+            "id": "marketing-rights-prior-written-approval",
+            "tier": "preferred",
+            "description": "Require Customer’s prior written approval before Oceans uses the Customer’s Marks for marketing or promotion.",
+            "detail": [],
+            "changes": [
+              {
+                "range": {
+                  "start": {
+                    "sourceKey": "source:paragraph-marketing-rights/segment/2/atom/0",
+                    "offset": 0
+                  },
+                  "end": {
+                    "sourceKey": "source:paragraph-marketing-rights/segment/2/atom/0",
+                    "offset": 0
+                  }
+                },
+                "replacement": [
+                  {
+                    "kind": "text",
+                    "text": " Any use of the Marks by Provider shall require the Customer’s prior written approval."
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "clauseKey": "monthly-fee-discount",
+      "concessionOrderBefore": [
+        "monthly-fee-first-month-discount-1000",
+        "monthly-fee-first-month-discount-1750",
+        "monthly-fee-first-month-discount-100-percent",
+        "monthly-fee-initial-term-monthly-discount-500",
+        "monthly-fee-initial-term-monthly-discount-1000"
+      ],
+      "concessionOrderAfter": [
+        "monthly-fee-first-month-discount-1000",
+        "monthly-fee-first-month-discount-1750",
+        "monthly-fee-first-month-discount-100-percent",
+        "monthly-fee-initial-term-monthly-discount-500",
+        "monthly-fee-initial-term-monthly-discount-1000"
+      ],
+      "corrected": [
+        {
+          "path": "/instructions/changesNeedApproval",
+          "expected": "Escalate to Ben.",
+          "actual": "Requires Ben's approval."
+        },
+        {
+          "path": "/concessions/monthly-fee-first-month-discount-1000/detail",
+          "expected": []
+        },
+        {
+          "path": "/concessions/monthly-fee-first-month-discount-1750/detail",
+          "expected": []
+        },
+        {
+          "path": "/concessions/monthly-fee-first-month-discount-100-percent/detail",
+          "expected": []
+        },
+        {
+          "path": "/concessions/monthly-fee-initial-term-monthly-discount-500/detail",
+          "expected": []
+        },
+        {
+          "path": "/concessions/monthly-fee-initial-term-monthly-discount-1000/detail",
+          "expected": []
+        }
+      ]
+    },
+    {
+      "clauseKey": "mutual-indemnification-insertion",
+      "concessionOrderBefore": [
+        "mutual-indemnification"
+      ],
+      "concessionOrderAfter": [
+        "mutual-indemnification"
+      ],
+      "corrected": [
+        {
+          "path": "/instructions/changesNeedApproval",
+          "expected": "Escalate to Ben, who will escalate to Ian.",
+          "actual": "Requires Ben's approval, and Ben will obtain Ian's approval."
+        },
+        {
+          "path": "/concessions/mutual-indemnification/detail",
+          "expected": []
+        }
+      ]
+    },
+    {
+      "clauseKey": "replacement-professional-initial-term",
+      "concessionOrderBefore": [
+        "replacement-commercially-viable",
+        "replacement-mutual-agreement"
+      ],
+      "concessionOrderAfter": [
+        "replacement-commercially-viable",
+        "replacement-mutual-agreement"
+      ],
+      "corrected": [
+        {
+          "path": "/triggers/1",
+          "expected": {
+            "id": "replacement-professional-renewal-term",
+            "range": {
+              "start": {
+                "sourceKey": "source:paragraph-replacement-professional/segment/11/atom/0",
+                "offset": 0
+              },
+              "end": {
+                "sourceKey": "source:paragraph-replacement-professional/segment/11/atom/0",
+                "offset": 29
+              }
+            }
+          }
+        },
+        {
+          "path": "/instructions/changesNeedApproval",
+          "expected": "Escalate to Ben. Who may need to escalate to Ian if it escalates further.",
+          "actual": "Requires Ben's approval. Ben may need Ian's approval if further approval is required."
+        },
+        {
+          "path": "/concessions/replacement-commercially-viable/description",
+          "expected": "Change the replacement standard so Oceans must propose a commercially viable replacement based upon the scope and requirements set forth in the applicable Statement of Work (\"SOW\").",
+          "actual": "Change the replacement standard so Oceans must propose a commercially viable replacement based on the specifics of the SOW."
+        },
+        {
+          "path": "/concessions/replacement-commercially-viable/detail",
+          "expected": [
+            "The surrounding language still leaves Oceans room to use its judgment when identifying the replacement."
+          ]
+        },
+        {
+          "path": "/concessions/replacement-commercially-viable/changes/1/replacement/0/text",
+          "expected": ", based upon the scope and requirements set forth in the applicable Statement of Work (“SOW”)",
+          "actual": " based upon the specifics of the SOW"
+        },
+        {
+          "path": "/concessions/replacement-mutual-agreement/description",
+          "expected": "Require Oceans and the Buyer to mutually determine the replacement Professional instead of leaving the replacement decision to Oceans alone.",
+          "actual": "Require Oceans and the Buyer to mutually agree on the replacement Professional instead of leaving the replacement decision to Oceans alone."
+        },
+        {
+          "path": "/concessions/replacement-mutual-agreement/detail",
+          "expected": []
+        },
+        {
+          "path": "/concessions/replacement-mutual-agreement/changes/0/replacement/0/text",
+          "expected": "as determined by both Parties",
+          "actual": "as mutually agreed upon by the Provider and the Customer"
+        },
+        {
+          "path": "/concessions/replacement-mutual-agreement/changes/1",
+          "expected": {
+            "range": {
+              "start": {
+                "sourceKey": "source:paragraph-replacement-professional/segment/11/atom/0",
+                "offset": 0
+              },
+              "end": {
+                "sourceKey": "source:paragraph-replacement-professional/segment/11/atom/0",
+                "offset": 29
+              }
+            },
+            "replacement": [
+              {
+                "kind": "text",
+                "text": "as determined by both Parties"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "clauseKey": "resale",
+      "concessionOrderBefore": [
+        "resale-ordinary-course-billing"
+      ],
+      "concessionOrderAfter": [
+        "resale-ordinary-course-billing"
+      ],
+      "corrected": [
+        {
+          "path": "/concessions/resale-ordinary-course-billing/detail",
+          "expected": []
+        }
+      ]
+    },
+    {
+      "clauseKey": "sharing-highly-sensitive-personal-information",
+      "concessionOrderBefore": [
+        "sharing-highly-sensitive-personal-information-split-responsibility"
+      ],
+      "concessionOrderAfter": [
+        "sharing-highly-sensitive-personal-information-split-responsibility"
+      ],
+      "corrected": [
+        {
+          "path": "/instructions/negotiation",
+          "expected": "A rare concession is to split responsibility based on whose systems, tools, infrastructure, or written direction are involved. Only consider this concession if the liability cap remains in place.",
+          "actual": "A rare concession is to split responsibility based on whose systems, platforms, or infrastructure are involved. Only consider this concession if the liability cap remains in place."
+        },
+        {
+          "path": "/instructions/changesNeedApproval",
+          "expected": "Escalate to Ben.",
+          "actual": "Requires Ben's approval."
+        },
+        {
+          "path": "/concessions/sharing-highly-sensitive-personal-information-split-responsibility/description",
+          "expected": "Split responsibility for Highly Sensitive Personal Information based on whose systems, tools, infrastructure, or written direction are involved. Buyer remains responsible for information in Buyer-controlled systems; Oceans is responsible for information in Oceans-controlled systems. Buyer must also notify Oceans in writing before giving a Professional access to systems containing Highly Sensitive Personal Information. Only consider this concession if the liability cap remains in place.",
+          "actual": "Split responsibility for Highly Sensitive Personal Information based on whose systems, tools, or infrastructure are involved. Buyer remains responsible for information in Buyer-controlled systems; Oceans is responsible for information in Oceans-controlled systems. Buyer must also notify Oceans in writing before giving a Professional access to systems containing Highly Sensitive Personal Information. Only consider this concession if the liability cap remains in place."
+        },
+        {
+          "path": "/concessions/sharing-highly-sensitive-personal-information-split-responsibility/detail",
+          "expected": []
+        },
+        {
+          "path": "/concessions/sharing-highly-sensitive-personal-information-split-responsibility/changes/0/replacement/0/text",
+          "expected": "The Parties agree as follows with respect to Highly Sensitive Personal Information: (i) Customer shall be responsible for the security of any Highly Sensitive Personal Information stored in, transmitted through, or accessible via Customer's systems, platforms, or infrastructure, including any unauthorized access or breach resulting from Customer's security controls or practices. (ii) Provider shall be responsible for the security of any Highly Sensitive Personal Information stored in or transmitted through Provider's systems, platforms, or infrastructure in accordance with industry-standard security practices. (iii) Customer shall notify Provider in writing prior to granting any Professional access to any systems, platforms, or applications containing Highly Sensitive Personal Information. Customer warrants and agrees that it shall be solely responsible for any Highly Sensitive Personal Information in its possession.",
+          "actual": "The Parties agree as follows with respect to Highly Sensitive Personal Information: (i) Customer shall be responsible for the security of any Highly Sensitive Personal Information stored in, transmitted through, or accessible via Customer's systems, platforms, or infrastructure, including any unauthorized access or breach resulting from Customer's security controls or practices. (ii) Provider shall be responsible for the security of any Highly Sensitive Personal Information stored in or transmitted through Provider's systems, platforms, or infrastructure in accordance with industry-standard security practices. (iii) Customer shall notify Provider in writing prior to granting any Professional access to any systems, platforms, or applications containing Highly Sensitive Personal Information."
+        }
+      ]
+    },
+    {
+      "clauseKey": "term-fee-payment",
+      "concessionOrderBefore": [
+        "term-fee-payment-monthly-autopay"
+      ],
+      "concessionOrderAfter": [
+        "term-fee-payment-monthly-autopay-after-initial-term",
+        "term-fee-payment-monthly-autopay"
+      ],
+      "corrected": [
+        {
+          "path": "/instructions/negotiation",
+          "expected": "Can relent to monthly billing if we are within our cash flow tolerance and it would cost us the deal. Preferred: monthly billing after the Initial Term. Secondary escalation: monthly billing from the start. Monthly billing must be via auto pay credit card payments.",
+          "actual": "We can move to monthly billing if clients pay via auto pay credit card payments."
+        },
+        {
+          "path": "/instructions/changesNeedApproval",
+          "expected": "Escalate to Ben.",
+          "actual": "Requires Ben's approval."
+        },
+        {
+          "path": "/concessions/term-fee-payment-monthly-autopay-after-initial-term",
+          "expected": {
+            "id": "term-fee-payment-monthly-autopay-after-initial-term",
+            "tier": "preferred",
+            "description": "Keep the Initial Term prepaid, then change Renewal Term fees to equal monthly installments paid automatically by credit card.",
+            "detail": [],
+            "after": "(Language changed in 3. Fees and Payment and in Exhibit A)",
+            "changes": [
+              {
+                "range": {
+                  "start": {
+                    "sourceKey": "source:paragraph-renewal-term-fee/segment/1/atom/0",
+                    "offset": 0
+                  },
+                  "end": {
+                    "sourceKey": "source:paragraph-renewal-term-fee/segment/1/atom/0",
+                    "offset": 39
+                  }
+                },
+                "replacement": [
+                  {
+                    "kind": "text",
+                    "text": "by credit card via automatic recurring payment in equal monthly installments"
+                  }
+                ]
+              },
+              {
+                "range": {
+                  "start": {
+                    "sourceKey": "source:paragraph-renewal-term-fee/segment/4/atom/0",
+                    "offset": 0
+                  },
+                  "end": {
+                    "sourceKey": "source:paragraph-renewal-term-fee/segment/4/atom/0",
+                    "offset": 0
+                  }
+                },
+                "replacement": [
+                  {
+                    "kind": "text",
+                    "text": " and on the same date of each month thereafter"
+                  }
+                ]
+              },
+              {
+                "range": {
+                  "start": {
+                    "sourceKey": "source:paragraph-exhibit-renewal-term/segment/1/atom/0",
+                    "offset": 0
+                  },
+                  "end": {
+                    "sourceKey": "source:paragraph-exhibit-renewal-term/segment/1/atom/0",
+                    "offset": 0
+                  }
+                },
+                "replacement": [
+                  {
+                    "kind": "text",
+                    "text": " by credit card via automatic recurring payment"
+                  }
+                ]
+              },
+              {
+                "range": {
+                  "start": {
+                    "sourceKey": "source:paragraph-exhibit-renewal-term/segment/3/atom/0",
+                    "offset": 0
+                  },
+                  "end": {
+                    "sourceKey": "source:paragraph-exhibit-renewal-term/segment/3/atom/0",
+                    "offset": 105
+                  }
+                },
+                "replacement": [
+                  {
+                    "kind": "text",
+                    "text": "in equal monthly installments on or before"
+                  }
+                ]
+              },
+              {
+                "range": {
+                  "start": {
+                    "sourceKey": "source:paragraph-exhibit-renewal-term/segment/5/atom/0",
+                    "offset": 0
+                  },
+                  "end": {
+                    "sourceKey": "source:paragraph-exhibit-renewal-term/segment/5/atom/0",
+                    "offset": 19
+                  }
+                },
+                "replacement": [
+                  {
+                    "kind": "text",
+                    "text": "start date of each applicable"
+                  }
+                ]
+              },
+              {
+                "range": {
+                  "start": {
+                    "sourceKey": "source:paragraph-exhibit-renewal-term/segment/7/atom/0",
+                    "offset": 0
+                  },
+                  "end": {
+                    "sourceKey": "source:paragraph-exhibit-renewal-term/segment/7/atom/0",
+                    "offset": 0
+                  }
+                },
+                "replacement": [
+                  {
+                    "kind": "text",
+                    "text": " and on the same date of each month thereafter prior to the commencement of the Renewal Term"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "path": "/concessions/term-fee-payment-monthly-autopay/tier",
+          "expected": "rare",
+          "actual": "preferred"
+        },
+        {
+          "path": "/concessions/term-fee-payment-monthly-autopay/description",
+          "expected": "Change the Initial Term and Renewal Term fees from upfront lump-sum payments to equal monthly installments paid automatically by credit card from the start of the engagement.",
+          "actual": "Change the Initial Term and Renewal Term fees from upfront lump-sum payments to equal monthly installments paid automatically by credit card."
+        },
+        {
+          "path": "/concessions/term-fee-payment-monthly-autopay/detail",
+          "expected": []
+        },
+        {
+          "path": "/concessions/term-fee-payment-monthly-autopay/after",
+          "expected": "(Language changed in 3. Fees and Payment and in Exhibit A)"
+        },
+        {
+          "path": "/concessions/term-fee-payment-monthly-autopay/changes/10/replacement/0/text",
+          "expected": " and on the same date of each month thereafter prior to the commencement of the Renewal Term",
+          "actual": " and on the same date of each month thereafter"
+        }
+      ]
+    },
+    {
+      "clauseKey": "work-product-payment-vesting",
+      "concessionOrderBefore": [],
+      "concessionOrderAfter": [],
+      "corrected": [
+        {
+          "path": "/instructions/changesNeedApproval",
+          "expected": "Escalate to Ben.",
+          "actual": "Requires Ben's approval."
+        }
+      ]
+    }
+  ]
+}

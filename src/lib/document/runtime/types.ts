@@ -1,0 +1,86 @@
+import type { ContractBlock } from '$lib/contract/model';
+import type { DocumentOverlayItem } from '$lib/playbook/document-overlay';
+import type { SourceIndex } from '$lib/contract/source-index';
+import type { Address } from '$lib/contract/numbering';
+import type { ContractChange, SourceRange } from '$lib/playbook/model';
+import type { PaginatedPage } from '../pagination/types';
+
+export type ConcessionSelection = Readonly<Record<string, string>>;
+export const EMPTY_PREVIEW_CHANGES: readonly ContractChange[] = Object.freeze([]);
+export interface ContractRenderSource {
+	readonly revision: number;
+	readonly blocks: readonly ContractBlock[];
+	readonly items: readonly DocumentOverlayItem[];
+	readonly sourceIndex: SourceIndex;
+}
+export interface RenderSnapshot {
+	readonly id: number;
+	readonly layoutEpoch: string;
+	readonly changedPages: readonly number[];
+	readonly source: ContractRenderSource;
+	readonly concessions: ConcessionSelection;
+	readonly previewChanges: readonly ContractChange[];
+	readonly addresses: ReadonlyMap<string, Address>;
+	readonly pages: readonly PaginatedPage[];
+}
+export interface SourceIssue {
+	blocksFailed: boolean;
+	itemsFailed: boolean;
+}
+export interface RenderFailure {
+	message: string;
+	cause?: unknown;
+}
+export interface RenderJobMeta {
+	generation: number;
+	sourceRevision: number;
+}
+export function sameSelection(a: ConcessionSelection, b: ConcessionSelection): boolean {
+	return (
+		Object.keys(a).length === Object.keys(b).length &&
+		Object.entries(a).every(([key, value]) => b[key] === value)
+	);
+}
+
+export function sameSourceRange(a: SourceRange, b: SourceRange): boolean {
+	return (
+		a.start.sourceKey === b.start.sourceKey &&
+		a.start.offset === b.start.offset &&
+		a.end.sourceKey === b.end.sourceKey &&
+		a.end.offset === b.end.offset
+	);
+}
+
+export function samePreviewChanges(
+	a: readonly ContractChange[],
+	b: readonly ContractChange[]
+): boolean {
+	return (
+		a.length === b.length &&
+		a.every(
+			(change, i) =>
+				sameSourceRange(change.range, b[i].range) &&
+				JSON.stringify(change.replacement) === JSON.stringify(b[i].replacement)
+		)
+	);
+}
+
+/** Detach draft proxies and freeze everything read by an asynchronous render. */
+export function snapshotPreviewChanges(
+	changes: readonly ContractChange[]
+): readonly ContractChange[] {
+	if (!changes.length) return EMPTY_PREVIEW_CHANGES;
+	return Object.freeze(
+		changes.map((change) => {
+			const copy = {
+				range: Object.freeze({
+					start: Object.freeze({ ...change.range.start }),
+					end: Object.freeze({ ...change.range.end })
+				}),
+				replacement: change.replacement.map((atom) => Object.freeze({ ...atom }))
+			};
+			Object.freeze(copy.replacement);
+			return Object.freeze(copy);
+		})
+	);
+}

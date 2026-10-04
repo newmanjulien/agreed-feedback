@@ -8,63 +8,27 @@
 	<meta name="robots" content="noindex" />
 </svelte:head>
 
-<main class="gate">
-	<form method="POST" action="/gate?next={encodeURIComponent(data.next)}">
-		<p>Enter your password.</p>
-		<input id="password" name="password" type="password" autocomplete="current-password" required />
-		{#if form?.incorrect}<p class="error" role="alert">Incorrect password. Try again.</p>{/if}
-		<button type="submit">Continue</button>
+<main class="grid min-h-screen place-items-center bg-canvas p-6 text-ink">
+	<form
+		class="grid w-full max-w-[380px] gap-4 rounded-base border border-line bg-surface p-[18px]"
+		method="POST"
+		action="/gate?next={encodeURIComponent(data.next)}"
+	>
+		<p class="m-0 text-ink-secondary">Enter your password.</p>
+		<input
+			class="w-full rounded-md border border-line bg-surface p-3 text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+			id="password"
+			name="password"
+			type="password"
+			autocomplete="current-password"
+			required
+		/>
+		{#if form?.incorrect}<p class="m-0 text-danger" role="alert">
+				Incorrect password. Try again.
+			</p>{/if}
+		<button
+			class="cursor-pointer rounded-lg border-0 bg-accent p-2.5 font-normal text-surface hover:bg-accent-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+			type="submit">Continue</button
+		>
 	</form>
 </main>
-
-<style>
-	.gate {
-		min-height: 100vh;
-		display: grid;
-		place-items: center;
-		padding: 24px;
-		background: var(--color-canvas);
-		color: var(--color-ink);
-	}
-	form {
-		width: min(100%, 380px);
-		display: grid;
-		gap: 16px;
-		padding: 18px;
-		border: 1px solid var(--color-line);
-		border-radius: var(--radius-control);
-		background: var(--color-surface);
-	}
-	p {
-		margin: 0;
-		color: var(--color-ink-secondary);
-	}
-	input {
-		width: 100%;
-		padding: 12px;
-		border: 1px solid var(--color-line);
-		border-radius: var(--radius-sm);
-		background: white;
-		color: var(--color-ink);
-	}
-	input:focus-visible,
-	button:focus-visible {
-		outline: 2px solid var(--color-accent);
-		outline-offset: 2px;
-	}
-	button {
-		padding: 10px;
-		border: 0;
-		border-radius: var(--radius-lg);
-		background: var(--color-accent);
-		color: white;
-		font-weight: 400;
-		cursor: pointer;
-	}
-	button:hover {
-		background: var(--color-accent-hover);
-	}
-	.error {
-		color: var(--color-danger);
-	}
-</style>

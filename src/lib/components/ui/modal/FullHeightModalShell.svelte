@@ -2,6 +2,8 @@
 	import { onMount, type Snippet } from 'svelte';
 	import XIcon from 'phosphor-svelte/lib/XIcon';
 	import SquareIconButton from '$lib/components/ui/SquareIconButton.svelte';
+	import { getInteractionController } from '$lib/components/ui/interactions';
+	const interactions = getInteractionController();
 
 	let {
 		title,
@@ -18,6 +20,7 @@
 
 	onMount(() => {
 		if (!dialogElement) throw new Error('Modal dialog failed to mount.');
+		interactions.closeTransient();
 		dialogElement.showModal();
 		dialogElement.focus({ preventScroll: true });
 	});
@@ -46,9 +49,11 @@
 	onclick={handleBackdropClick}
 >
 	<div
-		class="relative mx-auto flex h-full min-h-0 w-full max-w-[480px] flex-col overflow-hidden rounded-panel border border-line bg-surface shadow-none max-[600px]:rounded-none max-[600px]:border-0"
+		class="relative mx-auto flex h-full min-h-0 w-full max-w-[480px] flex-col overflow-hidden rounded-xl border border-line bg-surface shadow-none max-[600px]:rounded-none max-[600px]:border-0"
 	>
-		<div class="modal-close absolute top-4 right-4 z-10">
+		<div
+			class="absolute top-4 right-4 z-10 [&_button:hover]:bg-fill-subtle [&_button:focus-visible]:bg-fill-subtle"
+		>
 			<SquareIconButton type="button" aria-label="Close modal" onclick={closeModal}>
 				<XIcon aria-hidden="true" size={22} weight="regular" />
 			</SquareIconButton>
@@ -65,10 +70,3 @@
 		{/if}
 	</div>
 </dialog>
-
-<style>
-	.modal-close :global(button:hover),
-	.modal-close :global(button:focus-visible) {
-		background-color: var(--color-hover-subtle);
-	}
-</style>

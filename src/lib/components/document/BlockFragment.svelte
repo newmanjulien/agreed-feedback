@@ -1,43 +1,43 @@
 <script lang="ts">
+	import type { AnnotationActivation } from '$lib/document/annotation-anchor';
 	import InlineContent from './InlineContent.svelte';
-	import type { PageFragment } from '$lib/document/pagination/types';
+	import { fragmentKey, type PageFragment } from '$lib/document/pagination/types';
 
 	let {
 		fragment,
-		pageNumber,
-		selectedOccurrenceKey,
-		activeClauseKeys,
-		onClauseSelect
+		profileMode = false,
+		selectedAnnotationId,
+		canOpenPlaybookItems,
+		onAnnotationSelect
 	}: {
 		fragment: PageFragment;
-		pageNumber: number;
-		selectedOccurrenceKey: string | null;
-		activeClauseKeys: ReadonlySet<string>;
-		onClauseSelect: (clauseKey: string, occurrenceKey: string, fragmentKey: string) => void;
+		/** Preserve layout markup while suppressing global IDs and interactive semantics. */
+		profileMode?: boolean;
+		selectedAnnotationId: string | null;
+		canOpenPlaybookItems: boolean;
+		onAnnotationSelect: (
+			itemId: string,
+			annotationId: string,
+			activation: AnnotationActivation
+		) => void;
 	} = $props();
-
-	let blockFragmentKey = $derived(`page-${pageNumber}:${fragment.blockKey}`);
-
-	function handleCellPaddingClick(event: MouseEvent) {
-		if (event.target !== event.currentTarget) return;
-		(event.currentTarget as HTMLElement).querySelector<HTMLElement>('.contract-clause')?.click();
-	}
 </script>
 
 {#if fragment.type === 'heading'}
 	<svelte:element
 		this={`h${fragment.level}`}
-		id={fragment.anchor}
+		id={profileMode ? undefined : fragment.anchor}
 		class="contract-block contract-heading"
 		data-block-key={fragment.blockKey}
-		tabindex="-1"
+		data-source-fragment-key={fragmentKey(fragment)}
+		tabindex={profileMode ? undefined : -1}
 	>
 		<InlineContent
+			{profileMode}
 			tokens={fragment.tokens}
-			{blockFragmentKey}
-			{selectedOccurrenceKey}
-			{activeClauseKeys}
-			{onClauseSelect}
+			{selectedAnnotationId}
+			canOpenPlaybookItems={canOpenPlaybookItems && !profileMode}
+			{onAnnotationSelect}
 		/>
 	</svelte:element>
 {:else if fragment.type === 'paragraph'}
@@ -47,13 +47,14 @@
 		class:is-final={fragment.isFinal}
 		class:is-empty-insertion-slot={fragment.emptyInsertionSlot}
 		data-block-key={fragment.blockKey}
+		data-source-fragment-key={fragmentKey(fragment)}
 	>
 		<InlineContent
+			{profileMode}
 			tokens={fragment.tokens}
-			{blockFragmentKey}
-			{selectedOccurrenceKey}
-			{activeClauseKeys}
-			{onClauseSelect}
+			{selectedAnnotationId}
+			canOpenPlaybookItems={canOpenPlaybookItems && !profileMode}
+			{onAnnotationSelect}
 		/>
 	</p>
 {:else}
@@ -61,26 +62,25 @@
 		class="contract-block contract-table"
 		class:signature-table={fragment.variant === 'signature'}
 		data-block-key={fragment.blockKey}
+		data-source-fragment-key={fragmentKey(fragment)}
+		style:table-layout={fragment.columnWidths ? 'fixed' : undefined}
 	>
+		{#if fragment.columnWidths}
+			<colgroup>
+				{#each fragment.columnWidths as width}<col style:width={`${width}px`} />{/each}
+			</colgroup>
+		{/if}
 		<thead>
 			{#each fragment.rows.slice(0, fragment.headerRowCount) as row, rowIndex}
 				<tr
 					>{#each row as cell, cellIndex}
-						{@const hasActiveClause = cell.tokens.some(
-							(token) => token.clauseKey && activeClauseKeys.has(token.clauseKey)
-						)}
-						<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_noninteractive_element_interactions -->
-						<th
-							scope="col"
-							class:clause-cell={hasActiveClause}
-							onclick={hasActiveClause ? handleCellPaddingClick : undefined}
-						>
+						<th scope="col" data-source-row={rowIndex} data-source-cell={cellIndex}>
 							<InlineContent
+								{profileMode}
 								tokens={cell.tokens}
-								blockFragmentKey={`${blockFragmentKey}:row-${rowIndex}:cell-${cellIndex}`}
-								{selectedOccurrenceKey}
-								{activeClauseKeys}
-								{onClauseSelect}
+								{selectedAnnotationId}
+								canOpenPlaybookItems={canOpenPlaybookItems && !profileMode}
+								{onAnnotationSelect}
 							/>
 						</th>{/each}</tr
 				>
@@ -90,21 +90,16 @@
 			{#each fragment.rows.slice(fragment.headerRowCount) as row, rowIndex}
 				<tr
 					>{#each row as cell, cellIndex}
-						{@const hasActiveClause = cell.tokens.some(
-							(token) => token.clauseKey && activeClauseKeys.has(token.clauseKey)
-						)}
-						<!-- The inner clause handles keyboard input; this forwards clicks on the cell padding. -->
-						<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_noninteractive_element_interactions -->
 						<td
-							class:clause-cell={hasActiveClause}
-							onclick={hasActiveClause ? handleCellPaddingClick : undefined}
+							data-source-row={(fragment.interval?.start ?? 0) + rowIndex + fragment.headerRowCount}
+							data-source-cell={cellIndex}
 						>
 							<InlineContent
+								{profileMode}
 								tokens={cell.tokens}
-								blockFragmentKey={`${blockFragmentKey}:row-${rowIndex + fragment.headerRowCount}:cell-${cellIndex}`}
-								{selectedOccurrenceKey}
-								{activeClauseKeys}
-								{onClauseSelect}
+								{selectedAnnotationId}
+								canOpenPlaybookItems={canOpenPlaybookItems && !profileMode}
+								{onAnnotationSelect}
 							/>
 						</td>{/each}</tr
 				>
