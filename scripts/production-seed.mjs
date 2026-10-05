@@ -1,4 +1,4 @@
-// Pure, deterministic conversion of the attached full Convex export. No network or DB writes.
+// Pure, deterministic conversion of the cleaned Convex export. No network or DB writes.
 import assert from 'node:assert/strict';
 import { readFile, writeFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
@@ -144,8 +144,7 @@ export function transformExport(source) {
 					'negotiation',
 					'changesNeedEscalation',
 					'preferredConcessions',
-					'rareConcessions',
-					'showPreferredConcessionsInfoTooltip'
+					'rareConcessions'
 				],
 				'clauseBox'
 			);
@@ -197,8 +196,7 @@ export function transformExport(source) {
 			return {
 				triggers,
 				instructions,
-				concessions,
-				importantToNegotiate: old.showPreferredConcessionsInfoTooltip
+				concessions
 			};
 		});
 	assert.equal(new Set(source.boxes.map((b) => b.clauseKey)).size, source.boxes.length);

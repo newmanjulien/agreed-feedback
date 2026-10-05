@@ -1,6 +1,8 @@
-# Welcome to your Convex snapshot export!
+# Cleaned Convex snapshot archive
 
-This ZIP file contains a snapshot of the tables in your Convex deployment.
+These files derive from the supplied Convex snapshot. They have been edited and
+are not byte-for-byte originals. The remaining contract text, instructions,
+concessions, tiers, logical keys, and exported system metadata are preserved.
 
 Documents for each table are listed as lines of JSON in
 <table_name>/documents.jsonl files.

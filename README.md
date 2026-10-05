@@ -17,7 +17,7 @@ and rare concessions, multiple changes, and structured contract references.
 Save validates and submits the complete instruction box; Cancel discards local
 changes without writing. Adding a concession to an existing box updates only the
 parent draft until that box is saved. Back preserves entered clause selections and
-wording. Existing boxes expose negotiation importance directly. Their concessions
+wording. Their concessions
 are read-only, including newly added concessions in the draft. Changing a concession
 requires deleting it and adding a new one.
 
@@ -111,8 +111,9 @@ gates for the incremental runtime refactor.
 
 ## Production-data seed restoration
 
-The attached full Convex export is retained under `data/migration/source` as the
-source of truth. `npm run seed:restore-export` deterministically rebuilds both seed
+The cleaned supplied Convex export is retained under `data/migration/source` as the
+seed source of truth. These archives have been edited and are not byte-for-byte
+originals. `npm run seed:restore-export` deterministically rebuilds both seed
 files and the logical mapping. `npm run seed:reconcile` compares every record,
 checks edit/save preservation, and compares generated contract output against the
 old provision rules. `seed:verify` requires that reconciliation to pass.

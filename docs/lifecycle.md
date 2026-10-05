@@ -14,7 +14,7 @@ Save validates and submits one complete immutable instruction-box snapshot. No
 input observer, timer, dismissal, visibility event or navigation sends a save.
 Cancel discards the active draft without writing. New Explain and Negotiate boxes
 both end with Save; their initial selection only determines the local draft shape.
-Existing boxes always expose the same fields, including negotiation importance.
+Existing boxes always expose the same instruction fields and concession sections.
 Concessions display read-only descriptions. Changing a concession requires deleting
 it and adding a new one; unchanged structured replacement references stay intact.
 

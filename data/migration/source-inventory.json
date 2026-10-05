@@ -247,9 +247,6 @@
       "rareConcessions[].replacements[].targetProvisionKey": {
         "string": 23
       },
-      "showPreferredConcessionsInfoTooltip": {
-        "boolean": 56
-      },
       "summary": {
         "string": 56
       }

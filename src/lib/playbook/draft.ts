@@ -82,8 +82,7 @@ export function semanticPlaybookDraft(draft: PlaybookItem): PlaybookItem {
 	return {
 		triggers: draft.triggers.map(({ id, range }) => ({ id, range: semanticRange(range) })),
 		...(Object.keys(instructions).length ? { instructions } : {}),
-		concessions: draft.concessions.map(semanticConcession),
-		importantToNegotiate: draft.importantToNegotiate
+		concessions: draft.concessions.map(semanticConcession)
 	};
 }
 
@@ -101,7 +100,6 @@ export function newPlaybookDraft(range: SourceRange): PlaybookDraft {
 	return {
 		instructions: {},
 		triggers: [{ id: newTriggerId(), range: semanticRange(range) }],
-		concessions: [],
-		importantToNegotiate: false
+		concessions: []
 	};
 }

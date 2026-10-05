@@ -5,12 +5,10 @@
 	import type { Concession } from '$lib/playbook/model';
 	let {
 		concession,
-		importantToNegotiate = $bindable(),
 		affectsOtherParts,
 		onAffectedPart
 	}: {
 		concession: Concession;
-		importantToNegotiate: boolean;
 		affectsOtherParts: boolean;
 		onAffectedPart: (value: boolean) => void;
 	} = $props();
@@ -19,11 +17,7 @@
 	let optionsButton = $state<HTMLButtonElement>();
 	let keyboardOpen = $state(false);
 	const selectedOptions = $derived(
-		[
-			concession.tier === 'rare' && 'Rare concession',
-			importantToNegotiate && 'Important to negotiate',
-			affectsOtherParts && 'Affects another part'
-		]
+		[concession.tier === 'rare' && 'Rare concession', affectsOtherParts && 'Affects another part']
 			.filter(Boolean)
 			.join(', ')
 	);
@@ -87,12 +81,6 @@
 				label="This is a rare concession"
 				checked={concession.tier === 'rare'}
 				onCheckedChange={(checked) => (concession.tier = checked ? 'rare' : 'preferred')}
-				className="rounded-md px-3 py-2 hover:bg-fill-subtle"
-			/>
-			<Checkbox
-				label="It’s important for reps to negotiate this clause"
-				checked={importantToNegotiate}
-				onCheckedChange={(checked) => (importantToNegotiate = checked)}
 				className="rounded-md px-3 py-2 hover:bg-fill-subtle"
 			/>
 			<Checkbox

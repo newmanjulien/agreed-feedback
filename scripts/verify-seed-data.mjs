@@ -43,7 +43,6 @@ try {
 		[2, 2, 2, 4]
 	);
 	assert.equal(items.filter((i) => i.concessions.length > 1).length, 7);
-	assert.equal(items.filter((i) => i.importantToNegotiate).length, 4);
 	assert.equal(Math.max(...concessions.map((c) => c.changes.length)), 11);
 	const { buildSourceIndex } = await server.ssrLoadModule('/src/lib/contract/source-index.ts');
 	const { isEmptyRange, rangeTouchesTable } = await server.ssrLoadModule(

@@ -27,6 +27,5 @@ export const concession = v.object({
 export const playbookItem = v.object({
 	triggers: v.array(trigger),
 	instructions: v.optional(instructions),
-	concessions: v.array(concession),
-	importantToNegotiate: v.boolean()
+	concessions: v.array(concession)
 });

@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { tick } from 'svelte';
 	import DotsThreeVerticalIcon from 'phosphor-svelte/lib/DotsThreeVerticalIcon';
-	import Checkbox from '$lib/components/ui/Checkbox.svelte';
 	import SquareIconButton from '$lib/components/ui/SquareIconButton.svelte';
 	import Menu from '$lib/components/ui/Menu.svelte';
 	import type { Concession } from '$lib/playbook/model';
@@ -151,7 +150,6 @@
 			{:else if step === 'concession'}
 				<ConcessionCreationEditor
 					concession={creationConcession}
-					bind:importantToNegotiate={flow.creationImportantToNegotiate}
 					affectsOtherParts={flow.affectsOtherParts}
 					onAffectedPart={(value) => flow.setAffectedPart(value)}
 				/>
@@ -187,11 +185,6 @@
 				</div>
 			{/if}
 		{:else}
-			<Checkbox
-				label="It’s important for reps to negotiate this clause"
-				checked={draft.importantToNegotiate}
-				onCheckedChange={(checked) => (draft.importantToNegotiate = checked)}
-			/>
 			<textarea
 				class="block min-h-28 min-w-0 w-full resize-y rounded-base border border-line bg-surface px-3 py-2 text-ink placeholder:text-ink-muted focus:border-accent focus:outline-2 focus:outline-accent/18 focus:outline-offset-1"
 				aria-label="Summary for this clause"
@@ -218,7 +211,6 @@
 						value={tier}
 						label={`${tier === 'preferred' ? 'Preferred' : 'Rare'} concessions`}
 						danger={tier === 'rare'}
-						important={tier === 'preferred' && draft.importantToNegotiate}
 						bind:open
 					>
 						{#each concessions as concession (concession.id)}

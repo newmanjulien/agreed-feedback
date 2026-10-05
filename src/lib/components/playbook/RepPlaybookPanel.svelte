@@ -67,7 +67,6 @@
 						value={tier}
 						label={`${tier === 'preferred' ? 'Preferred' : 'Rare'} ${concessions.length === 1 ? 'concession' : 'concessions'}`}
 						danger={tier === 'rare'}
-						important={tier === 'preferred' && item.importantToNegotiate}
 						bind:open
 					>
 						{#each concessions as concession, i (concession.id)}

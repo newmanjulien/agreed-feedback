@@ -42,8 +42,6 @@ export class AuthoringFlow {
 		key: string;
 		triggerId: string;
 		concession: Concession;
-		// Untouched follows the latest draft; either boolean records an explicit edit.
-		importantToNegotiate: boolean | null;
 	} | null>(null);
 	constructor(
 		readonly session: AuthoringSession,
@@ -99,13 +97,6 @@ export class AuthoringFlow {
 			this.pendingAddition?.concession ??
 			(this.entry && !this.entry.confirmed ? this.draft?.concessions[0] : undefined)
 		);
-	}
-	get creationImportantToNegotiate() {
-		return this.pendingAddition?.importantToNegotiate ?? this.draft?.importantToNegotiate ?? false;
-	}
-	set creationImportantToNegotiate(value: boolean) {
-		if (this.pendingAddition) this.pendingAddition.importantToNegotiate = value;
-		else if (this.creating && this.draft) this.draft.importantToNegotiate = value;
 	}
 	get additionTargetReason() {
 		const pending = this.pendingAddition;
@@ -298,8 +289,7 @@ export class AuthoringFlow {
 				tier,
 				description: '',
 				changes: [{ range, replacement: [{ kind: 'text', text: '' }] }]
-			},
-			importantToNegotiate: null
+			}
 		};
 		this.selectedTriggerId = trigger.id;
 		this.initialSelection = range;
@@ -359,8 +349,7 @@ export class AuthoringFlow {
 			const concession = this.pendingAddition.concession;
 			this.editError = this.session.replaceDraft(entry.key, {
 				...entry.draft,
-				concessions: [...entry.draft.concessions, concession],
-				importantToNegotiate: this.creationImportantToNegotiate
+				concessions: [...entry.draft.concessions, concession]
 			});
 			if (this.editError) return false;
 			this.cancelAddition();
