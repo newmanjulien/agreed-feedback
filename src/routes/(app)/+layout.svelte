@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { setDocumentDomain } from '$lib/document/domain/context';
 	import { env } from '$env/dynamic/public';
 	import LayoutProfileSurface from '$lib/components/document/LayoutProfileSurface.svelte';
 	import {
@@ -10,7 +9,6 @@
 	import { onMount, type Snippet } from 'svelte';
 	import { InteractionController, setInteractionController } from '$lib/components/ui/interactions';
 	let { children }: { children: Snippet } = $props();
-	setDocumentDomain();
 	const interactions = setInteractionController(new InteractionController());
 	onMount(() => interactions.mount());
 	if (env.PUBLIC_CONVEX_URL) setupConvex(env.PUBLIC_CONVEX_URL);

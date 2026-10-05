@@ -17,7 +17,7 @@ import {
 import { localContainer, rangeText, unitsInRange } from './ranges';
 import { diffRedlineText } from './redline-diff';
 import { referenceText, type Address } from './numbering';
-import { changesConflict } from '../playbook/conflicts';
+import { createChangeConflictChecker } from '../playbook/conflicts';
 
 type OwnedTrigger = Trigger & { itemId: string };
 type PositionedAnnotation = AnnotationMembership & { start: number; end: number };
@@ -225,12 +225,13 @@ export class ContractCompositionEngine {
 			[...annotationsByContainer].map(([key, annotations]) => [key, JSON.stringify(annotations)])
 		);
 		const patches = new Map<string, Patch[]>();
+		const conflicts = createChangeConflictChecker(index);
 		for (const patch of changes) {
 			const { change } = patch;
 			const range = change.range;
 			const key = localContainer(index, range);
 			const items = patches.get(key) ?? [];
-			if (items.some((patch) => changesConflict(index, patch.change, change)))
+			if (items.some((patch) => conflicts(patch.change, change)))
 				throw new Error(`Conflicting active changes in ${key}`);
 			items.push({
 				...patch,

@@ -1,5 +1,6 @@
 import { fragmentKey, type InlineToken, type PaginatedPage } from '../pagination/types';
 import type { DocumentSearchResult, SearchPoint, TextMatch } from './types';
+import { countSearchWork } from '../runtime/render-perf';
 
 // Use the same context-independent fold for queries and token text, including final sigma.
 function foldSearchCharacter(character: string): string {
@@ -93,8 +94,16 @@ export class DocumentSearchCache {
 								rowIndex < fragment.headerRowCount
 									? rowIndex
 									: (fragment.interval?.start ?? 0) + rowIndex;
-							const key = JSON.stringify(['cell', page.number, location.fragmentKey, sourceRow, cell]);
-							groups.set(key, [{ tokens: content.tokens, location: { ...location, row: sourceRow, cell } }]);
+							const key = JSON.stringify([
+								'cell',
+								page.number,
+								location.fragmentKey,
+								sourceRow,
+								cell
+							]);
+							groups.set(key, [
+								{ tokens: content.tokens, location: { ...location, row: sourceRow, cell } }
+							]);
 						}
 					}
 				} else {
@@ -138,6 +147,7 @@ export class DocumentSearchCache {
 		return [...this.#entries.values()].flatMap(({ block }) => {
 			let matches = this.#matches.get(block);
 			if (!matches) {
+				countSearchWork('scannedCharacters', block.text.length);
 				matches = findTextMatches(block.text, query).map((match) => ({
 					start: block.starts[match.start],
 					end: block.ends[match.end - 1]
@@ -149,20 +159,32 @@ export class DocumentSearchCache {
 	}
 }
 
+interface MountedSearchRange {
+	range: Range;
+	start: Text;
+	end: Text;
+	startPage: PaginatedPage;
+	endPage: PaginatedPage;
+}
+
 /** Resolve only matching token locations. Search itself needs no DOM or mounted page. */
 export class DocumentSearchRanges {
 	#root?: HTMLElement;
-	#ranges = new Map<DocumentSearchResult, Range>();
+	#ranges = new Map<DocumentSearchResult, MountedSearchRange>();
 
 	reset() {
 		this.#root = undefined;
 		this.#ranges.clear();
 	}
 
-	materialize(root: HTMLElement, results: readonly DocumentSearchResult[]): (Range | null)[] {
+	materialize(
+		root: HTMLElement,
+		results: readonly DocumentSearchResult[],
+		pages: readonly PaginatedPage[]
+	): (Range | null)[] {
 		if (root !== this.#root) this.reset();
 		this.#root = root;
-		const next = new Map<DocumentSearchResult, Range>();
+		const next = new Map<DocumentSearchResult, MountedSearchRange>();
 		const tokens = new Map<string, NodeListOf<HTMLElement>>();
 		const resolve = (point: SearchPoint) => {
 			const key = JSON.stringify([point.pageNumber, point.fragmentKey, point.row, point.cell]);
@@ -180,27 +202,37 @@ export class DocumentSearchRanges {
 			}
 			const node = leaves[point.tokenIndex]?.firstChild;
 			return node?.nodeType === Node.TEXT_NODE && point.offset <= (node.textContent?.length ?? 0)
-				? node
+				? (node as Text)
 				: undefined;
 		};
 		const ranges = results.map((result) => {
+			const previous = this.#ranges.get(result);
+			const startPage = pages[result.start.pageNumber - 1],
+				endPage = pages[result.end.pageNumber - 1];
+			if (!startPage || !endPage) return null;
+			if (
+				previous &&
+				previous.startPage === startPage &&
+				previous.endPage === endPage &&
+				root.contains(previous.start) &&
+				root.contains(previous.end) &&
+				previous.range.startContainer === previous.start &&
+				previous.range.endContainer === previous.end &&
+				previous.range.startOffset === result.start.offset &&
+				previous.range.endOffset === result.end.offset
+			) {
+				next.set(result, previous);
+				return previous.range;
+			}
+			countSearchWork('rangeResolutions');
 			const start = resolve(result.start),
 				end = resolve(result.end);
 			if (!start || !end) return null;
-			const previous = this.#ranges.get(result);
-			if (
-				previous?.startContainer === start &&
-				previous.endContainer === end &&
-				previous.startOffset === result.start.offset &&
-				previous.endOffset === result.end.offset
-			) {
-				next.set(result, previous);
-				return previous;
-			}
 			const range = root.ownerDocument.createRange();
+			countSearchWork('materializedRanges');
 			range.setStart(start, result.start.offset);
 			range.setEnd(end, result.end.offset);
-			next.set(result, range);
+			next.set(result, { range, start, end, startPage, endPage });
 			return range;
 		});
 		this.#ranges = next;

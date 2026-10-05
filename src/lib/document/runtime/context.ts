@@ -1,4 +1,3 @@
-import { getDocumentDomain } from '../domain/context';
 import { countStartupWork } from './render-perf';
 import { getContext, setContext, untrack } from 'svelte';
 import { ContractSourceController, type ContractSourceInput } from './source.svelte';
@@ -14,7 +13,7 @@ function querySnapshot(input: ContractSourceInput): ContractSourceInput {
 }
 export function createContractWorkspace(initial: ContractSourceInput) {
 	countStartupWork('workspaceCreated');
-	const source = new ContractSourceController(getDocumentDomain());
+	const source = new ContractSourceController();
 	const session = new ContractWorkspaceSession();
 	let initialReplay: ContractSourceInput | undefined;
 

@@ -5,6 +5,76 @@ import type { LayoutProfileMetrics } from '../pagination/profiler';
 
 const enabled = () => dev || env.PUBLIC_CONTRACT_PERF === '1';
 
+type OverlayWork =
+	| 'measuredPages'
+	| 'measuredNodes'
+	| 'geometryNotifications'
+	| 'selectionUpdates'
+	| 'highlightPublications'
+	| 'hoverChecks'
+	| 'floatingUpdates';
+
+/** Fixed aggregate counters; inspecting idle work does not retain DOM or callback references. */
+export function countOverlayWork(name: OverlayWork, count = 1) {
+	if (!enabled() || typeof window === 'undefined') return;
+	const target = window as typeof window & {
+		__contractOverlayPerf?: Partial<Record<OverlayWork, number>>;
+	};
+	const counters = (target.__contractOverlayPerf ??= {});
+	counters[name] = (counters[name] ?? 0) + count;
+}
+
+type SearchWork =
+	| 'refreshes'
+	| 'scannedCharacters'
+	| 'rangeResolutions'
+	| 'materializedRanges'
+	| 'measuredNodes'
+	| 'rangeMeasurements';
+
+/** Search counters retain only totals, never queries, ranges, or text nodes. */
+export function countSearchWork(name: SearchWork, count = 1) {
+	if (!enabled() || typeof window === 'undefined') return;
+	const target = window as typeof window & {
+		__contractSearchPerf?: Partial<Record<SearchWork, number>>;
+	};
+	const counters = (target.__contractSearchPerf ??= {});
+	counters[name] = (counters[name] ?? 0) + count;
+}
+
+/** Aggregate Admin lifecycle counters; no departed component or query references. */
+function adminQueryCounters() {
+	if (!enabled() || typeof window === 'undefined') return;
+	const target = window as typeof window & {
+		__adminQueryPerf?: {
+			activeOwners: number;
+			mounts: number;
+			unmounts: number;
+			sourceUpdates: number;
+		};
+	};
+	return (target.__adminQueryPerf ??= {
+		activeOwners: 0,
+		mounts: 0,
+		unmounts: 0,
+		sourceUpdates: 0
+	});
+}
+export function recordAdminQueryOwner() {
+	const counters = adminQueryCounters();
+	if (!counters) return;
+	counters.activeOwners++;
+	counters.mounts++;
+	return () => {
+		counters.activeOwners--;
+		counters.unmounts++;
+	};
+}
+export function recordAdminSourceUpdate() {
+	const counters = adminQueryCounters();
+	if (counters) counters.sourceUpdates++;
+}
+
 /** Local, bounded navigation milestones; timestamps use the browser time origin. */
 export function recordColdStart(name: string, startedAt?: number) {
 	if (!enabled() || typeof window === 'undefined') return;

@@ -2,10 +2,10 @@ import type { ContractBlock } from '$lib/contract/model';
 import type { DocumentOverlayItem } from '$lib/playbook/document-overlay';
 import type { SourceIndex } from '$lib/contract/source-index';
 import type { Address } from '$lib/contract/numbering';
-import type { ContractChange, SourceRange } from '$lib/playbook/model';
+import type { ContractChange, SourceRange, ConcessionSelection } from '$lib/playbook/model';
 import type { PaginatedPage } from '../pagination/types';
 
-export type ConcessionSelection = Readonly<Record<string, string>>;
+export type { ConcessionSelection } from '$lib/playbook/model';
 export const EMPTY_PREVIEW_CHANGES: readonly ContractChange[] = Object.freeze([]);
 export interface ContractRenderSource {
 	readonly revision: number;
@@ -35,13 +35,6 @@ export interface RenderJobMeta {
 	generation: number;
 	sourceRevision: number;
 }
-export function sameSelection(a: ConcessionSelection, b: ConcessionSelection): boolean {
-	return (
-		Object.keys(a).length === Object.keys(b).length &&
-		Object.entries(a).every(([key, value]) => b[key] === value)
-	);
-}
-
 export function sameSourceRange(a: SourceRange, b: SourceRange): boolean {
 	return (
 		a.start.sourceKey === b.start.sourceKey &&

@@ -12,6 +12,8 @@ import type * as admin from "../admin.js";
 import type * as contract from "../contract.js";
 import type * as playbookItems from "../playbookItems.js";
 import type * as playbookValidators from "../playbookValidators.js";
+import type * as savedContractValidators from "../savedContractValidators.js";
+import type * as savedContracts from "../savedContracts.js";
 import type * as sourceValidators from "../sourceValidators.js";
 
 import type {
@@ -25,6 +27,8 @@ declare const fullApi: ApiFromModules<{
   contract: typeof contract;
   playbookItems: typeof playbookItems;
   playbookValidators: typeof playbookValidators;
+  savedContractValidators: typeof savedContractValidators;
+  savedContracts: typeof savedContracts;
   sourceValidators: typeof sourceValidators;
 }>;
 

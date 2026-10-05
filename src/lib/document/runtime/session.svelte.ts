@@ -1,4 +1,4 @@
-import { sameSelection, type ConcessionSelection } from './types';
+import { sameSelection, type ConcessionSelection } from '$lib/playbook/model';
 
 /** Workspace intent, deliberately not persisted across reloads. */
 export class ContractWorkspaceSession {

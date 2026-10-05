@@ -1,7 +1,9 @@
 @import 'tailwindcss';
+@import '@fontsource-variable/inter';
 
 @theme {
-	--font-sans: Arial, Helvetica, sans-serif;
+	--font-sans: 'Inter Variable', Inter, sans-serif;
+	--font-document: Arial, Helvetica, sans-serif;
 
 	--color-canvas: #f1f3f4;
 	--color-surface: #ffffff;
@@ -25,13 +27,13 @@
 }
 
 :root {
-	--app-header-height: 51px;
+	--app-header-height: 36px;
 	--document-viewport-gap: 16px;
 }
 
-@media (max-width: 650px) {
+@media (min-width: 768px) {
 	:root {
-		--app-header-height: 48px;
+		--app-header-height: 41px;
 	}
 }
 

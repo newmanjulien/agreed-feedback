@@ -11,6 +11,7 @@
 	import { tick, untrack, onMount, onDestroy, type Snippet } from 'svelte';
 	import type { ContractChange, SourcePoint, SourceRange } from '$lib/playbook/model';
 	import { pointPosition } from '$lib/contract/source-index';
+	import { unitsInRange } from '$lib/contract/ranges';
 	import { EMPTY_PREVIEW_CHANGES, type ConcessionSelection } from '$lib/document/runtime/types';
 	import { recordColdStart } from '$lib/document/runtime/render-perf';
 	import { prewarmSavedConcessions } from '$lib/document/runtime/prewarm';
@@ -100,11 +101,11 @@
 			controller = highlights;
 		void commit;
 		if (!root || !controller) return;
-		controller.contentCommitted(commit?.changedPages);
+		if (commit) controller.contentCommitted(commit.layoutEpoch, commit.changedPages);
 	});
 	$effect(() => {
 		void pageScale;
-		highlights?.invalidateLayout();
+		highlights?.projectionChanged();
 	});
 	const authoringRanges = new Map<
 		SourceRange,
@@ -133,9 +134,7 @@
 				return [];
 			}
 			const keys = new Set(
-				index.units
-					.filter((unit) => unit.position < end && unit.position + unit.length > start)
-					.map((unit) => unit.blockKey)
+				(start < end ? unitsInRange(index, sourceRange) : []).map((unit) => unit.blockKey)
 			);
 			const pages = commit.pages.filter((page) =>
 				page.placements.some(({ fragment }) => keys.has(fragment.blockKey))
@@ -292,11 +291,13 @@
 		if (!root || !index) return;
 		// A removed effect leaves the owning item open at its first real trigger.
 		const fallbackTrigger = point
-			? source.geometry?.triggersContainingPoint(point).find(
-					(trigger) =>
-						trigger.range.start.sourceKey === point.sourceKey &&
-						trigger.range.start.offset === point.offset
-				)
+			? source.geometry
+					?.triggersContainingPoint(point)
+					.find(
+						(trigger) =>
+							trigger.range.start.sourceKey === point.sourceKey &&
+							trigger.range.start.offset === point.offset
+					)
 			: undefined;
 		const fallback = fallbackTrigger
 			? [...(source.geometry?.triggerIds.get(fallbackTrigger.id) ?? [])][0]

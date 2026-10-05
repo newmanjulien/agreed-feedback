@@ -1,4 +1,4 @@
-const DEFAULT_HEADER_HEIGHT = 51;
+const DEFAULT_HEADER_HEIGHT = 41;
 const DEFAULT_VIEWPORT_GAP = 16;
 
 function cssPixelValue(styles: CSSStyleDeclaration, property: string, fallback: number) {

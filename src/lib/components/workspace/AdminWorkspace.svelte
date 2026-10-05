@@ -2,11 +2,15 @@
 	import { untrack, onMount, tick } from 'svelte';
 	import { beforeNavigate } from '$app/navigation';
 	import { createContractWorkspace, setContractWorkspace } from '$lib/document/runtime/context';
-	import type { ContractSourceInput } from '$lib/document/runtime/source.svelte';
-	import { recordContractInput } from '$lib/document/runtime/render-perf';
+	import {
+		recordAdminQueryOwner,
+		recordAdminSourceUpdate,
+		recordContractInput
+	} from '$lib/document/runtime/render-perf';
 	import { sameSourceRange, snapshotPreviewChanges } from '$lib/document/runtime/types';
 	import { env } from '$env/dynamic/public';
-	import { useConvexClient } from 'convex-svelte';
+	import { useConvexClient, useQuery } from 'convex-svelte';
+	import { api } from '../../../convex/_generated/api';
 	import { AuthoringSession } from '$lib/playbook/authoring.svelte';
 	import { convexSaveTransport } from '$lib/playbook/save-transport';
 	import type { OperationStatus } from '$lib/components/chrome/operation-status';
@@ -16,11 +20,14 @@
 	import PlaybookEditor from '$lib/components/playbook/PlaybookEditor.svelte';
 	import WorkspaceChrome from './WorkspaceChrome.svelte';
 	import { setInteractionOwner } from '$lib/components/ui/interactions';
-	let { data }: { data: ContractSourceInput } = $props();
 	setInteractionOwner(Symbol('authoring-workspace'));
+	const client = env.PUBLIC_CONVEX_URL ? useConvexClient() : null;
+	// Query effects belong to this component and unsubscribe when it leaves.
+	const data = client
+		? { blocks: useQuery(api.contract.getBlocks, {}), items: useQuery(api.playbookItems.list, {}) }
+		: { blocks: { error: true }, items: { error: true } };
 	const workspace = setContractWorkspace(untrack(() => createContractWorkspace(data)));
 	const { source, renderer, viewer } = workspace;
-	const client = env.PUBLIC_CONVEX_URL ? useConvexClient() : null;
 	const authoring = new AuthoringSession(client ? convexSaveTransport(client) : null);
 	$effect(() => {
 		const { compiled, geometry, geometryVersion, items } = source;
@@ -39,7 +46,10 @@
 		}, 2500);
 		return () => clearTimeout(timer);
 	});
-	$effect(() => workspace.accept(data));
+	$effect(() => {
+		workspace.accept(data);
+		recordAdminSourceUpdate();
+	});
 	const flow: AuthoringFlow = new AuthoringFlow(authoring, () => ({
 		index: source.compiled?.index ?? null,
 		geometry: source.geometry,
@@ -105,13 +115,17 @@
 		flow.cancel();
 	});
 	onMount(() => {
+		const releaseOwner = client ? recordAdminQueryOwner() : undefined;
 		const warn = (event: BeforeUnloadEvent) => {
 			if (!flow.hasUnsavedWork) return;
 			event.preventDefault();
 			event.returnValue = '';
 		};
 		window.addEventListener('beforeunload', warn);
-		return () => window.removeEventListener('beforeunload', warn);
+		return () => {
+			window.removeEventListener('beforeunload', warn);
+			releaseOwner?.();
+		};
 	});
 </script>
 
@@ -120,7 +134,7 @@
 	<main
 		oninputcapture={recordContractInput}
 		onclickcapture={recordContractInput}
-		class="pt-6 pb-12 admin-selection-enabled"
+		class="pt-14 pb-12 admin-selection-enabled min-[1000px]:pt-6"
 		aria-label="Contract authoring"
 	>
 		{#snippet panelContent()}{#if entry && source.renderSource}{#key entry.key}<PlaybookEditor

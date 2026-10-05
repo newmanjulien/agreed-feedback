@@ -1,13 +1,15 @@
 import type { DocumentOverlayItem } from './document-overlay';
 import type { SourceIndex } from '../contract/source-index';
-import type { ConcessionSelection } from '../document/runtime/types';
-import { changesConflict } from './conflicts';
+import type { ConcessionSelection } from './model';
+import { createChangeConflictChecker } from './conflicts';
 export function selectedItems(
 	items: readonly DocumentOverlayItem[],
 	selection: ConcessionSelection
 ) {
 	return items.flatMap((item) => {
-		const concession = item.concessions.find((c) => c.id === selection[item.itemId]);
+		const selected = selection[item.itemId];
+		if (selected === undefined) return [];
+		const concession = item.concessions.find((c) => c.id === selected);
 		return concession ? [{ itemId: item.itemId, concession }] : [];
 	});
 }
@@ -22,10 +24,11 @@ export function conflictsForConcession(
 		.find((i) => i.itemId === itemId)
 		?.concessions.find((c) => c.id === concessionId);
 	if (!candidate) return [];
+	const conflicts = createChangeConflictChecker(index);
 	return selectedItems(items, selection).filter(
 		(a) =>
 			a.itemId !== itemId &&
-			candidate.changes.some((x) => a.concession.changes.some((y) => changesConflict(index, x, y)))
+			candidate.changes.some((x) => a.concession.changes.some((y) => conflicts(x, y)))
 	);
 }
 export function activeConflicts(
@@ -34,13 +37,12 @@ export function activeConflicts(
 	selection: ConcessionSelection
 ) {
 	const active = selectedItems(items, selection);
+	const conflicts = createChangeConflictChecker(index);
 	return active.filter((a, i) =>
 		active.some(
 			(b, j) =>
 				i !== j &&
-				a.concession.changes.some((x) =>
-					b.concession.changes.some((y) => changesConflict(index, x, y))
-				)
+				a.concession.changes.some((x) => b.concession.changes.some((y) => conflicts(x, y)))
 		)
 	);
 }

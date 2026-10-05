@@ -1,6 +1,6 @@
 import { tick } from 'svelte';
 import { ContractCompositionEngine } from '$lib/contract/compose';
-import type { ContractChange } from '$lib/playbook/model';
+import { sameSelection, type ContractChange } from '$lib/playbook/model';
 import { paginatePreparedDocument } from '../pagination/paginate';
 import { reconcilePages } from '../pagination/reconcile';
 import { type LayoutProfiler, StaleLayoutProfileError } from '../pagination/profiler';
@@ -12,7 +12,6 @@ import {
 	type RenderPerfSample
 } from './render-perf';
 import {
-	sameSelection,
 	samePreviewChanges,
 	EMPTY_PREVIEW_CHANGES,
 	type ConcessionSelection,

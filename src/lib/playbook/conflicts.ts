@@ -1,52 +1,58 @@
-import type { ContractChange, SourcePoint, SourceRange } from './model';
+import type { ContractChange } from './model';
 import { activatedBlock } from './geometry';
-import { resolvePoint, type SourceIndex } from '../contract/source-index';
-import {
-	comparePoints,
-	containsPoint,
-	isEmptyRange,
-	localContainer,
-	rangesOverlap
-} from '../contract/ranges';
+import { pointPosition, resolvePoint, type SourceIndex } from '../contract/source-index';
+import { localContainer } from '../contract/ranges';
 
 export interface ChangeFootprint {
-	consumedRange?: SourceRange;
-	insertionPoint?: SourcePoint;
-	structuralKeys: string[];
+	start: number;
+	end: number;
+	block: string;
+	structuralBlock?: string;
 }
 
 export function changeFootprint(index: SourceIndex, change: ContractChange): ChangeFootprint {
 	localContainer(index, change.range);
-	const block = activatedBlock(index, change);
+	const structuralBlock = activatedBlock(index, change);
 	return {
-		...(isEmptyRange(index, change.range)
-			? { insertionPoint: change.range.start }
-			: { consumedRange: change.range }),
-		structuralKeys: block ? [block] : []
+		start: pointPosition(index, change.range.start),
+		end: pointPosition(index, change.range.end),
+		block: resolvePoint(index, change.range.start).blockKey,
+		structuralBlock
 	};
 }
 
-export function changesConflict(index: SourceIndex, a: ContractChange, b: ContractChange): boolean {
-	const x = changeFootprint(index, a);
-	const y = changeFootprint(index, b);
-	const touches = (footprint: ChangeFootprint, block: string): boolean => {
-		const point = footprint.insertionPoint ?? footprint.consumedRange?.start;
-		return Boolean(point && resolvePoint(index, point).blockKey === block);
-	};
+function footprintsConflict(x: ChangeFootprint, y: ChangeFootprint): boolean {
+	const xInsertion = x.start === x.end,
+		yInsertion = y.start === y.end;
 	return Boolean(
-		x.structuralKeys.some((block) => touches(y, block)) ||
-		y.structuralKeys.some((block) => touches(x, block)) ||
-		(x.consumedRange &&
-			y.consumedRange &&
-			rangesOverlap(index, x.consumedRange, y.consumedRange)) ||
-		(x.insertionPoint &&
-			y.insertionPoint &&
-			comparePoints(index, x.insertionPoint, y.insertionPoint) === 0) ||
-		(x.insertionPoint &&
-			y.consumedRange &&
-			containsPoint(index, y.consumedRange, x.insertionPoint, true)) ||
-		(y.insertionPoint &&
-			x.consumedRange &&
-			containsPoint(index, x.consumedRange, y.insertionPoint, true))
+		x.structuralBlock === y.block ||
+		y.structuralBlock === x.block ||
+		(xInsertion && yInsertion
+			? x.start === y.start
+			: xInsertion
+				? y.start <= x.start && x.start <= y.end
+				: yInsertion
+					? x.start <= y.start && y.start <= x.end
+					: x.start < y.end && y.start < x.end)
 	);
+}
+
+export function changesConflict(index: SourceIndex, a: ContractChange, b: ContractChange): boolean {
+	return footprintsConflict(changeFootprint(index, a), changeFootprint(index, b));
+}
+
+/** Request-local memo: each change's source coordinates are resolved at most once.
+ * Keeping it local also accepts in-place draft edits on the next validation call.
+ */
+export function createChangeConflictChecker(index: SourceIndex) {
+	const footprints = new WeakMap<ContractChange, ChangeFootprint>();
+	const footprint = (change: ContractChange) => {
+		let value = footprints.get(change);
+		if (!value) {
+			value = changeFootprint(index, change);
+			footprints.set(change, value);
+		}
+		return value;
+	};
+	return (a: ContractChange, b: ContractChange) => footprintsConflict(footprint(a), footprint(b));
 }

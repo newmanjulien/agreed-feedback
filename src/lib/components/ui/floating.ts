@@ -10,8 +10,12 @@ import {
 	type VirtualElement
 } from '@floating-ui/dom';
 import type { CloseReason } from './interactions';
+import { countOverlayWork } from '$lib/document/runtime/render-perf';
 
-export type FloatingAnchor = HTMLElement | VirtualElement;
+export type FloatingVirtualAnchor = VirtualElement & {
+	subscribe?: (update: () => void) => () => void;
+};
+export type FloatingAnchor = HTMLElement | FloatingVirtualAnchor;
 export interface FloatingOptions {
 	anchor: FloatingAnchor;
 	placement: Placement;
@@ -23,6 +27,54 @@ export interface FloatingOptions {
 	onReady?: () => void;
 }
 
+type AnchorWatch = { context: Element; update: () => void };
+const anchorObservers = new WeakMap<
+	Document,
+	{
+		observer: MutationObserver;
+		watches: Set<AnchorWatch>;
+	}
+>();
+
+/** One removal observer per document, active only while surfaces own references. */
+function watchAnchor(context: Element, update: () => void) {
+	const document = context.ownerDocument;
+	let shared = anchorObservers.get(document);
+	if (!shared) {
+		const watches = new Set<AnchorWatch>();
+		const observer = new MutationObserver((records) => {
+			for (const watch of watches) {
+				const affected = records.some((record) =>
+					record.type === 'attributes'
+						? record.oldValue !== (record.target as Element).getAttribute(record.attributeName!) &&
+							record.target.contains(watch.context)
+						: Array.from(record.removedNodes).some((node) => node.contains(watch.context))
+				);
+				if (affected) watch.update();
+			}
+		});
+		observer.observe(document.body, {
+			childList: true,
+			subtree: true,
+			attributes: true,
+			attributeOldValue: true,
+			attributeFilter: ['disabled', 'hidden', 'class', 'style']
+		});
+		shared = { observer, watches };
+		anchorObservers.set(document, shared);
+	}
+	const owner = shared;
+	const watch = { context, update };
+	owner.watches.add(watch);
+	return () => {
+		if (!owner.watches.delete(watch)) return;
+		if (!owner.watches.size) {
+			owner.observer.disconnect();
+			anchorObservers.delete(document);
+		}
+	};
+}
+
 /** Native top-layer rendering keeps DOM ownership and fieldset inheritance intact. */
 export function positionFloating(surface: HTMLElement, options: FloatingOptions) {
 	const { anchor, close } = options;
@@ -30,6 +82,7 @@ export function positionFloating(surface: HTMLElement, options: FloatingOptions)
 	let disposed = false;
 	let ready = false;
 	let revision = 0;
+	let frame: number | undefined;
 	Object.assign(surface.style, {
 		position: 'fixed',
 		inset: 'auto',
@@ -48,6 +101,7 @@ export function positionFloating(surface: HTMLElement, options: FloatingOptions)
 
 	async function update() {
 		if (disposed) return;
+		countOverlayWork('floatingUpdates');
 		const token = ++revision;
 		if (anchorUnavailable()) {
 			close('anchor-removal');
@@ -92,26 +146,38 @@ export function positionFloating(surface: HTMLElement, options: FloatingOptions)
 		}
 	}
 
-	const release = autoUpdate(anchor, surface, () => void update(), { animationFrame: true });
-	// Removal and inherited disabled state can change without moving the reference.
-	const observer = new MutationObserver(() => {
-		if (!disposed && anchorUnavailable()) {
-			revision++;
-			close('anchor-removal');
-		}
-	});
-	if (context)
-		observer.observe(document.body, {
-			childList: true,
-			subtree: true,
-			attributes: true,
-			attributeFilter: ['disabled']
+	function scheduleUpdate() {
+		if (disposed || frame !== undefined) return;
+		// Discard an in-flight position as soon as its reference changes.
+		revision++;
+		frame = requestAnimationFrame(() => {
+			frame = undefined;
+			void update();
 		});
+	}
+	const release = autoUpdate(anchor, surface, scheduleUpdate, {
+		animationFrame: false,
+		// A selection reference moves through its subscription, not its document-sized context.
+		layoutShift: anchor instanceof HTMLElement
+	});
+	const releaseAnchor =
+		anchor instanceof HTMLElement ? undefined : anchor.subscribe?.(scheduleUpdate);
+	const releaseRemoval = context
+		? watchAnchor(context, () => {
+				if (disposed) return;
+				if (!context.isConnected || context.matches(':disabled')) {
+					revision++;
+					close('anchor-removal');
+				} else scheduleUpdate();
+			})
+		: undefined;
 	return () => {
 		disposed = true;
 		revision++;
+		if (frame !== undefined) cancelAnimationFrame(frame);
 		release();
-		observer.disconnect();
+		releaseAnchor?.();
+		releaseRemoval?.();
 		if (surface.matches(':popover-open')) surface.hidePopover();
 	};
 }

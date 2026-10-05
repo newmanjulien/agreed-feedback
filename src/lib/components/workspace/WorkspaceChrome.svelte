@@ -2,6 +2,8 @@
 	import { recordColdStart } from '$lib/document/runtime/render-perf';
 	import { DocumentSearchSession } from '$lib/document/search/search-session.svelte';
 	import UtilityRail from '$lib/components/chrome/UtilityRail.svelte';
+	import AppHeader from '$lib/components/chrome/AppHeader.svelte';
+	import InfoIcon from 'phosphor-svelte/lib/InfoIcon';
 	import DocumentSearchPanel from '$lib/components/search/DocumentSearchPanel.svelte';
 	import AppStatus from '$lib/components/chrome/AppStatus.svelte';
 	import MagnifyingGlassIcon from 'phosphor-svelte/lib/MagnifyingGlassIcon';
@@ -23,8 +25,21 @@
 	const protect = protectedInteraction();
 	let {
 		variant = 'rep',
-		feedback = null
-	}: { variant?: HelpVariant; feedback?: OperationStatus | null } = $props();
+		feedback = null,
+		companyName = null,
+		saving = false,
+		canSave = true,
+		dirty = false,
+		onSave
+	}: {
+		variant?: HelpVariant;
+		feedback?: OperationStatus | null;
+		companyName?: string | null;
+		saving?: boolean;
+		canSave?: boolean;
+		dirty?: boolean;
+		onSave?: () => void;
+	} = $props();
 	const { source, session, renderer, viewer } = getContractWorkspace();
 	let helpVisible = $state(false);
 	onMount(() => {
@@ -129,29 +144,26 @@
 	});
 </script>
 
-<header
-	class="sticky top-0 z-40 flex h-[var(--app-header-height)] items-center border-b border-line bg-surface/96 px-[18px] backdrop-blur-[12px] max-[650px]:px-3"
->
-	<p class="m-0 min-w-0 flex-1 truncate text-sm text-ink-secondary">
-		{variant === 'admin'
-			? 'Add and edit contract instructions (beta)'
-			: 'Understand and negotiate the contract (beta)'}
-	</p>
-	<div class="flex shrink-0 items-center gap-1">
-		<div use:protect class="hidden max-[999px]:block">
-			<SquareIconButton
-				bind:element={mobileSearchButton}
-				type="button"
-				disabled={!searchEnabled}
-				aria-label="Search"
-				aria-pressed={searchOpen}
-				aria-controls="document-search"
-				onclick={() => mobileSearchButton && toggleSearch(mobileSearchButton)}
+<AppHeader>
+	{#snippet actions()}
+		{#if onSave}
+			<p
+				class="min-w-0 truncate text-xs text-ink-secondary sm:text-sm"
+				title={companyName ?? 'New contract'}
 			>
-				<MagnifyingGlassIcon aria-hidden="true" size={19} weight="regular" />
-			</SquareIconButton>
-		</div>
-	</div>
+				{companyName ?? 'New contract'}
+			</p>
+			<button
+				use:protect
+				type="button"
+				disabled={!canSave || saving}
+				onclick={onSave}
+				class="shrink-0 rounded bg-[#171717] px-2 py-1 text-[11px] text-white disabled:opacity-50 sm:px-3 sm:text-xs"
+				aria-label={dirty ? 'Save contract, unsaved changes' : 'Save contract'}
+				>{saving ? 'Saving…' : 'Save contract'}</button
+			>
+		{/if}
+	{/snippet}
 	<div
 		class="pointer-events-none absolute top-[calc(100%+20px)] right-0 left-0 flex justify-center max-[999px]:top-[calc(100%+8px)] max-[999px]:right-3 max-[999px]:left-auto max-[999px]:w-[min(454px,calc(100vw-24px))] max-[999px]:flex-col max-[999px]:items-end max-[999px]:gap-2"
 	>
@@ -179,7 +191,30 @@
 			/>
 		</div>
 	</div>
-</header>
+</AppHeader>
+
+<div
+	use:protect
+	class="fixed top-[calc(var(--app-header-height)+8px)] left-2 z-20 flex gap-1 rounded-lg border border-line bg-surface shadow-sm min-[1000px]:hidden"
+>
+	<SquareIconButton
+		bind:element={mobileSearchButton}
+		type="button"
+		disabled={!searchEnabled}
+		aria-label="Search contract"
+		aria-pressed={searchOpen}
+		aria-controls="document-search"
+		onclick={() => mobileSearchButton && toggleSearch(mobileSearchButton)}
+	>
+		<MagnifyingGlassIcon aria-hidden="true" size={19} weight="regular" />
+	</SquareIconButton>
+	<SquareIconButton
+		type="button"
+		aria-label="Help: How Agreed works"
+		onclick={() => (helpVisible = true)}
+		><InfoIcon aria-hidden="true" size={19} weight="regular" /></SquareIconButton
+	>
+</div>
 
 <div
 	use:protect

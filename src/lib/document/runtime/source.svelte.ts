@@ -12,7 +12,7 @@ export interface ContractSourceInput {
 	items: QueryValue<PlaybookItemRecord[]>;
 }
 
-/** Route-local publication of app-scoped pure semantics. Query failures retain accepted data. */
+/** Workspace-owned source semantics. Query failures retain accepted data. */
 export class ContractSourceController {
 	items = $state.raw<readonly PlaybookItemRecord[] | null>(null);
 	compiled = $state.raw<CompiledContract | null>(null);
