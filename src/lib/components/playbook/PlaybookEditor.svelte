@@ -35,6 +35,7 @@
 	const saving = $derived(phase?.kind === 'saving');
 	const forwardDisabled = $derived(
 		!session.canEdit ||
+			flow.creationIncomplete ||
 			Boolean(actionError) ||
 			(!(creating && (!flow.lastStep || flow.addingConcession)) && !session.canSave)
 	);

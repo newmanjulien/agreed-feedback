@@ -27,6 +27,7 @@
 	<textarea
 		class="block min-h-28 w-full resize-y rounded-base border border-line bg-surface px-3 py-2 text-ink placeholder:text-ink-muted focus:border-accent focus:outline-2 focus:outline-accent/18 focus:outline-offset-1"
 		aria-label="Primary replacement clause"
+		required
 		placeholder="Write the text that would replace the clause you highlighted"
 		bind:value={
 			() =>
@@ -38,6 +39,7 @@
 	<textarea
 		class="block min-h-28 w-full resize-y rounded-base border border-line bg-surface px-3 py-2 text-ink placeholder:text-ink-muted focus:border-accent focus:outline-2 focus:outline-accent/18 focus:outline-offset-1"
 		aria-label="Concession description"
+		required
 		placeholder="Explain the concession in plain English so reps understand the change they're making"
 		bind:value={concession.description}></textarea>
 	<div>
