@@ -48,6 +48,7 @@
 			onSelect={bindings?.onSelect ?? (() => false)}
 		>
 			{#snippet panelContent()}{#if entry.active && bindings}{@render bindings.panelContent()}{/if}{/snippet}
+			{#snippet footerContent()}{#if entry.active && bindings?.footerContent}{@render bindings.footerContent()}{/if}{/snippet}
 		</ContractViewer>
 	</div>
 </div>

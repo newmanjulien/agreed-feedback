@@ -2,6 +2,7 @@
 	import { documentAnnotations } from '$lib/playbook/document-overlay';
 	import { onDestroy, onMount, untrack } from 'svelte';
 	import { beforeNavigate, goto } from '$app/navigation';
+	import { navigating } from '$app/state';
 	import type { BeforeNavigate } from '@sveltejs/kit';
 	import { useConvexClient } from 'convex-svelte';
 	import { api } from '../../../convex/_generated/api';
@@ -21,6 +22,10 @@
 	import WorkspaceChrome from './WorkspaceChrome.svelte';
 	import { recordContractInput } from '$lib/document/runtime/render-perf';
 	import { setInteractionOwner } from '$lib/components/ui/interactions';
+	import { sameSelection } from '$lib/playbook/model';
+	import type { ConcessionSelection, ContractRenderSource } from '$lib/document/runtime/types';
+	import { composeExport } from '$lib/contract/export/content';
+	import { downloadWord, prepareWord, retireWordUrl } from '$lib/contract/export/word';
 	let {
 		snapshot,
 		initialContract,
@@ -138,6 +143,7 @@
 	onDestroy(() => {
 		active = false;
 		historyEvents.abort();
+		invalidateWord();
 		persistence.destroy();
 	});
 	let leaving = $state(false);
@@ -337,6 +343,140 @@
 		selectedItemId = null;
 		selectedAnnotationId = null;
 	}
+	let exportError = $state<string | null>(null);
+	type WordInput = {
+		source: ContractRenderSource;
+		concessions: ConcessionSelection;
+		companyName: string;
+	};
+	let wordInput: WordInput | null = null;
+	let wordAttempted = false;
+	let wordAttempt = $state.raw<{ input: WordInput; controller: AbortController } | null>(null);
+	const preparingWord = $derived(wordAttempt !== null);
+	let preparedWord = $state.raw<{ input: WordInput; url: string } | null>(null);
+	const savedExportInput = $derived.by<WordInput | null>(() => {
+		if (persistence.pending || persistence.deleted || !source.renderSource) return null;
+		return {
+			source: source.renderSource,
+			concessions: Object.freeze({ ...persistence.confirmed.selectedConcessions }),
+			companyName: persistence.confirmed.companyName
+		};
+	});
+	// Eligibility is independent of export activity so preparation cannot cancel itself.
+	const eligibleExportSnapshot = $derived.by(() => {
+		const rendered = viewer.displayedSnapshot;
+		if (
+			persistence.pending ||
+			persistence.error ||
+			persistence.conflict ||
+			persistence.deleted ||
+			metadata.error ||
+			!connected ||
+			source.issue ||
+			workspace.renderer.pending ||
+			workspace.renderer.error ||
+			viewer.preparationBlocked ||
+			!viewer.ready ||
+			!viewer.visible ||
+			leaving ||
+			destination ||
+			navigationError ||
+			navigating.to ||
+			!rendered ||
+			!rendered.pages.length ||
+			rendered !== workspace.renderer.snapshot ||
+			rendered.source !== source.renderSource ||
+			rendered.previewChanges.length ||
+			!sameSelection(rendered.concessions, persistence.confirmed.selectedConcessions)
+		)
+			return null;
+		return rendered;
+	});
+	const exportSnapshot = $derived(preparingWord ? null : eligibleExportSnapshot);
+	function sameWordInput(a: WordInput | null, b: WordInput | null): boolean {
+		return (
+			a === b ||
+			Boolean(
+				a &&
+				b &&
+				a.source === b.source &&
+				a.companyName === b.companyName &&
+				sameSelection(a.concessions, b.concessions)
+			)
+		);
+	}
+	function invalidateWord() {
+		const attempt = wordAttempt;
+		wordAttempt = null;
+		attempt?.controller.abort();
+		if (preparedWord) retireWordUrl(preparedWord.url);
+		preparedWord = null;
+	}
+	$effect(() => {
+		const input = savedExportInput;
+		const rendered = eligibleExportSnapshot;
+		untrack(() => {
+			if (!sameWordInput(wordInput, input)) {
+				invalidateWord();
+				wordInput = input;
+				wordAttempted = false;
+				exportError = null;
+			}
+			// Pagination and temporary viewer guards do not change the attempt identity.
+			if (input && rendered && !wordAttempted) void prepareWordDownload(rendered, input);
+		});
+	});
+	async function prepareWordDownload(
+		captured: NonNullable<typeof eligibleExportSnapshot>,
+		input: WordInput
+	) {
+		if (!active || preparingWord) return;
+		const attempt = { input, controller: new AbortController() };
+		wordInput = input;
+		wordAttempted = true;
+		wordAttempt = attempt;
+		exportError = null;
+		try {
+			const blob = await prepareWord(
+				composeExport(captured),
+				input.companyName,
+				attempt.controller.signal
+			);
+			if (!active || wordAttempt !== attempt || !sameWordInput(input, savedExportInput)) return;
+			const url = URL.createObjectURL(blob);
+			if (preparedWord) retireWordUrl(preparedWord.url);
+			preparedWord = { input, url };
+		} catch {
+			if (
+				active &&
+				wordAttempt === attempt &&
+				!attempt.controller.signal.aborted &&
+				sameWordInput(input, savedExportInput)
+			)
+				exportError = 'We couldn’t prepare this download. Try again.';
+		} finally {
+			if (wordAttempt === attempt) wordAttempt = null;
+		}
+	}
+	function downloadPreparedWord() {
+		const captured = exportSnapshot;
+		const input = savedExportInput;
+		if (!active || !captured || !input) return;
+		if (!preparedWord || !sameWordInput(preparedWord.input, input)) {
+			// Explicit retry only prepares the file; a separate click downloads it.
+			if (!sameWordInput(wordInput, input)) invalidateWord();
+			void prepareWordDownload(captured, input);
+			return;
+		}
+		try {
+			downloadWord(preparedWord.url, input.companyName);
+			exportError = null;
+		} catch {
+			exportError = 'We couldn’t prepare this download. Try again.';
+		}
+	}
+	const actionButtonClass =
+		'cursor-pointer rounded-lg border border-accent/90 bg-accent/90 px-5 py-2.5 font-normal text-sm text-surface enabled:hover:border-accent-hover enabled:hover:bg-accent-hover focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-accent disabled:cursor-default disabled:border-line disabled:bg-control-fill disabled:text-ink-muted';
 </script>
 
 <BoxDismissal owner={interactionOwner} active={Boolean(item)} onDismiss={close} />
@@ -362,7 +502,7 @@
 {#if source.renderSource && !persistence.deleted}
 	<main
 		onclickcapture={recordContractInput}
-		class="pt-14 pb-12 min-[1000px]:pt-6"
+		class="pt-14 pb-16 min-[1000px]:pt-6"
 		aria-label="Contract document"
 	>
 		{#snippet panelContent()}{#if item}<RepPlaybookPanel
@@ -373,10 +513,52 @@
 					onToggle={toggle}
 					onClose={() => close()}
 				/>{/if}{/snippet}
+		{#snippet footerContent()}
+			<div
+				class="pt-6"
+				role="group"
+				aria-label="Contract downloads"
+				aria-busy={preparingWord}
+			>
+				<div class="flex flex-wrap justify-center gap-3">
+					<span
+						class="group/pdf relative inline-flex focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-accent"
+						role="button"
+						tabindex="0"
+						aria-disabled="true"
+						aria-label="Download as .pdf. PDF downloads are coming"
+					>
+						<button
+							type="button"
+							class={`${actionButtonClass} pointer-events-none`}
+							disabled>Download as .pdf</button
+						>
+						<span
+							role="tooltip"
+							class="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 hidden w-max max-w-72 -translate-x-1/2 rounded-base bg-ink-secondary px-2.5 py-2 text-xs leading-[1.4] text-surface group-hover/pdf:block group-focus-visible/pdf:block"
+						>PDF downloads are coming</span>
+					</span>
+					<button
+						type="button"
+						class={actionButtonClass}
+						disabled={!exportSnapshot}
+						onclick={downloadPreparedWord}>Download as .docx</button
+					>
+				</div>
+				{#if preparingWord}
+					<p class="mt-3 text-center text-sm text-ink-muted" role="status">
+						Preparing Word download…
+					</p>
+				{:else if exportError}
+					<p class="mt-3 text-center text-sm text-ink-muted" role="alert">{exportError}</p>
+				{/if}
+			</div>
+		{/snippet}
 		<DocumentViewerSlot
 			entry={resource}
 			hasPanel={Boolean(item)}
 			{panelContent}
+			{footerContent}
 			{selectedAnnotationId}
 			selectedConcessions={persistence.choices}
 			allowPlaybookNavigation={editable}

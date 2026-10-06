@@ -12,6 +12,7 @@ import { type ConcessionSelection } from './types';
 
 export interface ViewerBindings {
 	panelContent: Snippet;
+	footerContent?: Snippet;
 	selectedConcessions: ConcessionSelection;
 	hasPanel?: boolean;
 	followScroll?: boolean;

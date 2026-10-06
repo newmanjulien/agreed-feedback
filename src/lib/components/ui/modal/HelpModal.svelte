@@ -23,7 +23,7 @@
 <FullHeightModalShell title={content.title} {onClose}>
 	<div class="flex min-h-full flex-col justify-between gap-6 pt-1">
 		<div class="space-y-6">
-			<p class="text-[14px] leading-[1.45] text-ink-muted">
+			<p class="text-[14px] leading-[1.5] text-ink-muted">
 				{content.intro}
 			</p>
 
@@ -43,7 +43,7 @@
 							<div class:pb-7={index < content.steps.length - 1}>
 								<h3 class="text-[14px] leading-tight font-medium text-ink">{step.title}</h3>
 
-								<p class="mt-1.5 text-[14px] leading-[1.45] text-ink-muted">
+								<p class="mt-1.5 text-[14px] leading-[1.6] text-ink-muted">
 									{#if highlight && highlightStart >= 0}
 										{step.description.slice(0, highlightStart)}<span
 											class="rounded-[3px] [box-decoration-break:clone] [-webkit-box-decoration-break:clone]"

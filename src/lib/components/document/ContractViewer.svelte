@@ -58,6 +58,7 @@
 		hasPanel = false,
 		followScroll = false,
 		panelContent,
+		footerContent,
 		selectedConcessions,
 		onRemoveConcession,
 		selectedAnnotationId = null,
@@ -76,6 +77,7 @@
 		hasPanel?: boolean;
 		followScroll?: boolean;
 		panelContent: Snippet;
+		footerContent?: Snippet;
 		selectedConcessions: ConcessionSelection;
 		onRemoveConcession: (itemId: string) => void;
 		selectedAnnotationId?: string | null;
@@ -817,6 +819,7 @@
 			bind:documentStageElement={viewer.documentStageElement}
 			{documentContent}
 			{panelContent}
+			{footerContent}
 		/>
 	</div>
 {/if}

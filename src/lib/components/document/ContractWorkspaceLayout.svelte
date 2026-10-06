@@ -14,7 +14,8 @@
 		layoutElement = $bindable(),
 		documentStageElement = $bindable(),
 		documentContent,
-		panelContent
+		panelContent,
+		footerContent
 	}: {
 		hasPanel: boolean;
 		interactive?: boolean;
@@ -26,6 +27,7 @@
 		documentStageElement?: HTMLDivElement;
 		documentContent: Snippet;
 		panelContent: Snippet;
+		footerContent?: Snippet;
 	} = $props();
 </script>
 
@@ -57,6 +59,7 @@
 		>
 			{@render documentContent()}
 		</div>
+		{@render footerContent?.()}
 	</div>
 
 	{#if hasPanel}
