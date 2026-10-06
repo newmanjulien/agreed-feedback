@@ -51,9 +51,9 @@ npm run seed:verify
 npx convex dev
 ```
 
-For a fresh development deployment, run `npm run convex:seed`, set `APP_PASSWORD`
-in `.env.local`, and run `npm run dev`. Configure `PUBLIC_CONVEX_URL` for the
-backend. The canonical bootstrap data is `data/convex`: 113 immutable blocks and
+For a fresh development deployment, run `npm run convex:seed` and `npm run dev`.
+Configure `PUBLIC_CONVEX_URL` in `.env.local` for the backend.
+The canonical bootstrap data is `data/convex`: 113 immutable blocks and
 56 Playbook Items, containing 62 Triggers, 26 concessions and 66 changes.
 The seed command refuses to overwrite edited runtime records and resumes an
 interrupted items-first import. It is not a migration tool.
@@ -61,12 +61,6 @@ interrupted items-first import. It is not a migration tool.
 Use a fresh deployment for this schema, or explicitly migrate existing data
 before pushing it. Existing records and scheduled lifecycle jobs must be handled
 by that migration.
-
-## Website gate
-
-The private `APP_PASSWORD` protects website routes using a signed HttpOnly cookie.
-It is not Convex authorization: public admin mutations retain the existing access
-model. Backend authorization is outside this architectural rewrite.
 
 ## Verification
 

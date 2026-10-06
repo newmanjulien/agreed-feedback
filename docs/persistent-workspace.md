@@ -1,6 +1,6 @@
 # Persistent document preparation
 
-The unlocked app layout owns the shared live Admin queries, the DOM measurement
+The app layout owns the shared live Admin queries, the DOM measurement
 surface, and `DocumentResources`. Each resource retains one source controller,
 document domain, renderer, viewer state, and mounted `DocumentPage` elements.
 `RetainedViewer` moves the same wrapper between its offscreen parking element and
@@ -21,7 +21,7 @@ layout are measured after activation.
 
 ## Scheduling and candidates
 
-The unlocked layout starts shared Admin queries and code preloading, but saved
+The app layout starts shared Admin queries and code preloading, but saved
 snapshot retrieval and preparation do not wait for Admin. Admin source acceptance
 and document preparation run in background only while the saved queue is empty;
 foreground navigation wins at scheduler boundaries.
@@ -62,7 +62,7 @@ alone cannot identify separate documents. Prepared-page readiness also waits for
 the Svelte DOM update. Active interaction readiness and the first visible paint
 opportunity are separate milestones.
 
-The saved route returns an ID and loading shell after the server password gate.
+The saved route returns an ID and loading shell.
 `SavedContract` starts browser snapshot retrieval and one live Convex state query
 concurrently. That query remains the workspace's state source throughout editing;
 there is no HTTP state check or second workspace state subscription. Cached content
@@ -89,7 +89,7 @@ snapshots and an estimated 32 MiB of JSON data. Retrieval tries memory, disk, th
 existing full-snapshot endpoint. Confirmed metadata accompanies snapshots; local
 selection drafts and pending operations never enter storage. Memory eviction keeps
 the disk copy. Default Home card metadata caches the first 24 results in localStorage
-for 24 hours and renders only inside the unlocked layout. Live results replace it;
+for 24 hours and renders only inside the app layout. Live results replace it;
 pagination is disabled until the current live result is ready. Searches retain cards
 through debounce and loading, with skeletons only when no cards are available.
 All storage names include deployment URL and format version. Invalid or unavailable
@@ -152,7 +152,7 @@ were added. Do not treat the checklist as measured evidence.
   60-page inactive limit. Confirm the active viewer stays protected and data-cache
   hits remain possible after its hidden viewer is released.
 - Scroll candidates out of view, leave Home mid-preparation, hide/show the tab, and
-  leave the unlocked layout. Check cancellation, resumption, and listener/DOM cleanup.
+  leave the app layout. Check cancellation, resumption, and listener/DOM cleanup.
 - Repeat basic opens with each fallback flag disabled.
 
 ## Timing and reuse comparison
