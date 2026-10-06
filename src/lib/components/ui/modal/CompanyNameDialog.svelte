@@ -57,7 +57,7 @@
 	class="m-auto w-[calc(100%-32px)] max-w-[420px] rounded-xl border border-line bg-surface p-6 text-ink shadow-xl backdrop:bg-black/25"
 >
 	<form onsubmit={submit}>
-		<h2 id={titleId} class="mb-5 text-lg font-medium">{title}</h2>
+		<h2 id={titleId} class="mb-5 text-[17px] font-medium">{title}</h2>
 		<label class="mb-2 block text-sm" for={`${titleId}-name`}>Buyer company name</label>
 		<input
 			bind:this={input}
@@ -83,12 +83,12 @@
 				type="button"
 				disabled={busy}
 				onclick={onClose}
-				class="h-9 rounded-xl border border-[#e5e5e5] bg-white px-3 text-[13px] font-normal transition-colors hover:bg-[#f3f3f3] focus-visible:outline-1 focus-visible:outline-[#d5d5d5] disabled:opacity-50">Cancel</button
+				class="h-9 rounded-button-lg border border-[#e5e5e5] bg-white px-3 text-[13px] font-normal transition-colors hover:bg-[#f3f3f3] focus-visible:outline-1 focus-visible:outline-[#d5d5d5] disabled:opacity-50">Cancel</button
 			>
 			<button
 				type="submit"
 				disabled={busy}
-				class="h-9 rounded-xl bg-[#171717] px-3 text-[13px] font-normal text-white hover:bg-[#303030] focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-[#d5d5d5] disabled:opacity-50"
+				class="h-9 rounded-button-lg bg-[#171717] px-3 text-[13px] font-normal text-white hover:bg-[#303030] focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-[#d5d5d5] disabled:opacity-50"
 				>{busy ? busyLabel : submitLabel}</button
 			>
 		</div>

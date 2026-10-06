@@ -22,14 +22,16 @@ function sameFragment(a: PageFragment, b: PageFragment): boolean {
 	);
 }
 
-/** Reconcile complete paginator output at the same page positions, never partial work.
+/** Reconcile closed paginator pages at their final page positions.
  * Prepared objects and their tokens are immutable across requests. Their identity
  * proves content/provenance equality; geometry fingerprints cannot authorize reuse.
  */
 export function* iterateReconciledPages(
 	candidates: readonly PaginatedPage[],
 	layoutEpoch: string,
-	previous?: { readonly layoutEpoch: string; readonly pages: readonly PaginatedPage[] }
+	previous?: { readonly layoutEpoch: string; readonly pages: readonly PaginatedPage[] },
+	/** Single closed-page reconciliation omits removal accounting until completion. */
+	offset?: number
 ): Generator<undefined, PageReconciliation> {
 	const previousPages = previous?.pages ?? [];
 	const sameEpoch = previous?.layoutEpoch === layoutEpoch;
@@ -37,7 +39,8 @@ export function* iterateReconciledPages(
 	const pages: PaginatedPage[] = [],
 		changedPages: number[] = [];
 	for (const [index, candidate] of candidates.entries()) {
-		const prior = previousPages[index];
+		const position = index + (offset ?? 0);
+		const prior = previousPages[position];
 		let same = Boolean(
 			sameEpoch &&
 			prior &&
@@ -66,11 +69,11 @@ export function* iterateReconciledPages(
 				Object.freeze(candidate);
 			}
 			pages.push(candidate);
-			changedPages.push(index + 1);
+			changedPages.push(position + 1);
 		}
 		yield undefined;
 	}
-	for (let index = pages.length; index < previousPages.length; index++) {
+	for (let index = pages.length; offset === undefined && index < previousPages.length; index++) {
 		changedPages.push(index + 1);
 		yield undefined;
 	}

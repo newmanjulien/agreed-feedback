@@ -27,7 +27,7 @@
 				Incorrect password. Try again.
 			</p>{/if}
 		<button
-			class="cursor-pointer rounded-lg border-0 bg-accent p-2.5 font-normal text-surface hover:bg-accent-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+			class="cursor-pointer rounded-button-md border-0 bg-accent p-2.5 font-normal text-surface hover:bg-accent-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
 			type="submit">Continue</button
 		>
 	</form>

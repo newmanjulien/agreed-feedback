@@ -83,9 +83,9 @@
 			aria-pressed={canOpenPlaybookItems
 				? selectedAnnotationId !== null && segment.membershipIds.includes(selectedAnnotationId)
 				: undefined}
-			data-item-id={segment.target.itemId}
-			data-annotation-id={segment.target.id}
-			data-annotation-memberships={JSON.stringify(segment.membershipIds)}
+			data-item-id={profileMode ? undefined : segment.target.itemId}
+			data-annotation-id={profileMode ? undefined : segment.target.id}
+			data-annotation-memberships={profileMode ? undefined : JSON.stringify(segment.membershipIds)}
 			onkeydown={interactive && !profileMode
 				? (event) => handleKeydown(event, segment.target!.itemId, segment.target!.id)
 				: undefined}

@@ -10,7 +10,7 @@
 	import { LAYOUT_EPOCH, PAGE_FORMAT } from '$lib/document/pagination/page-format';
 	import type { PageFragment } from '$lib/document/pagination/types';
 	import type { PreparedBlock } from '$lib/document/pagination/prepare';
-	import type { BlockLayoutProfile } from '$lib/document/pagination/profile';
+	import type { BlockLayoutProfile, GeometryDetail } from '$lib/document/pagination/profile';
 	import {
 		StaleLayoutProfileError,
 		type LayoutProfileMetrics,
@@ -19,6 +19,7 @@
 	import {
 		readHeadingProfile,
 		readParagraphProfile,
+		readParagraphBounds,
 		readTableColumns,
 		readTableProfile
 	} from '$lib/document/pagination/profile-dom';
@@ -44,7 +45,20 @@
 				get epoch() {
 					return mounted && document.fonts.status === 'loaded' ? epoch : undefined;
 				},
-				profile
+				profile,
+				withBlock<T>(
+					block: PreparedBlock,
+					expected: string,
+					detail: GeometryDetail,
+					visit: (profile: BlockLayoutProfile, readExact: () => BlockLayoutProfile) => T,
+					metrics?: LayoutProfileMetrics
+				): T {
+					let result!: T;
+					profile([block], expected, metrics, detail, (measured, exact) => {
+						result = visit(measured, exact);
+					});
+					return result;
+				}
 			};
 		}
 		function invalidate() {
@@ -57,7 +71,9 @@
 		function profile(
 			blocks: readonly PreparedBlock[],
 			expectedEpoch: string,
-			metrics?: LayoutProfileMetrics
+			metrics?: LayoutProfileMetrics,
+			detail: GeometryDetail = 'exact',
+			visit?: (profile: BlockLayoutProfile, readExact: () => BlockLayoutProfile) => void
 		) {
 			const checkEpoch = () => {
 				if (!mounted || document.fonts.status !== 'loaded' || epoch !== expectedEpoch)
@@ -109,7 +125,8 @@
 							profiles[i] =
 								fragment.type === 'heading'
 									? readHeadingProfile(block, fragment)
-									: readParagraphProfile(block, fragment);
+									: ((detail === 'bounds' ? readParagraphBounds(block, fragment) : undefined) ??
+										readParagraphProfile(block, fragment));
 					});
 				});
 				if (hasTables) {
@@ -126,6 +143,19 @@
 						});
 					});
 				}
+				checkEpoch();
+				visit?.(profiles[0], () => {
+					if (profiles[0].kind !== 'paragraph' || profiles[0].lines) return profiles[0];
+					checkEpoch();
+					const block = element.children[0];
+					const fragment = fragments[0];
+					if (!(block instanceof HTMLElement) || fragment.type !== 'paragraph')
+						throw new Error('Missing scoped paragraph.');
+					read(0, () => {
+						profiles[0] = readParagraphProfile(block, fragment);
+					});
+					return profiles[0];
+				});
 				checkEpoch();
 				return { epoch: expectedEpoch, profiles };
 			} finally {

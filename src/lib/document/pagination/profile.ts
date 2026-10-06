@@ -4,7 +4,7 @@ import { fitsPage } from './page-format';
 /** CSS-pixel equivalence for observed layout coordinates, never a page-fit allowance. */
 export const LAYOUT_COORDINATE_TOLERANCE = 0.01;
 
-export type BlockLayoutProfile = HeadingLayoutProfile | ParagraphLayoutProfile | TableLayoutProfile;
+export type BlockLayoutProfile = HeadingLayoutProfile | ParagraphBounds | TableLayoutProfile;
 
 /** Request-local content association. Profiles themselves contain no provenance or page state. */
 export type LayoutProfiles = ReadonlyMap<PreparedBlock, BlockLayoutProfile>;
@@ -24,14 +24,24 @@ export interface ParagraphLine {
 	readonly bottom: number;
 }
 
-export interface ParagraphLayoutProfile {
+export type GeometryDetail = 'bounds' | 'exact';
+
+export function hasExactGeometry(profile: BlockLayoutProfile): boolean {
+	return profile.kind !== 'paragraph' || profile.lines !== undefined;
+}
+
+export interface ParagraphBounds {
 	readonly kind: 'paragraph';
 	readonly tokenCount: number;
-	/** No lines for collapsed whitespace or empty content with zero visual height. */
-	readonly lines: readonly ParagraphLine[];
+	/** Undefined for bounds-only geometry; an empty exact map means collapsed content. */
+	readonly lines?: readonly ParagraphLine[];
 	readonly marginBlockStart: number;
 	readonly marginBlockEnd: number;
 	readonly contentHeight: number;
+}
+
+export interface ParagraphLayoutProfile extends ParagraphBounds {
+	readonly lines: readonly ParagraphLine[];
 }
 
 export interface TableLayoutProfile {
@@ -77,6 +87,11 @@ export function validateBlockLayoutProfile(profile: BlockLayoutProfile): void {
 				),
 				'paragraph heights and margins'
 			);
+			requireGeometry(
+				Number.isFinite(profile.marginBlockStart + profile.contentHeight + profile.marginBlockEnd),
+				'paragraph outer height'
+			);
+			if (!profile.lines) return;
 			let nextToken = 0;
 			let previousBottom = 0;
 			for (const line of profile.lines) {
@@ -110,10 +125,6 @@ export function validateBlockLayoutProfile(profile: BlockLayoutProfile): void {
 			requireGeometry(
 				profile.lines.length > 0 || profile.contentHeight === 0,
 				'paragraph height without an observed line'
-			);
-			requireGeometry(
-				Number.isFinite(profile.marginBlockStart + profile.contentHeight + profile.marginBlockEnd),
-				'paragraph outer height'
 			);
 			return;
 		}

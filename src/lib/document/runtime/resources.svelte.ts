@@ -117,7 +117,7 @@ export class DocumentResources {
 					entry,
 					active: entry.active,
 					opening: entry.opening,
-					pages: entry.workspace.renderer.snapshot?.pages.length ?? 0,
+					pages: entry.workspace.renderer.retainedPageCount,
 					failed: Boolean(
 						entry.workspace.renderer.error ||
 						entry.workspace.source.issue ||
@@ -398,13 +398,13 @@ export class DocumentResources {
 		const removable = this.#removable(saved);
 		let count = saved.length;
 		let pages = removable.reduce(
-			(sum, entry) => sum + (entry.workspace.renderer.snapshot?.pages.length ?? 0),
+			(sum, entry) => sum + entry.workspace.renderer.retainedPageCount,
 			0
 		);
 		for (const entry of removable) {
 			if (count <= 4 && pages <= 60) break;
 			count--;
-			pages -= entry.workspace.renderer.snapshot?.pages.length ?? 0;
+			pages -= entry.workspace.renderer.retainedPageCount;
 			this.#failed.add(entry.id); // Data remains cached; navigation can still acquire it.
 			this.evict(entry.id);
 			evicted = true;

@@ -35,7 +35,7 @@
 	onMount(() => {
 		helpVisible = !isHelpHidden(variant);
 	});
-	const searchEnabled = $derived(Boolean(renderer.snapshot && viewer.visible));
+	const searchEnabled = $derived(Boolean(viewer.displayedSnapshot && viewer.visible));
 	const searchSession = new DocumentSearchSession();
 	let searchOpen = $state(false);
 	let searchPanelElement = $state<HTMLElement>();
@@ -107,8 +107,8 @@
 	$effect(() => {
 		const target = searchEnabled ? viewer.documentStageElement : undefined;
 		if (!searchEnabled) closeSearch(false);
-		void renderer.snapshot?.id;
-		const pages = renderer.snapshot?.pages ?? [];
+		void viewer.displayedSnapshot?.id;
+		const pages = viewer.displayedSnapshot?.pages ?? [];
 		let cancelled = false;
 		void tick().then(() => {
 			if (cancelled) return;
@@ -152,9 +152,9 @@
 		>
 			<AppStatus
 				{feedback}
-				renderPending={Boolean(renderer.snapshot && renderer.pending)}
-				renderError={renderer.snapshot ? renderer.error : null}
-				sourceStale={Boolean(renderer.snapshot && source.issue)}
+				renderPending={Boolean(viewer.displayedSnapshot && renderer.pending)}
+				renderError={viewer.displayedSnapshot ? renderer.error : null}
+				sourceStale={Boolean(viewer.displayedSnapshot && source.issue)}
 				onRetryRender={viewer.retry}
 			/>
 		</div>

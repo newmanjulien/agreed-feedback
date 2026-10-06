@@ -13,7 +13,7 @@
 </script>
 
 <label
-	class={`flex cursor-pointer items-start gap-2 text-[15px] leading-5 text-ink-muted has-[:disabled]:cursor-default has-[:disabled]:opacity-50 ${className}`}
+	class={`flex cursor-pointer items-start gap-2 text-[14px] leading-5 text-ink-muted has-[:disabled]:cursor-default has-[:disabled]:opacity-50 ${className}`}
 >
 	<input
 		type="checkbox"

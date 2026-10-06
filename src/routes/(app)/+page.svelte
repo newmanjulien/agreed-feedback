@@ -14,8 +14,9 @@
 	import MagnifyingGlassIcon from 'phosphor-svelte/lib/MagnifyingGlassIcon';
 	import PlusIcon from 'phosphor-svelte/lib/PlusIcon';
 	import XIcon from 'phosphor-svelte/lib/XIcon';
-	import { setInteractionOwner } from '$lib/components/ui/interactions';
+	import { getInteractionController, setInteractionOwner } from '$lib/components/ui/interactions';
 	setInteractionOwner(Symbol('home'));
+	const interactions = getInteractionController();
 	const client = env.PUBLIC_CONVEX_URL ? useConvexClient() : null;
 	const warming = createVisibleContractWarming();
 	onDestroy(() => warming.destroy());
@@ -41,8 +42,35 @@
 	const pendingSearch = $derived(search.trim() !== query);
 	let retained = $state.raw<CachedCard[]>([]);
 	let settledQuery = $state<string | null>(null);
+	function handleTyping(event: KeyboardEvent) {
+		if (
+			!searchInput ||
+			event.defaultPrevented ||
+			event.isComposing ||
+			event.ctrlKey ||
+			event.metaKey ||
+			event.altKey ||
+			event.key.length !== 1 ||
+			event.key === ' '
+		)
+			return;
+		const target = event.target;
+		if (
+			target instanceof HTMLElement &&
+			(target.isContentEditable ||
+				target.closest(
+					'input, textarea, select, [role="textbox"], [role="combobox"], [role="listbox"], [role="menu"]'
+				))
+		)
+			return;
+		event.preventDefault();
+		searchInput.value = (searchInput.value + event.key).slice(0, searchInput.maxLength);
+		searchInput.focus({ preventScroll: true });
+		searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+	}
 	onMount(() => {
 		if (settledQuery === null) retained = readCachedCards();
+		return interactions.shortcut(handleTyping);
 	});
 	const waiting = $derived(
 		pendingSearch ||
@@ -124,7 +152,7 @@
 	<div class="mx-auto max-w-[1800px]">
 		<div class="mb-6 flex items-center gap-2">
 			<div
-				class="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-xl border border-[#e5e5e5] bg-white px-3 text-[#8a8a8a] transition-colors focus-within:border-[#d5d5d5]"
+				class="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-button-lg border border-[#e5e5e5] bg-white px-3 text-[#8a8a8a] transition-colors focus-within:border-[#d5d5d5]"
 			>
 				<MagnifyingGlassIcon size={17} aria-hidden="true" />
 				<input
@@ -140,7 +168,7 @@
 					<button
 						type="button"
 						aria-label="Clear search"
-						class="-mr-1 flex size-6 shrink-0 items-center justify-center rounded-md text-[#8a8a8a] transition-colors hover:bg-[#f3f3f3] hover:text-ink focus-visible:outline-1 focus-visible:outline-[#d5d5d5]"
+						class="-mr-1 flex size-6 shrink-0 items-center justify-center rounded-button-sm text-[#8a8a8a] transition-colors hover:bg-[#f3f3f3] hover:text-ink focus-visible:outline-1 focus-visible:outline-[#d5d5d5]"
 						onclick={() => {
 							search = '';
 							searchInput?.focus();
@@ -152,7 +180,7 @@
 			</div>
 			<a
 				href="/contracts/new"
-				class="flex h-9 shrink-0 items-center gap-1.5 rounded-xl bg-[#171717] px-3 text-[13px] font-normal text-white hover:bg-[#303030]"
+				class="flex h-9 shrink-0 items-center gap-1.5 rounded-button-lg bg-[#171717] px-3 text-[13px] font-normal text-white hover:bg-[#303030]"
 				><PlusIcon size={15} aria-hidden="true" />Add New</a
 			>
 		</div>
@@ -174,7 +202,7 @@
 				<p>We couldn’t load your contracts.</p>
 				<button
 					onclick={() => window.location.reload()}
-					class="mt-4 rounded-xl border border-line bg-surface px-4 py-2 text-sm">Try again</button
+					class="mt-4 rounded-button-lg border border-line bg-surface px-4 py-2 text-sm">Try again</button
 				>
 			</div>
 		{:else if waiting && cards.length === 0}
@@ -226,7 +254,7 @@
 							settledQuery !== query ||
 							contracts.status === 'LoadingMore'}
 						onclick={() => contracts.loadMore(24)}
-						class="rounded-xl border border-[#e5e5e5] bg-white px-4 py-2 text-sm disabled:opacity-50"
+						class="rounded-button-lg border border-[#e5e5e5] bg-white px-4 py-2 text-sm disabled:opacity-50"
 						>{contracts.status === 'LoadingMore' ? 'Loading…' : 'Load more'}</button
 					>
 				</div>{/if}

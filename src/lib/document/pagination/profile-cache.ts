@@ -1,4 +1,4 @@
-import { validateBlockLayoutProfile, type BlockLayoutProfile } from './profile';
+import { hasExactGeometry, validateBlockLayoutProfile, type BlockLayoutProfile } from './profile';
 
 /** Current-document geometry plus a bounded LRU of other shapes, all for one epoch. */
 export class LayoutProfileCache {
@@ -26,7 +26,12 @@ export class LayoutProfileCache {
 	retain(epoch: string, profiles: ReadonlyMap<string, BlockLayoutProfile>): void {
 		if (epoch !== this.#epoch) throw new Error('Cannot retain stale layout profiles.');
 		const previous = this.#active;
-		this.#active = new Map(profiles);
+		this.#active = new Map(
+			[...profiles].map(([key, profile]) => {
+				const cached = previous.get(key) ?? this.#profiles.get(key);
+				return [key, cached && hasExactGeometry(cached) ? cached : profile];
+			})
+		);
 		for (const key of profiles.keys()) this.#profiles.delete(key);
 		for (const [key, profile] of previous) if (!profiles.has(key)) this.#store(key, profile);
 	}
@@ -61,7 +66,13 @@ export class LayoutProfileCache {
 				([fingerprint, profile]) => [fingerprint, normalizeProfile(profile)] as const
 			)
 		);
-		for (const [fingerprint, profile] of stored) this.#store(fingerprint, profile);
+		for (const [fingerprint, profile] of stored) {
+			const existing = this.get(epoch, fingerprint);
+			const preferred = existing && hasExactGeometry(existing) ? existing : profile;
+			stored.set(fingerprint, preferred);
+			if (this.#active.has(fingerprint)) this.#active.set(fingerprint, preferred);
+			else this.#store(fingerprint, preferred);
+		}
 		return stored;
 	}
 
@@ -87,11 +98,13 @@ function normalizeProfile(profile: BlockLayoutProfile): BlockLayoutProfile {
 						marginBlockStart: profile.marginBlockStart,
 						marginBlockEnd: profile.marginBlockEnd,
 						contentHeight: profile.contentHeight,
-						lines: Object.freeze(
-							profile.lines.map(({ startToken, endToken, top, bottom }) =>
-								Object.freeze({ startToken, endToken, top, bottom })
+						lines:
+							profile.lines &&
+							Object.freeze(
+								profile.lines.map(({ startToken, endToken, top, bottom }) =>
+									Object.freeze({ startToken, endToken, top, bottom })
+								)
 							)
-						)
 					}
 				: {
 						kind: 'table',

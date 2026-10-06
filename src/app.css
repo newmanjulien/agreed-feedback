@@ -24,6 +24,10 @@
 	--color-danger-surface-hover: #ffe4e1;
 
 	--radius-base: 14px;
+	--radius-button-sm: 4px;
+	--radius-button-md: 6px;
+	--radius-button-lg: 10px;
+	--radius-button-xl: 12px;
 }
 
 :root {

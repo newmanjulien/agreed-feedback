@@ -56,7 +56,7 @@
 
 	const creationConcession = $derived(flow.creationConcession);
 	const actionButtonClass =
-		'cursor-pointer rounded-[12px] border border-line bg-surface px-3 py-2 text-ink/80 text-[15px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3563ff]';
+		'cursor-pointer rounded-button-lg border border-line bg-surface px-3 py-2 text-ink/80 text-[14px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3563ff]';
 	const stepTitle = $derived(
 		step === 'concession' ? 'Add a concession your reps can make' : 'Other part of contract'
 	);
@@ -77,7 +77,7 @@
 <PlaybookCard label="Instruction box editor">
 	{#if !creating && draft.persistedId}
 		<div class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
-			<span class="min-w-0 text-[15px] font-medium text-ink/80"
+			<span class="min-w-0 text-[14px] font-medium text-ink/80"
 				>Edit the instructions your reps see</span
 			>
 			<div class="flex shrink-0 items-center gap-1">
@@ -114,7 +114,7 @@
 								role="menuitem"
 								tabindex="-1"
 								disabled={!session.canDelete}
-								class="w-full cursor-pointer rounded-md border-0 bg-transparent px-3 py-2 text-left text-[14px] text-danger hover:bg-danger-surface focus-visible:bg-danger-surface focus-visible:outline-2 focus-visible:outline-accent"
+								class="w-full cursor-pointer rounded-button-sm border-0 bg-transparent px-3 py-2 text-left text-[14px] text-danger hover:bg-danger-surface focus-visible:bg-danger-surface focus-visible:outline-2 focus-visible:outline-accent"
 								onclick={() => {
 									activate();
 									onDelete();
@@ -127,7 +127,7 @@
 		</div>
 	{:else}
 		<div
-			class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 text-[15px] font-medium text-ink/80"
+			class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 text-[14px] font-medium text-ink/80"
 		>
 			<span class="min-w-0">{stagedCreation ? stepTitle : 'Explain this clause for reps'}</span>
 		</div>
@@ -155,7 +155,7 @@
 					onAffectedPart={(value) => flow.setAffectedPart(value)}
 				/>
 			{:else}
-				<div class="flex flex-col gap-3 text-[15px] leading-[1.45] text-ink-muted">
+				<div class="flex flex-col gap-3 text-[14px] leading-[1.45] text-ink-muted">
 					{#if !creationConcession.changes[1]}
 						<p class="m-0 text-sm">
 							Scroll to the right spot then select the other clause of the contract which is
@@ -193,7 +193,7 @@
 				bind:value={
 					() => draft.instructions.summary ?? '', (text) => (draft.instructions.summary = text)
 				}></textarea>
-			<div class="flex min-w-0 flex-col gap-2 text-[15px] leading-[1.45] text-ink-muted">
+			<div class="flex min-w-0 flex-col gap-2 text-[14px] leading-[1.45] text-ink-muted">
 				{#each instructionsFields.slice(1) as field}
 					<PlaybookSection value={field.key} label={field.label} bind:open>
 						<textarea

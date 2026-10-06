@@ -111,7 +111,7 @@
 				type="button"
 				role="menuitem"
 				tabindex="-1"
-				class="w-full cursor-pointer rounded-md border-0 bg-transparent px-3 py-2 text-left text-[14px] text-ink-secondary hover:bg-control-fill focus-visible:bg-control-fill focus-visible:outline-2 focus-visible:outline-accent"
+				class="w-full cursor-pointer rounded-button-sm border-0 bg-transparent px-3 py-2 text-left text-[14px] text-ink-secondary hover:bg-control-fill focus-visible:bg-control-fill focus-visible:outline-2 focus-visible:outline-accent"
 				onclick={() => {
 					close();
 					onRename();
@@ -121,7 +121,7 @@
 				type="button"
 				role="menuitem"
 				tabindex="-1"
-				class="w-full cursor-pointer rounded-md border-0 bg-transparent px-3 py-2 text-left text-[14px] text-danger hover:bg-danger-surface focus-visible:bg-danger-surface focus-visible:outline-2 focus-visible:outline-accent"
+				class="w-full cursor-pointer rounded-button-sm border-0 bg-transparent px-3 py-2 text-left text-[14px] text-danger hover:bg-danger-surface focus-visible:bg-danger-surface focus-visible:outline-2 focus-visible:outline-accent"
 				onclick={() => {
 					close();
 					onDelete();

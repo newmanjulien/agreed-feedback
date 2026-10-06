@@ -34,6 +34,13 @@ export interface RenderFailure {
 export interface RenderJobMeta {
 	generation: number;
 	sourceRevision: number;
+	readonly source: ContractRenderSource;
+	readonly concessions: ConcessionSelection;
+	readonly previewChanges: readonly ContractChange[];
+	readonly layoutEpoch: string | undefined;
+	readonly pages: readonly PaginatedPage[];
+	readonly progressive: boolean;
+	readonly status: 'running' | 'failed';
 }
 export function sameSourceRange(a: SourceRange, b: SourceRange): boolean {
 	return (

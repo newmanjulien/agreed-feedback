@@ -80,7 +80,7 @@
 		<button
 			bind:this={infoButton}
 			type="button"
-			class="inline-flex cursor-help items-center justify-center rounded-md border-0 bg-transparent p-0 text-current focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+			class="inline-flex cursor-help items-center justify-center rounded-button-sm border-0 bg-transparent p-0 text-current focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
 			aria-label={label}
 			aria-describedby={tooltipId}
 			onpointerdown={(event) => (pointerType = event.pointerType)}

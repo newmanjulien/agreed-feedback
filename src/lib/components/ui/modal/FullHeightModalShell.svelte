@@ -60,7 +60,7 @@
 		</div>
 
 		<header class="min-w-0 px-4 py-4 pr-14">
-			<h2 id={titleId} class="text-lg leading-tight font-medium text-ink">{title}</h2>
+			<h2 id={titleId} class="text-[17px] leading-tight font-medium text-ink">{title}</h2>
 		</header>
 
 		{#if children}

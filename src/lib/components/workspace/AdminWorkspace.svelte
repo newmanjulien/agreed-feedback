@@ -141,6 +141,9 @@
 		class="pt-14 pb-12 admin-selection-enabled min-[1000px]:pt-6"
 		aria-label="Contract authoring"
 	>
+		<h1 class="mb-5 px-2 text-center text-[13px] leading-6 text-ink-muted/50">
+			Edit the instructions reps will see
+		</h1>
 		{#snippet panelContent()}{#if entry && source.renderSource}{#key entry.key}<PlaybookEditor
 						{flow}
 						onCancel={cancel}
@@ -171,9 +174,9 @@
 			onSelect={(itemId, triggerId) => flow.openItem(itemId, triggerId)}
 		/>
 	</main>
-	{#if renderer.snapshot}<SourceSelectionToolbar
+	{#if viewer.ready && viewer.displayedSnapshot}<SourceSelectionToolbar
 			container={viewer.documentStageElement}
-			snapshot={renderer.snapshot}
+			snapshot={viewer.displayedSnapshot}
 			enabled={flow.selectionMode !== 'inactive'}
 			autoConfirm={flow.picking}
 			onSelectionIssue={(issue) => flow.reportIssue(issue)}

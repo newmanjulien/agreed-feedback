@@ -1,5 +1,10 @@
 import type { PreparedBlock } from './prepare';
-import type { BlockLayoutProfile, LayoutProfiles } from './profile';
+import {
+	hasExactGeometry,
+	type BlockLayoutProfile,
+	type GeometryDetail,
+	type LayoutProfiles
+} from './profile';
 import { LayoutProfileCache } from './profile-cache';
 import { DocumentScheduler, type Priority } from '../runtime/scheduler';
 
@@ -25,6 +30,14 @@ export interface LayoutProfileBatch {
 export interface LayoutProfileSurface {
 	/** Undefined while fonts are loading or the surface is detached. Always read live. */
 	readonly epoch: string | undefined;
+	/** The visitor and any exact upgrade finish before the shared DOM is cleared. */
+	withBlock?<T>(
+		block: PreparedBlock,
+		expectedEpoch: string,
+		detail: GeometryDetail,
+		visit: (profile: BlockLayoutProfile, readExact: () => BlockLayoutProfile) => T,
+		metrics?: LayoutProfileMetrics
+	): T;
 	profile(
 		blocks: readonly PreparedBlock[],
 		expectedEpoch: string,
@@ -84,12 +97,82 @@ export class LayoutProfiler {
 		return () => this.#alternatives.delete(abort);
 	}
 
+	/** Synchronous single-block transactions; all geometry also stays request-local. */
+	createRequest(epoch: string, metrics?: LayoutProfileMetrics, initial?: LayoutProfiles) {
+		const profiles = new Map<PreparedBlock, BlockLayoutProfile>(initial);
+		const geometry = new Map(
+			[...profiles].map(([block, profile]) => [block.geometryFingerprint, profile])
+		);
+		const store = (block: PreparedBlock, profile: BlockLayoutProfile) => {
+			if (this.epoch !== epoch) throw new StaleLayoutProfileError();
+			validateAssociation(block, profile);
+			const stored = this.cache
+				.setBatch(epoch, new Map([[block.geometryFingerprint, profile]]))
+				.get(block.geometryFingerprint)!;
+			geometry.set(block.geometryFingerprint, stored);
+			profiles.set(block, stored);
+		};
+		const resolve = <T>(
+			block: PreparedBlock,
+			detail: GeometryDetail = 'exact',
+			advance?: (upgrade: () => void) => T
+		): T | undefined => {
+			if (this.epoch !== epoch) throw new StaleLayoutProfileError();
+			this.cache.useEpoch(epoch);
+			const key = block.geometryFingerprint;
+			const profile = geometry.get(key) ?? this.cache.get(epoch, key);
+			if (profile && (detail === 'bounds' || hasExactGeometry(profile))) {
+				if (metrics) metrics.profileCacheHits++;
+				validateAssociation(block, profile);
+				geometry.set(key, profile);
+				profiles.set(block, profile);
+				return advance?.(() => {
+					resolve(block, 'exact');
+				});
+			}
+			if (metrics) {
+				metrics.profileCacheMisses++;
+				metrics.profileUniqueMisses++;
+				metrics.profileBatchCount++;
+			}
+			const started = performance.now();
+			try {
+				if (this.surface.withBlock)
+					return this.surface.withBlock(
+						block,
+						epoch,
+						detail,
+						(measured, readExact) => {
+							store(block, measured);
+							return advance?.(() => {
+								store(block, readExact());
+							});
+						},
+						metrics
+					);
+				const batch = this.surface.profile([block], epoch, metrics);
+				if ('then' in batch)
+					throw new Error('Progressive profiling requires a synchronous surface transaction.');
+				if (batch.epoch !== epoch || batch.profiles.length !== 1)
+					throw new Error('Missing or stale single-block geometry.');
+				store(block, batch.profiles[0]);
+				return advance?.(() => {
+					resolve(block, 'exact');
+				});
+			} finally {
+				if (metrics) metrics.profileTotalMs += performance.now() - started;
+			}
+		};
+		return { profiles, resolve };
+	}
+
 	async resolve(
 		blocks: readonly PreparedBlock[],
 		metrics?: LayoutProfileMetrics,
 		checkCurrent?: () => void,
 		priority: Priority = () => 'foreground',
-		signal?: AbortSignal
+		signal?: AbortSignal,
+		detail: GeometryDetail = 'exact'
 	): Promise<LayoutProfiles> {
 		if (priority() !== 'alternative') this.beginPreparation();
 		const revision = this.#preparationRevision;
@@ -120,7 +203,8 @@ export class LayoutProfiler {
 							key = block.geometryFingerprint;
 						if (!geometry.has(key) && !misses.has(key)) {
 							const cached = this.cache.get(epoch, key);
-							if (cached) geometry.set(key, cached);
+							if (cached && (detail === 'bounds' || hasExactGeometry(cached)))
+								geometry.set(key, cached);
 							else misses.set(key, block);
 						}
 						const profile = geometry.get(key);
@@ -157,8 +241,9 @@ export class LayoutProfiler {
 					// Another serialized request may have measured these shapes while we waited.
 					const pending = candidates.filter((block) => {
 						const profile = this.cache.get(epoch, block.geometryFingerprint);
-						if (profile) geometry.set(block.geometryFingerprint, profile);
-						return !profile;
+						if (profile && (detail === 'bounds' || hasExactGeometry(profile)))
+							geometry.set(block.geometryFingerprint, profile);
+						return !profile || (detail === 'exact' && !hasExactGeometry(profile));
 					});
 					if (!pending.length) return;
 					const started = metrics ? performance.now() : 0;

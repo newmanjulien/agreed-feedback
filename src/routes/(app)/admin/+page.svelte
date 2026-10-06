@@ -2,5 +2,5 @@
 	import AdminWorkspace from '$lib/components/workspace/AdminWorkspace.svelte';
 </script>
 
-<svelte:head><title>Add and edit contract instructions | Agreed</title></svelte:head>
+<svelte:head><title>Edit contract instructions | Agreed</title></svelte:head>
 <AdminWorkspace />

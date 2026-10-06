@@ -6,8 +6,8 @@
 </script>
 
 <!-- Measurement needs the same spans and text, but never reads interaction metadata.
-     Visible source/provenance markup is unchanged. Reduced metadata is opt-in until production performance gates pass. -->
-{#if profileMode && env.PUBLIC_CONTRACT_PROFILE_METADATA === '0'}
+     Visible source/provenance markup is unchanged. Set the diagnostic flag to 1 to profile source metadata. -->
+{#if profileMode && env.PUBLIC_CONTRACT_PROFILE_METADATA !== '1'}
 	{#each tokens as token}<span
 			data-contract-token=""
 			style:font-weight={token.marks?.bold === undefined

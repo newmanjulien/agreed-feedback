@@ -116,7 +116,7 @@
 				<p class="mt-3 text-ink-muted">This contract may have been deleted.</p>
 			{:else}
 				<p role="alert">We couldn’t load this contract.</p>
-				<button class="mt-4 rounded-md border border-line bg-surface px-4 py-2" onclick={retry}
+				<button class="mt-4 rounded-button-sm border border-line bg-surface px-4 py-2" onclick={retry}
 					>Try again</button
 				>
 			{/if}

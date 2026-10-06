@@ -16,11 +16,11 @@
 		onSearchToggle?: (trigger: HTMLButtonElement) => void;
 		onOpenHelp: () => void;
 	} = $props();
-	const itemClass = 'flex flex-col items-center gap-1 text-[11px] leading-[1.2] text-ink-secondary';
+	const itemClass = 'flex flex-col items-center gap-[3px] text-[10px] leading-[1.2] text-ink-secondary';
 </script>
 
 <nav class="pointer-events-auto flex w-16 flex-col items-center" aria-label="Document tools">
-	<div class="flex flex-col items-center gap-[18px]">
+	<div class="flex flex-col items-center gap-4">
 		{#if onSearchToggle}
 			<div class={itemClass}>
 				<SquareIconButton
@@ -32,14 +32,14 @@
 					aria-controls="document-search"
 					onclick={() => searchElement && onSearchToggle?.(searchElement)}
 				>
-					<MagnifyingGlassIcon aria-hidden="true" size={22} weight="regular" />
+					<MagnifyingGlassIcon aria-hidden="true" size={20} weight="regular" />
 				</SquareIconButton>
 				<span aria-hidden="true">Search</span>
 			</div>
 		{/if}
 		<div class={itemClass}>
 			<SquareIconButton type="button" aria-label="Help: How Agreed works" onclick={onOpenHelp}>
-				<InfoIcon aria-hidden="true" size={22} weight="regular" />
+				<InfoIcon aria-hidden="true" size={20} weight="regular" />
 			</SquareIconButton>
 			<span aria-hidden="true">Help</span>
 		</div>

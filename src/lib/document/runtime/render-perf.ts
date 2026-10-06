@@ -87,6 +87,53 @@ export function recordColdStart(name: string, startedAt?: number) {
 	if (marks.length > 100) marks.shift();
 }
 
+/** DOM flush durations, separate from geometry preparation and scheduler wait time. */
+export function recordPageMount(
+	generation: number,
+	startedAt: number,
+	pageCount: number,
+	atomic = false
+) {
+	if (!enabled() || typeof window === 'undefined') return;
+	const target = window as typeof window & {
+		__contractPageMountPerf?: {
+			generation: number;
+			at: number;
+			durationMs: number;
+			pageCount: number;
+			atomic: boolean;
+		}[];
+	};
+	const samples = (target.__contractPageMountPerf ??= []);
+	samples.push({
+		generation,
+		at: startedAt,
+		durationMs: performance.now() - startedAt,
+		pageCount,
+		atomic
+	});
+	if (samples.length > 100) samples.shift();
+}
+
+/** Bounded numeric windows, including awaited DOM flushes; never retain document content. */
+export interface SchedulerWindowSample {
+	at: number;
+	budgetMs: number;
+	durationMs: number;
+	preparationCallbacks: number;
+	appendedPages: number;
+	preparationMs: number;
+	mountMs: number;
+	overruns: number;
+}
+export function recordSchedulerWindow(sample: SchedulerWindowSample) {
+	if (!enabled() || typeof window === 'undefined') return;
+	const target = window as typeof window & { __contractSchedulerPerf?: SchedulerWindowSample[] };
+	const samples = (target.__contractSchedulerPerf ??= []);
+	samples.push({ ...sample });
+	if (samples.length > 100) samples.shift();
+}
+
 /** Home-scoped observation includes browser DOM work following background slices. */
 export function observeHomeWarming(): () => void {
 	if (!enabled() || typeof PerformanceObserver === 'undefined') return () => {};
@@ -208,6 +255,9 @@ export interface RenderPerfSample extends LayoutProfileMetrics {
 	compositionCompleteAt?: number;
 	preparationCompleteAt?: number;
 	paginationCompleteAt?: number;
+	firstPageAt?: number;
+	preparationSlices: number;
+	maxPreparationSliceMs: number;
 	paintOpportunityAt?: number;
 	inputToPaintOpportunityMs?: number;
 	affectedContainers: number;
@@ -252,6 +302,8 @@ export function createPerfSample(
 		composeMs: 0,
 		prepareMs: 0,
 		profileResolveMs: 0,
+		preparationSlices: 0,
+		maxPreparationSliceMs: 0,
 		profileCacheHits: 0,
 		profileCacheMisses: 0,
 		profileUniqueMisses: 0,

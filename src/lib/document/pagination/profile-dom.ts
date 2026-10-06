@@ -3,6 +3,7 @@ import {
 	LAYOUT_COORDINATE_TOLERANCE as EPSILON,
 	type HeadingLayoutProfile,
 	type ParagraphLayoutProfile,
+	type ParagraphBounds,
 	type TableLayoutProfile
 } from './profile';
 
@@ -27,6 +28,71 @@ export function readHeadingProfile(
 	return {
 		kind: 'heading',
 		outerHeight: element.getBoundingClientRect().height + marginBlockStart + marginBlockEnd
+	};
+}
+
+/** Whole placement is supported only by the production inline paragraph structure.
+ * No line boxes or token boundaries are derived from this height read. */
+export function readParagraphBounds(
+	element: HTMLElement,
+	fragment: ParagraphFragment
+): ParagraphBounds | undefined {
+	const style = getComputedStyle(element);
+	if (
+		!element.matches('p.contract-paragraph.is-final') ||
+		fragment.emptyInsertionSlot ||
+		style.display !== 'block' ||
+		style.whiteSpace !== 'normal' ||
+		style.wordBreak !== 'normal' ||
+		style.overflowWrap !== 'normal' ||
+		style.hyphens === 'auto' ||
+		style.writingMode !== 'horizontal-tb' ||
+		style.direction !== 'ltr' ||
+		![style.paddingTop, style.paddingBottom, style.borderTopWidth, style.borderBottomWidth].every(
+			(value) => parseFloat(value) === 0
+		) ||
+		!Number.isFinite(parseFloat(style.lineHeight)) ||
+		parseFloat(style.lineHeight) <= 0
+	)
+		return undefined;
+	const leaves = [...element.querySelectorAll<HTMLElement>('[data-contract-token]')];
+	if (leaves.length !== fragment.tokens.length) return undefined;
+	for (let index = 0; index < leaves.length; index++) {
+		const leaf = leaves[index];
+		if (
+			leaf.childNodes.length !== 1 ||
+			leaf.firstChild?.nodeType !== Node.TEXT_NODE ||
+			leaf.textContent !== fragment.tokens[index].value ||
+			// Hyphens, slashes, soft breaks and non-Latin scripts can wrap inside a
+			// token. Keep the exact reader's unsupported-layout checks for those.
+			!/^[\s]*$|^\s*[\("'\[{]*[A-Za-z0-9]+[.,;:!?\)"'\]}]*\s*$/.test(fragment.tokens[index].value)
+		)
+			return undefined;
+	}
+	for (const child of element.querySelectorAll<HTMLElement>('*')) {
+		const inline = getComputedStyle(child);
+		if (
+			!child.matches('span, ins, del') ||
+			inline.display !== 'inline' ||
+			inline.position !== 'static' ||
+			inline.float !== 'none' ||
+			inline.fontSize !== style.fontSize ||
+			inline.fontFamily !== style.fontFamily ||
+			inline.lineHeight !== style.lineHeight ||
+			inline.verticalAlign !== 'baseline' ||
+			inline.whiteSpace !== style.whiteSpace ||
+			inline.wordBreak !== style.wordBreak ||
+			inline.overflowWrap !== style.overflowWrap ||
+			inline.writingMode !== style.writingMode ||
+			inline.direction !== style.direction
+		)
+			return undefined;
+	}
+	return {
+		kind: 'paragraph',
+		tokenCount: fragment.tokens.length,
+		...margins(element),
+		contentHeight: element.getBoundingClientRect().height
 	};
 }
 

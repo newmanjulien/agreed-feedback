@@ -96,7 +96,14 @@
 		const choices = persistence.choices;
 		if (resource && resources) resources.update(resource, choices);
 	});
+	let notifiedVisible = false;
 	let recordedOpening = false;
+	$effect(() => {
+		if (viewer.visible && !persistence.deleted && !source.issue && !notifiedVisible) {
+			notifiedVisible = true;
+			untrack(() => onVisible?.());
+		}
+	});
 	$effect(() => {
 		if (
 			viewer.visible &&
@@ -109,13 +116,12 @@
 			recordedOpening = true;
 			untrack(() => {
 				recordOpening(contractId);
-				onVisible?.();
 			});
 		}
 	});
 	$effect(() => {
 		if (
-			!recordedOpening &&
+			!notifiedVisible &&
 			(workspace.renderer.error || source.issue || viewer.preparationBlocked || persistence.deleted)
 		)
 			untrack(() => onFailure?.());

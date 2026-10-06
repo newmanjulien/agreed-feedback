@@ -13,9 +13,13 @@
 	import { pointPosition } from '$lib/contract/source-index';
 	import { unitsInRange } from '$lib/contract/ranges';
 	import { EMPTY_PREVIEW_CHANGES, type ConcessionSelection } from '$lib/document/runtime/types';
-	import type { Priority } from '$lib/document/runtime/scheduler';
+	import { afterPaint, type Priority } from '$lib/document/runtime/scheduler';
 	import { getDocumentResources } from '$lib/document/runtime/resources.svelte';
-	import { recordColdStart, recordDocumentReady } from '$lib/document/runtime/render-perf';
+	import {
+		recordColdStart,
+		recordDocumentReady,
+		recordPageMount
+	} from '$lib/document/runtime/render-perf';
 	import { prewarmSavedConcessions } from '$lib/document/runtime/prewarm';
 	import {
 		sourcePointBounds,
@@ -32,6 +36,7 @@
 	import { getContractWorkspace } from '$lib/document/runtime/context';
 	import { activeConflicts } from '$lib/playbook/selection-conflicts';
 	import { getDocumentViewportMetrics } from '$lib/document/document-viewport';
+	import type { PaginatedPage } from '$lib/document/pagination/types';
 	import { PAGE_FORMAT } from '$lib/document/pagination/page-format';
 	import {
 		LayoutProfiler,
@@ -84,21 +89,37 @@
 	const { source, renderer, viewer } = getContractWorkspace();
 	const interacting = $derived(active && interactive);
 	const snapshot = $derived(renderer.snapshot);
-	const displayComplete = $derived(Boolean(snapshot));
+	let activationComplete = $state(false);
+	let mountedPages = $state.raw<readonly PaginatedPage[]>([]);
+	let pageElementsSnapshot = $state.raw<typeof snapshot>();
+	let mountedGeneration = $state(0);
+	$effect(() => {
+		if (!active) activationComplete = false;
+		else if (viewer.prepared && viewer.visible) activationComplete = true;
+	});
 	let highlights = $state<DocumentHighlightController>();
 	let clauseInteractions = $state<DocumentClauseInteractions>();
 	let highlightRects = $state.raw<PageHighlights>(new Map());
 	$effect(() => {
 		const stage = viewer.documentStageElement;
-		if (!interacting || !stage || !displayComplete || !viewer.visible) return;
-		const controller = new DocumentHighlightController(stage);
-		highlights = controller;
-		const unsubscribe = controller.subscribe((rects) => {
-			highlightRects = rects;
-		});
+		if (!interacting || !stage || !viewer.visible) return;
+		const abort = new AbortController();
+		let controller: DocumentHighlightController | undefined;
+		let unsubscribe: (() => void) | undefined;
+		void afterPaint(abort.signal)
+			.then(() => {
+				if (abort.signal.aborted) return;
+				controller = new DocumentHighlightController(stage);
+				highlights = controller;
+				unsubscribe = controller.subscribe((rects) => {
+					highlightRects = rects;
+				});
+			})
+			.catch(() => {});
 		return () => {
-			unsubscribe();
-			controller.destroy();
+			abort.abort();
+			unsubscribe?.();
+			controller?.destroy();
 			highlights = undefined;
 			highlightRects = new Map();
 			authoringRanges.clear();
@@ -115,13 +136,26 @@
 			clauseInteractions = undefined;
 		};
 	});
+	let notifiedController: DocumentHighlightController | undefined;
+	let notifiedPages: readonly PaginatedPage[] = [];
 	$effect(() => {
-		const root = viewer.documentStageElement,
-			commit = snapshot,
-			controller = highlights;
-		void commit;
-		if (!root || !controller) return;
-		if (commit) controller.contentCommitted(commit.layoutEpoch, commit.changedPages);
+		const controller = highlights,
+			mounted = mountedPages;
+		const epoch = pageElementsSnapshot?.layoutEpoch ?? renderer.pending?.layoutEpoch;
+		if (!controller || !epoch) return;
+		const previous = notifiedController === controller ? notifiedPages : [];
+		const changed = mounted.filter((page, i) => page !== previous[i]).map((page) => page.number);
+		for (const page of previous.slice(mounted.length)) changed.push(page.number);
+		let cancelled = false;
+		void tick().then(() => {
+			if (cancelled) return;
+			notifiedController = controller;
+			notifiedPages = mounted;
+			controller.contentCommitted(epoch, changed);
+		});
+		return () => {
+			cancelled = true;
+		};
 	});
 	$effect(() => {
 		void pageScale;
@@ -139,7 +173,7 @@
 		const root = viewer.documentStageElement,
 			commit = snapshot,
 			controller = highlights;
-		if (!root || !commit || !controller) return;
+		if (!root || !commit || !controller || !viewer.ready) return;
 		const selected = new Set(selectedRanges);
 		for (const range of authoringRanges.keys())
 			if (!selected.has(range)) authoringRanges.delete(range);
@@ -236,7 +270,6 @@
 			window.removeEventListener('scroll', onScroll);
 		};
 	});
-	const pages = $derived(snapshot?.pages ?? []);
 	const requestedModel = $derived.by(() => {
 		try {
 			return {
@@ -286,6 +319,43 @@
 			!hasActiveConflicts
 		)
 	);
+	const partialEligible = $derived(
+		Boolean(
+			prepare &&
+			!source.issue &&
+			!requestedModel.error &&
+			!hasActiveConflicts &&
+			profiler &&
+			source.renderSource &&
+			renderer.pending?.progressive &&
+			renderer.isPreparingCurrent({
+				source: source.renderSource,
+				concessions: selectedConcessions,
+				previewChanges,
+				profiler
+			})
+		)
+	);
+	const pages = $derived(
+		activationComplete
+			? (snapshot?.pages ?? [])
+			: partialEligible
+				? renderer.pending!.pages
+				: current
+					? snapshot!.pages
+					: []
+	);
+	const targetGeneration = $derived(
+		activationComplete || current
+			? (snapshot?.id ?? 0)
+			: partialEligible
+				? renderer.pending!.generation
+				: 0
+	);
+	const incomplete = $derived(
+		!activationComplete &&
+			(!pageElementsSnapshot || pageElementsSnapshot.id !== targetGeneration || !current)
+	);
 	const canOpenPlaybookItems = $derived(
 		interacting && viewer.prepared && current && allowPlaybookNavigation && !picking
 	);
@@ -309,7 +379,9 @@
 	);
 	const displayWidth = $derived(PAGE_FORMAT.width * pageScale);
 	const displayHeight = $derived(
-		(pages.length * PAGE_FORMAT.height + Math.max(0, pages.length - 1) * PAGE_FORMAT.gap) *
+		(mountedPages.length * PAGE_FORMAT.height +
+			Math.max(0, mountedPages.length - 1) * PAGE_FORMAT.gap +
+			(incomplete ? 64 : 0)) *
 			pageScale
 	);
 	function annotationAnchor(
@@ -440,6 +512,7 @@
 				concessions: selectedConcessions,
 				previewChanges,
 				priority,
+				progressive: !activationComplete,
 				profiler
 			});
 	}
@@ -480,6 +553,7 @@
 				concessions: selection,
 				previewChanges: preview,
 				priority,
+				progressive: !activationComplete,
 				profiler: layoutProfiler
 			});
 		});
@@ -514,50 +588,96 @@
 			return;
 		return untrack(() => prewarmSavedConcessions(commit, layoutProfiler));
 	});
-	let mountedPages = $state.raw<typeof pages>([]);
-	let pageElementsSnapshot = $state.raw<typeof snapshot>();
-	let activated = $state(false);
 	$effect(() => {
-		if (!active) activated = false;
-		else if (current && pageElementsSnapshot === snapshot) activated = true;
-	});
-	$effect(() => {
-		const commit = snapshot,
+		const available = pages,
+			generation = targetGeneration,
+			epoch = current || activationComplete ? snapshot?.layoutEpoch : renderer.pending?.layoutEpoch,
+			commit = current || activationComplete ? snapshot : null,
 			enabled = prepare,
-			foreground = active || !retained,
-			layoutProfiler = profiler;
-		if (!commit || !enabled || !layoutProfiler) return;
+			layoutProfiler = profiler,
+			warm = activationComplete;
+		if (!enabled || !layoutProfiler || !generation) {
+			if (!warm)
+				untrack(() => {
+					mountedPages = [];
+					mountedGeneration = 0;
+					pageElementsSnapshot = null;
+				});
+			return;
+		}
 		const abort = new AbortController();
-		untrack(() => {
-			void (async () => {
-				if (foreground) mountedPages = commit.pages;
-				else {
-					// Keep existing elements; add only one new page per idle slice.
-					mountedPages = commit.pages.slice(0, mountedPages.length);
-					while (!abort.signal.aborted && mountedPages.length < commit.pages.length) {
-						await layoutProfiler.scheduler.run(
-							priority,
-							() => {
-								mountedPages = commit.pages.slice(0, mountedPages.length + 1);
-							},
-							abort.signal
-						);
-						await tick();
+		untrack(async () => {
+			if (warm) {
+				if (
+					mountedGeneration !== generation ||
+					mountedPages.length !== available.length ||
+					mountedPages.some((page, i) => page !== available[i])
+				) {
+					const startedAt = performance.now();
+					mountedPages = available;
+					mountedGeneration = generation;
+					await tick();
+					if (!abort.signal.aborted)
+						recordPageMount(generation, startedAt, mountedPages.length, true);
+				}
+			} else {
+				if (
+					mountedGeneration !== generation ||
+					mountedPages.some((page, i) => page !== available[i])
+				) {
+					mountedPages = [];
+					pageElementsSnapshot = null;
+					mountedGeneration = generation;
+				}
+				while (mountedPages.length < available.length) {
+					await layoutProfiler.scheduler.run(
+						priority,
+						async () => {
+							if (abort.signal.aborted) return;
+							const startedAt = performance.now();
+							const pageCount = mountedPages.length + 1;
+							mountedPages = available.slice(0, pageCount);
+							await tick();
+							if (!abort.signal.aborted) recordPageMount(generation, startedAt, pageCount);
+						},
+						abort.signal,
+						() => active || !retained,
+						'append'
+					);
+					if (mountedPages.length === 1 && epoch) {
+						await afterPaint(abort.signal);
+						renderer.acknowledgeFirstPagePaint(generation, epoch);
 					}
 				}
-				await tick();
-				if (!abort.signal.aborted) {
-					pageElementsSnapshot = commit;
-					recordColdStart(
-						foreground ? 'active-page-elements-ready' : 'background-page-elements-ready'
-					);
-				}
-			})().catch(() => {});
-		});
+			}
+			await tick();
+			if (!abort.signal.aborted && commit && mountedPages.length === commit.pages.length) {
+				pageElementsSnapshot = commit;
+				recordColdStart(active ? 'active-page-elements-ready' : 'background-page-elements-ready');
+			}
+		}).catch(() => {});
 		return () => abort.abort();
 	});
 	$effect(() => {
-		viewer.visible = active && (!retained || activated);
+		viewer.visible =
+			active &&
+			Boolean(mountedPages.length) &&
+			(activationComplete ||
+				(mountedGeneration === targetGeneration && (partialEligible || current)));
+		viewer.displayedSnapshot =
+			viewer.visible &&
+			pageElementsSnapshot &&
+			(pageElementsSnapshot.id === targetGeneration || activationComplete)
+				? pageElementsSnapshot
+				: null;
+	});
+	$effect(() => {
+		if (!viewer.visible) return;
+		const abort = new AbortController();
+		void afterPaint(abort.signal)
+			.then(() => recordColdStart('first-exact-display'))
+			.catch(() => {});
+		return () => abort.abort();
 	});
 	$effect(() => {
 		if (interacting && viewer.visible && snapshot && profiler)
@@ -592,6 +712,7 @@
 	onDestroy(() => {
 		viewer.ready = false;
 		viewer.visible = false;
+		viewer.displayedSnapshot = null;
 		viewer.documentStageElement = undefined;
 		viewer.retry = undefined;
 		viewer.restoreAnnotationFocus = undefined;
@@ -620,14 +741,6 @@
 	</div>
 {/if}
 {#if !sharedProfiles}<LayoutProfileSurface bind:surface />{/if}
-{#if retained && active && !activated && pages.length && renderer.error}
-	<div role="alert" class="mx-auto max-w-xl text-center">
-		<strong>We couldn’t display this contract.</strong>
-		<button type="button" class="ml-2 underline" onclick={interacting ? retryRender : undefined}
-			>Retry</button
-		>
-	</div>
-{/if}
 {#if !pages.length && !renderer.error}
 	{#if !retained}<LoadingPagination />{/if}
 {:else if !pages.length}
@@ -643,9 +756,9 @@
 {:else}
 	<div
 		class="viewer-root w-full"
-		class:awaiting-prepared={retained && active && !activated}
-		data-document-commit={snapshot?.id}
-		data-page-count={pages.length}
+		class:awaiting-prepared={active && !viewer.visible}
+		data-document-commit={targetGeneration}
+		data-page-count={mountedPages.length}
 		style:--contract-page-width={`${PAGE_FORMAT.width}px`}
 		style:--contract-page-height={`${PAGE_FORMAT.height}px`}
 		style:--contract-page-horizontal-padding={`${PAGE_FORMAT.horizontalPadding}px`}
@@ -675,6 +788,21 @@
 							onAnnotationSelect={selectAnnotation}
 						/>
 					{/each}
+					{#if incomplete}
+						<div
+							class="px-6 py-3 text-center text-ink-secondary"
+							role={renderer.error ? 'alert' : 'status'}
+						>
+							{#if renderer.error}
+								This document is incomplete. We couldn’t prepare the remaining pages.
+								<button
+									type="button"
+									class="ml-2 underline"
+									onclick={interacting ? retryRender : undefined}>Retry</button
+								>
+							{:else}Preparing remaining pages…{/if}
+						</div>
+					{/if}
 				</div>
 			</div>
 		{/snippet}
