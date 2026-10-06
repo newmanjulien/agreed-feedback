@@ -87,6 +87,75 @@ export function recordColdStart(name: string, startedAt?: number) {
 	if (marks.length > 100) marks.shift();
 }
 
+/** Home-scoped observation includes browser DOM work following background slices. */
+export function observeHomeWarming(): () => void {
+	if (!enabled() || typeof PerformanceObserver === 'undefined') return () => {};
+	const target = window as typeof window & {
+		__contractHomeWarmingPerf?: {
+			startedAt: number;
+			endedAt?: number;
+			longTasksSupported: boolean;
+			longTasks: { at: number; durationMs: number }[];
+		}[];
+	};
+	const sample = {
+		startedAt: performance.now(),
+		endedAt: undefined as number | undefined,
+		longTasksSupported: PerformanceObserver.supportedEntryTypes.includes('longtask'),
+		longTasks: [] as { at: number; durationMs: number }[]
+	};
+	const samples = (target.__contractHomeWarmingPerf ??= []);
+	samples.push(sample);
+	if (samples.length > 20) samples.shift();
+	recordColdStart('home-warming-start');
+	let observer: PerformanceObserver | undefined;
+	const collect = (entries: readonly PerformanceEntry[]) => {
+		for (const entry of entries) {
+			sample.longTasks.push({ at: entry.startTime, durationMs: entry.duration });
+			if (sample.longTasks.length > 100) sample.longTasks.shift();
+		}
+	};
+	if (sample.longTasksSupported) {
+		observer = new PerformanceObserver((list) => collect(list.getEntries()));
+		observer.observe({ type: 'longtask' });
+	}
+	return () => {
+		if (observer) collect(observer.takeRecords());
+		observer?.disconnect();
+		sample.endedAt = performance.now();
+		recordColdStart('home-warming-end');
+	};
+}
+
+let documentNavigation: { pathname: string; startedAt: number } | undefined;
+export function recordDocumentNavigation(pathname: string, startedAt = performance.now()) {
+	if (!enabled() || typeof window === 'undefined') return;
+	if (pathname !== '/admin' && !/^\/contracts\/[^/]+$/.test(pathname)) {
+		cancelDocumentNavigation();
+		return;
+	}
+	documentNavigation = { pathname, startedAt };
+	recordColdStart('document-navigation-start');
+}
+
+export function cancelDocumentNavigation() {
+	documentNavigation = undefined;
+}
+
+export function recordDocumentReady() {
+	if (!enabled() || typeof window === 'undefined') return;
+	const navigation = documentNavigation;
+	if (!navigation || navigation.pathname !== window.location.pathname) return;
+	recordColdStart(
+		navigation.pathname === '/admin'
+			? 'admin-navigation-to-document-ready'
+			: 'contract-navigation-to-document-ready',
+		navigation.startedAt
+	);
+	documentNavigation = undefined;
+	return navigation.startedAt;
+}
+
 /** Fixed work categories: bounded counters, no source text or backend identifiers. */
 type StartupWork = 'sourceAccept';
 type StartupCount =
@@ -130,6 +199,7 @@ export function recordDomainWork(domain: DocumentDomain) {
 
 export interface RenderPerfSample extends LayoutProfileMetrics {
 	generation: number;
+	priority?: import('./scheduler').RenderPriority;
 	sourceRevision: number;
 	requestedAt: number;
 	inputAt: number;

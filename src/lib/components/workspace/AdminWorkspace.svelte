@@ -1,32 +1,36 @@
 <script lang="ts">
-	import { untrack, onMount, tick } from 'svelte';
+	import { untrack, onMount, onDestroy, tick } from 'svelte';
 	import { beforeNavigate } from '$app/navigation';
 	import { createContractWorkspace, setContractWorkspace } from '$lib/document/runtime/context';
-	import {
-		recordAdminQueryOwner,
-		recordAdminSourceUpdate,
-		recordContractInput
-	} from '$lib/document/runtime/render-perf';
+	import { recordAdminSourceUpdate, recordContractInput } from '$lib/document/runtime/render-perf';
 	import { sameSourceRange, snapshotPreviewChanges } from '$lib/document/runtime/types';
 	import { env } from '$env/dynamic/public';
-	import { useConvexClient, useQuery } from 'convex-svelte';
-	import { api } from '../../../convex/_generated/api';
+	import { useConvexClient } from 'convex-svelte';
+	import { getAdminQueries } from '$lib/contract/admin-queries.svelte';
 	import { AuthoringSession } from '$lib/playbook/authoring.svelte';
 	import { convexSaveTransport } from '$lib/playbook/save-transport';
 	import type { OperationStatus } from '$lib/components/chrome/operation-status';
 	import { AuthoringFlow } from '$lib/playbook/authoring-flow.svelte';
-	import ContractViewer from '$lib/components/document/ContractViewer.svelte';
+	import { getDocumentResources } from '$lib/document/runtime/resources.svelte';
+	import DocumentViewerSlot from '$lib/components/document/DocumentViewerSlot.svelte';
+	import LoadingPagination from '$lib/components/document/LoadingPagination.svelte';
 	import SourceSelectionToolbar from '$lib/components/document/SourceSelectionToolbar.svelte';
 	import PlaybookEditor from '$lib/components/playbook/PlaybookEditor.svelte';
 	import WorkspaceChrome from './WorkspaceChrome.svelte';
 	import { setInteractionOwner } from '$lib/components/ui/interactions';
-	setInteractionOwner(Symbol('authoring-workspace'));
+
 	const client = env.PUBLIC_CONVEX_URL ? useConvexClient() : null;
-	// Query effects belong to this component and unsubscribe when it leaves.
-	const data = client
-		? { blocks: useQuery(api.contract.getBlocks, {}), items: useQuery(api.playbookItems.list, {}) }
-		: { blocks: { error: true }, items: { error: true } };
-	const workspace = setContractWorkspace(untrack(() => createContractWorkspace(data)));
+	const data = getAdminQueries();
+	const resources = getDocumentResources();
+	const resource = resources ? untrack(() => resources.acquire('admin', data)) : undefined;
+	if (resource && resources) untrack(() => resources.activate(resource));
+	onDestroy(() => {
+		if (resource && resources) resources.deactivate(resource);
+	});
+	setInteractionOwner(resource?.owner ?? Symbol('authoring-workspace'));
+	const workspace = setContractWorkspace(
+		resource?.workspace ?? untrack(() => createContractWorkspace(data))
+	);
 	const { source, renderer, viewer } = workspace;
 	const authoring = new AuthoringSession(client ? convexSaveTransport(client) : null);
 	$effect(() => {
@@ -47,8 +51,10 @@
 		return () => clearTimeout(timer);
 	});
 	$effect(() => {
-		workspace.accept(data);
-		recordAdminSourceUpdate();
+		if (!resources) {
+			workspace.accept(data);
+			recordAdminSourceUpdate();
+		}
 	});
 	const flow: AuthoringFlow = new AuthoringFlow(authoring, () => ({
 		index: source.compiled?.index ?? null,
@@ -115,7 +121,6 @@
 		flow.cancel();
 	});
 	onMount(() => {
-		const releaseOwner = client ? recordAdminQueryOwner() : undefined;
 		const warn = (event: BeforeUnloadEvent) => {
 			if (!flow.hasUnsavedWork) return;
 			event.preventDefault();
@@ -124,7 +129,6 @@
 		window.addEventListener('beforeunload', warn);
 		return () => {
 			window.removeEventListener('beforeunload', warn);
-			releaseOwner?.();
 		};
 	});
 </script>
@@ -151,7 +155,8 @@
 			>
 				{flow.feedback}
 			</p>{/if}
-		<ContractViewer
+		<DocumentViewerSlot
+			entry={resource}
 			hasPanel={Boolean(draft)}
 			followScroll={flow.otherClauseActive}
 			{panelContent}
@@ -179,4 +184,4 @@
 {:else if source.issue}<p role="alert">
 		We couldn’t load this contract. Please refresh to try again.
 	</p>
-{:else}<p role="status">Loading contract…</p>{/if}
+{:else}<LoadingPagination label="Loading contract" />{/if}

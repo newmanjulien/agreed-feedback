@@ -1,7 +1,7 @@
 import type { ConcessionSelection } from '$lib/document/runtime/types';
 import type { ContractBlock, ContractView, ResolvedBlock, ResolvedRun } from './model';
 import type { Trigger, ContractChange, SourceRange } from '../playbook/model';
-import type { ReplacementAtom } from './source-model';
+import type { InlineSource, ReplacementAtom } from './source-model';
 import {
 	triggerAnnotationId,
 	type AnnotationMembership,
@@ -10,8 +10,10 @@ import {
 import { activatedBlock, changeTriggerOwner } from '../playbook/geometry';
 import {
 	buildSourceIndex,
+	iterateSourceIndex,
+	iterateSourceAddresses,
+	type SourceIndex,
 	pointPosition,
-	sourceAddresses,
 	type SourceContainer
 } from './source-index';
 import { localContainer, rangeText, unitsInRange } from './ranges';
@@ -67,9 +69,11 @@ export function composeContract(
 
 /** Workspace-owned immutable source structure and resolved container/block versions. */
 export class ContractCompositionEngine {
-	readonly index;
+	#index?: SourceIndex;
+	#initialized = false;
+	#unfinishedBlocks = new Set<string>();
 	#blocks: readonly ContractBlock[];
-	#atomsByKey;
+	#atomsByKey = new Map<string, InlineSource>();
 	#items?: readonly DocumentOverlayItem[];
 	#triggers: OwnedTrigger[] = [];
 	#overlay = new WeakMap<
@@ -87,99 +91,136 @@ export class ContractCompositionEngine {
 	#patchVersions = new Map<string, string>();
 	#activationVersions = new Map<string, string>();
 	#dirtyContainers = new Set<string>();
-	#current: Map<string, Address>;
+	#current = new Map<string, Address>();
 	recomposedBlocks = 0;
 	affectedContainers = 0;
-	constructor(blocks: readonly ContractBlock[], index = buildSourceIndex(blocks)) {
+	constructor(blocks: readonly ContractBlock[], index?: SourceIndex) {
 		this.#blocks = blocks;
-		this.index = index;
-		this.#current = sourceAddresses(blocks);
-		for (const key of index.containers.keys()) this.#dirtyContainers.add(key);
-		this.#atomsByKey = new Map(
-			blocks
-				.flatMap((block) =>
-					block.kind === 'table' ? block.rows.flat().flatMap((c) => c.content) : block.content
-				)
-				.map((atom) => [atom.sourceKey, atom])
-		);
+		this.#index = index;
+	}
+	get index(): SourceIndex {
+		return (this.#index ??= buildSourceIndex(this.#blocks));
+	}
+	*#initialize(): Generator<undefined> {
+		if (this.#initialized) return;
+		const index = this.#index ?? (yield* iterateSourceIndex(this.#blocks));
+		const current = yield* iterateSourceAddresses(this.#blocks);
+		const atoms = new Map<string, InlineSource>();
+		for (const block of this.#blocks) {
+			if (block.kind === 'table') {
+				for (const row of block.rows)
+					for (const cell of row) {
+						for (const atom of cell.content) atoms.set(atom.sourceKey, atom);
+						yield undefined;
+					}
+			} else for (const atom of block.content) atoms.set(atom.sourceKey, atom);
+			yield undefined;
+		}
+		const dependencies = new Map<string, Set<string>>(),
+			dirty = new Set<string>();
 		for (const container of index.containers.values()) {
-			const dependencies = new Set<string>();
+			const targets = new Set<string>();
 			for (const unit of container.units) {
-				if (unit.kind === 'number') dependencies.add(unit.sourceKey.slice('number:'.length));
-				const atom = this.#atomsByKey.get(unit.sourceKey);
+				if (unit.kind === 'number') targets.add(unit.sourceKey.slice('number:'.length));
+				const atom = atoms.get(unit.sourceKey);
 				if (atom?.kind === 'reference') {
-					dependencies.add(atom.targetItemKey);
-					if (atom.endTargetItemKey) dependencies.add(atom.endTargetItemKey);
+					targets.add(atom.targetItemKey);
+					if (atom.endTargetItemKey) targets.add(atom.endTargetItemKey);
 				}
 			}
-			this.#dependencies.set(container.containerKey, dependencies);
+			dependencies.set(container.containerKey, targets);
+			dirty.add(container.containerKey);
+			yield undefined;
 		}
+		this.#index = index;
+		this.#current = current;
+		this.#atomsByKey = atoms;
+		this.#dependencies = dependencies;
+		this.#dirtyContainers = dirty;
+		this.#initialized = true;
 	}
 	/** Numbering accepted by the most recent composition, including optional paragraphs. */
 	get addresses(): ReadonlyMap<string, Address> {
 		return this.#current;
 	}
 	*compose(
+		input: CompositionInput,
+		options: { changedOnly?: boolean } = {}
+	): Generator<ResolvedBlock> {
+		for (const block of this.iterate(input, options)) if (block) yield block;
+	}
+	*iterate(
 		{ items, activeConcessions, previewChanges = [], view }: CompositionInput,
 		{ changedOnly = false }: { changedOnly?: boolean } = {}
-	): Generator<ResolvedBlock> {
+	): Generator<ResolvedBlock | undefined> {
+		yield* this.#initialize();
 		const blocks = this.#blocks,
 			index = this.index,
 			atomsByKey = this.#atomsByKey;
 		this.recomposedBlocks = 0;
 		this.affectedContainers = 0;
-		const changes: ChangeOrigin[] = [
-			...items.flatMap((item) => {
-				const concession = item.concessions.find((c) => c.id === activeConcessions[item.itemId]);
-				return (
-					concession?.changes.map((change, changeIndex) => ({
-						change,
-						origin: { itemId: item.itemId, concessionId: concession.id, changeIndex },
-						effect: item.annotations.find(
-							(annotation) =>
-								annotation.kind === 'concession-effect' &&
-								annotation.concessionId === concession.id &&
-								annotation.changeIndex === changeIndex
-						)
-					})) ?? []
-				);
-			}),
-			...previewChanges.map((change) => ({ change }))
-		];
-		const activations = new Map(
-			changes.flatMap((patch) => {
-				const block = activatedBlock(index, patch.change);
-				return block ? [[block, patch] as const] : [];
-			})
-		);
+		const changes: ChangeOrigin[] = [];
+		for (const item of items) {
+			const concession = item.concessions.find((c) => c.id === activeConcessions[item.itemId]);
+			for (const [changeIndex, change] of (concession?.changes ?? []).entries()) {
+				changes.push({
+					change,
+					origin: { itemId: item.itemId, concessionId: concession!.id, changeIndex },
+					effect: item.annotations.find(
+						(annotation) =>
+							annotation.kind === 'concession-effect' &&
+							annotation.concessionId === concession!.id &&
+							annotation.changeIndex === changeIndex
+					)
+				});
+				yield undefined;
+			}
+			yield undefined;
+		}
+		for (const change of previewChanges) {
+			changes.push({ change });
+			yield undefined;
+		}
+		const activations = new Map<string, ChangeOrigin>();
+		for (const patch of changes) {
+			const block = activatedBlock(index, patch.change);
+			if (block) activations.set(block, patch);
+			yield undefined;
+		}
 		// Construct and validate the entire candidate before changing accepted input state.
 		const previousAddresses = this.#current;
 		const activeKey = JSON.stringify([...activations.keys()].sort());
 		const current =
 			activeKey === this.#activeKey
 				? previousAddresses
-				: sourceAddresses(blocks, new Set(activations.keys()));
-		const activationVersions = new Map(
-			[...activations].map(([key, change]) => [key, JSON.stringify(change)])
-		);
-		const triggers =
-			items === this.#items
-				? this.#triggers
-				: items.flatMap((item) =>
-						item.triggers.map((o) => ({
-							...o,
-							itemId: item.itemId
-						}))
-					);
-		// Source coordinates and container grouping depend only on immutable saved overlays.
-		const overlays = items.map((item) => {
+				: yield* iterateSourceAddresses(blocks, new Set(activations.keys()));
+		const activationVersions = new Map<string, string>();
+		for (const [key, change] of activations) {
+			activationVersions.set(key, JSON.stringify(change));
+			yield undefined;
+		}
+		const triggers = items === this.#items ? this.#triggers : [];
+		if (items !== this.#items)
+			for (const item of items) {
+				for (const trigger of item.triggers) triggers.push({ ...trigger, itemId: item.itemId });
+				yield undefined;
+			}
+		const overlays: {
+			annotations: PositionedAnnotation[];
+			containers: Map<string, PositionedAnnotation[]>;
+		}[] = [];
+		for (const item of items) {
 			let cached = this.#overlay.get(item);
 			if (!cached) {
-				const annotations = item.annotations.map((annotation) => ({
-					...annotation,
-					start: pointPosition(index, annotation.range.start),
-					end: pointPosition(index, annotation.range.end)
-				}));
+				const annotations: PositionedAnnotation[] = [];
+				for (const annotation of item.annotations) {
+					annotations.push({
+						...annotation,
+						start: pointPosition(index, annotation.range.start),
+						end: pointPosition(index, annotation.range.end)
+					});
+					yield undefined;
+				}
 				const containers = new Map<string, PositionedAnnotation[]>();
 				for (const container of index.containers.values()) {
 					const start = container.units[0].position,
@@ -191,39 +232,42 @@ export class ContractCompositionEngine {
 							: annotation.start < last.position + last.length && annotation.end > start
 					);
 					if (local.length) containers.set(container.containerKey, local);
+					yield undefined;
 				}
 				cached = { annotations, containers };
 				this.#overlay.set(item, cached);
 			}
-			return cached;
-		});
-		const prioritized = new Map(
-			overlays.flatMap((overlay) =>
-				overlay.annotations.map(
-					(annotation) =>
-						[
-							annotation.id,
-							{
-								...annotation,
-								applied:
-									annotation.kind === 'concession-effect' &&
-									activeConcessions[annotation.itemId] === annotation.concessionId
-							}
-						] as const
-				)
-			)
-		);
-		const annotationsByContainer = new Map<string, PositionedAnnotation[]>(
-			[...index.containers.keys()].map((key) => [key, []])
-		);
+			overlays.push(cached);
+			yield undefined;
+		}
+		const prioritized = new Map<string, PositionedAnnotation>();
 		for (const overlay of overlays)
-			for (const [key, annotations] of overlay.containers)
+			for (const annotation of overlay.annotations) {
+				prioritized.set(annotation.id, {
+					...annotation,
+					applied:
+						annotation.kind === 'concession-effect' &&
+						activeConcessions[annotation.itemId] === annotation.concessionId
+				});
+				yield undefined;
+			}
+		const annotationsByContainer = new Map<string, PositionedAnnotation[]>();
+		for (const key of index.containers.keys()) {
+			annotationsByContainer.set(key, []);
+			yield undefined;
+		}
+		for (const overlay of overlays)
+			for (const [key, annotations] of overlay.containers) {
 				annotationsByContainer
 					.get(key)!
 					.push(...annotations.map((annotation) => prioritized.get(annotation.id)!));
-		const annotationVersions = new Map(
-			[...annotationsByContainer].map(([key, annotations]) => [key, JSON.stringify(annotations)])
-		);
+				yield undefined;
+			}
+		const annotationVersions = new Map<string, string>();
+		for (const [key, annotations] of annotationsByContainer) {
+			annotationVersions.set(key, JSON.stringify(annotations));
+			yield undefined;
+		}
 		const patches = new Map<string, Patch[]>();
 		const conflicts = createChangeConflictChecker(index);
 		for (const patch of changes) {
@@ -239,8 +283,13 @@ export class ContractCompositionEngine {
 				end: pointPosition(index, range.end)
 			});
 			patches.set(key, items);
+			yield undefined;
 		}
-		const patchVersions = new Map([...patches].map(([key, value]) => [key, JSON.stringify(value)]));
+		const patchVersions = new Map<string, string>();
+		for (const [key, value] of patches) {
+			patchVersions.set(key, JSON.stringify(value));
+			yield undefined;
+		}
 		const replacementDependencies = new Map<string, Set<string>>();
 		for (const [key, localPatches] of patches) {
 			const targets = new Set<string>();
@@ -251,23 +300,39 @@ export class ContractCompositionEngine {
 					if (atom.endTargetItemKey) targets.add(atom.endTargetItemKey);
 				}
 			replacementDependencies.set(key, targets);
+			yield undefined;
 		}
 		const dirty = new Set<string>();
-		if (this.#view !== view) for (const key of index.containers.keys()) dirty.add(key);
+		if (this.#view !== view)
+			for (const key of index.containers.keys()) {
+				dirty.add(key);
+				yield undefined;
+			}
 		for (const [next, previous] of [
 			[activationVersions, this.#activationVersions],
 			[annotationVersions, this.#annotationVersions],
 			[patchVersions, this.#patchVersions]
 		]) {
-			for (const key of new Set([...next.keys(), ...previous.keys()]))
+			for (const key of next.keys()) {
 				if (next.get(key) !== previous.get(key)) dirty.add(key);
+				yield undefined;
+			}
+			for (const key of previous.keys()) {
+				if (!next.has(key)) dirty.add(key);
+				yield undefined;
+			}
 		}
 		if (previousAddresses !== current) {
-			const changedTargets = new Set(
-				[...current.keys(), ...previousAddresses.keys()].filter(
-					(key) => JSON.stringify(current.get(key)) !== JSON.stringify(previousAddresses.get(key))
-				)
-			);
+			const changedTargets = new Set<string>();
+			for (const key of current.keys()) {
+				if (JSON.stringify(current.get(key)) !== JSON.stringify(previousAddresses.get(key)))
+					changedTargets.add(key);
+				yield undefined;
+			}
+			for (const key of previousAddresses.keys()) {
+				if (!current.has(key)) changedTargets.add(key);
+				yield undefined;
+			}
 			for (const [key, targets] of this.#dependencies) {
 				if (
 					[...targets, ...(replacementDependencies.get(key) ?? [])].some((target) =>
@@ -275,10 +340,20 @@ export class ContractCompositionEngine {
 					)
 				)
 					dirty.add(key);
+				yield undefined;
 			}
 		}
-		// Install synchronously before the first yield; unfinished dirtiness survives cancellation/failure.
-		for (const key of dirty) this.#dirtyContainers.add(key);
+		// Install a complete candidate; unfinished blocks survive cancellation.
+		for (const key of this.#dirtyContainers) {
+			dirty.add(key);
+			yield undefined;
+		}
+		const dirtyBlocks = new Set(this.#unfinishedBlocks);
+		for (const key of dirty) {
+			dirtyBlocks.add(index.containers.get(key)?.blockKey ?? key);
+			yield undefined;
+		}
+		this.#dirtyContainers = dirty;
 		this.#current = current;
 		this.#activeKey = activeKey;
 		this.#view = view;
@@ -287,9 +362,7 @@ export class ContractCompositionEngine {
 		this.#annotationVersions = annotationVersions;
 		this.#activationVersions = activationVersions;
 		this.#patchVersions = patchVersions;
-		const dirtyBlocks = new Set(
-			[...this.#dirtyContainers].map((key) => index.containers.get(key)!.blockKey)
-		);
+
 		function patchAnnotation(patch: Patch | ChangeOrigin): Annotation {
 			const { change } = patch;
 			const start = pointPosition(index, change.range.start),
@@ -593,19 +666,27 @@ export class ContractCompositionEngine {
 			}
 			return [...prefix, ...content];
 		}
-		function resolveBlock(block: ContractBlock): ResolvedBlock {
-			if (block.kind === 'table')
+		function* resolveBlock(block: ContractBlock): Generator<undefined, ResolvedBlock> {
+			if (block.kind === 'table') {
+				const rows: { content: ResolvedRun[] }[][] = [];
+				for (const [r, row] of block.rows.entries()) {
+					const cells: { content: ResolvedRun[] }[] = [];
+					for (const [c] of row.entries()) {
+						cells.push({
+							content: composeContainer(index.containers.get(`${block.blockKey}/cell/${r}/${c}`)!)
+						});
+						yield undefined;
+					}
+					rows.push(cells);
+				}
 				return {
 					kind: 'table',
 					blockKey: block.blockKey,
 					...(block.variant ? { variant: block.variant } : {}),
 					headerRowCount: block.headerRowCount,
-					rows: block.rows.map((row, r) =>
-						row.map((_, c) => ({
-							content: composeContainer(index.containers.get(`${block.blockKey}/cell/${r}/${c}`)!)
-						}))
-					)
+					rows
 				};
+			}
 			if (block.kind === 'paragraph' && block.optional && !activations.has(block.blockKey)) {
 				const memberships = annotationsByContainer
 					.get(block.blockKey)!
@@ -644,26 +725,36 @@ export class ContractCompositionEngine {
 				: { kind: 'paragraph', blockKey: block.blockKey, content };
 		}
 		// Idle alternatives only need changed blocks and their numbering/reference dependencies.
-		const candidates = changedOnly ? [...dirtyBlocks].map((key) => index.blocks.get(key)!) : blocks;
-		for (const block of candidates) {
+		function* candidates() {
+			if (changedOnly) {
+				for (const key of dirtyBlocks) yield index.blocks.get(key)!;
+			} else yield* blocks;
+		}
+		for (const block of candidates()) {
 			const previous = this.#resolved.get(block.blockKey);
 			if (previous && !dirtyBlocks.has(block.blockKey)) {
 				yield previous;
 				continue;
 			}
-			const next = resolveBlock(block);
-			const unchanged =
-				previous &&
-				previous.kind === next.kind &&
-				(previous.kind === 'table' && next.kind === 'table'
-					? previous.rows.every((row, r) =>
-							row.every((cell, c) => cell.content === next.rows[r][c].content)
-						)
-					: previous.kind !== 'table' &&
-						next.kind !== 'table' &&
-						previous.content === next.content);
+			this.#unfinishedBlocks.add(block.blockKey);
+			const next = yield* resolveBlock(block);
+			let unchanged = Boolean(previous && previous.kind === next.kind);
+			if (unchanged && previous?.kind === 'table' && next.kind === 'table') {
+				for (const [r, row] of previous.rows.entries())
+					for (const [c, cell] of row.entries()) {
+						if (cell.content !== next.rows[r][c].content) unchanged = false;
+						yield undefined;
+					}
+			} else
+				unchanged = Boolean(
+					previous &&
+					previous.kind !== 'table' &&
+					next.kind !== 'table' &&
+					previous.content === next.content
+				);
+			this.#unfinishedBlocks.delete(block.blockKey);
 			if (unchanged) {
-				if (!changedOnly) yield previous;
+				if (!changedOnly) yield previous!;
 			} else {
 				this.recomposedBlocks++;
 				this.#resolved.set(block.blockKey, next);

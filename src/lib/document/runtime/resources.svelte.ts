@@ -1,0 +1,428 @@
+import { getContext, setContext, untrack } from 'svelte';
+import type { Snippet } from 'svelte';
+import type { ContractChange, SourcePoint, SourceRange } from '$lib/playbook/model';
+import type { ContractRouteData } from '$lib/contract/saved';
+import type { ContractSourceInput } from './source.svelte';
+import { createContractWorkspace, type ContractWorkspace } from './context';
+import type { ContractLayoutProfiles } from './layout-context.svelte';
+import { recordAdminSourceUpdate, recordColdStart } from './render-perf';
+import { recentOpenings } from '$lib/contract/browser-storage';
+import { sameSelection } from '$lib/playbook/model';
+import { type ConcessionSelection } from './types';
+
+export interface ViewerBindings {
+	panelContent: Snippet;
+	selectedConcessions: ConcessionSelection;
+	hasPanel?: boolean;
+	followScroll?: boolean;
+	selectedAnnotationId?: string | null;
+	selectedRanges?: readonly SourceRange[];
+	previewChanges?: readonly ContractChange[];
+	panelSource?: SourcePoint;
+	picking?: boolean;
+	allowPlaybookNavigation?: boolean;
+	onRemoveConcession: (itemId: string) => void;
+	onSelect: (itemId: string, annotationId: string) => boolean | void;
+}
+function sameOrder<T>(a: readonly T[], b: readonly T[]) {
+	return a.length === b.length && a.every((value, index) => value === b[index]);
+}
+export type ReadyContract = Extract<ContractRouteData, { status: 'ready' }>;
+export class DocumentResource {
+	readonly owner = Symbol('document-resource');
+	readonly workspace: ContractWorkspace;
+	bindings = $state.raw<ViewerBindings>();
+	target = $state<HTMLElement>();
+	active = $state(false);
+	opening = $state(false);
+	openings = 0;
+	allowed = $state(false);
+	choices = $state.raw<ConcessionSelection>({});
+	confirmedChoices: ConcessionSelection = {};
+	lastUsed = 0;
+	completed = false;
+	readonly priority = () =>
+		this.active || this.opening ? ('foreground' as const) : ('background' as const);
+	constructor(
+		readonly id: string,
+		input: ContractSourceInput
+	) {
+		this.workspace = createContractWorkspace(input);
+	}
+	destroy() {
+		this.allowed = false;
+		this.active = false;
+		this.opening = false;
+		this.openings = 0;
+		this.target = undefined;
+		this.bindings = undefined;
+		this.workspace.renderer.destroy();
+	}
+}
+const RESOURCES = Symbol('document-resources');
+
+/** Layout-owned document work; route-owned interaction bindings never outlive their route. */
+export class DocumentResources {
+	entries = $state.raw<readonly DocumentResource[]>([]);
+	active = $state.raw<DocumentResource>();
+	warming = $state(true);
+	#candidates = $state.raw<readonly string[]>([]);
+	#pending = $state.raw<readonly ReadyContract[]>([]);
+	#canConstruct = $state(false);
+	#savedBusy = $state(false);
+	#rank: readonly string[] = [];
+	#failed = new Set<string>();
+	#clock = 0;
+	#destroyed = false;
+	#release: () => void;
+	get preparationCandidates() {
+		return this.#candidates;
+	}
+	constructor(
+		readonly profiles: ContractLayoutProfiles,
+		admin: ContractSourceInput
+	) {
+		this.#release = $effect.root(() => {
+			$effect(() => {
+				const input = {
+					blocks: { data: admin.blocks.data, error: admin.blocks.error },
+					items: { data: admin.items.data, error: admin.items.error }
+				};
+				const profiler = profiles.profiler;
+				const active = this.active?.id === 'admin';
+				const savedBusy = this.#savedBusy;
+				const complete = Boolean(
+					input.blocks.data && input.items.data && !input.blocks.error && !input.items.error
+				);
+				const entry = untrack(() => this.entries.find((entry) => entry.id === 'admin'));
+				untrack(() => recordAdminSourceUpdate());
+				if (!complete && !entry) return;
+				const accept = () =>
+					untrack(() => {
+						if (complete) this.acquire('admin', input);
+						else entry?.workspace.accept(input);
+					});
+				if (active) {
+					accept();
+					return;
+				}
+				if (!profiler || savedBusy) return;
+				const abort = new AbortController();
+				void profiler.scheduler.run(() => 'background', accept, abort.signal).catch(() => {});
+				return () => abort.abort();
+			});
+			$effect(() => {
+				const profiler = profiles.profiler;
+				const states = this.entries.map((entry) => ({
+					entry,
+					active: entry.active,
+					opening: entry.opening,
+					pages: entry.workspace.renderer.snapshot?.pages.length ?? 0,
+					failed: Boolean(
+						entry.workspace.renderer.error ||
+						entry.workspace.source.issue ||
+						entry.workspace.viewer.preparationBlocked
+					),
+					prepared:
+						entry.workspace.viewer.prepared &&
+						Boolean(
+							profiler &&
+							entry.workspace.source.renderSource &&
+							entry.workspace.renderer.isCurrent({
+								source: entry.workspace.source.renderSource,
+								concessions: entry.bindings?.selectedConcessions ?? entry.choices,
+								previewChanges: entry.active ? entry.bindings?.previewChanges : undefined,
+								profiler
+							})
+						)
+				}));
+				const candidates = this.#candidates;
+				const pending = this.#pending;
+				untrack(() => {
+					for (const state of states) if (state.prepared) state.entry.completed = true;
+					for (const state of states)
+						if (state.failed && !state.active && !state.opening) {
+							this.failedPreparation(state.entry.id);
+						}
+					if (candidates !== this.#candidates) return;
+					const foregroundBusy = states.some(
+						(state) => (state.active || state.opening) && !state.prepared && !state.failed
+					);
+					const nextId = candidates.find(
+						(id) =>
+							!this.#failed.has(id) &&
+							!states.some((state) => state.entry.id === id && state.prepared)
+					);
+					const constructing = pending.some((data) => data.id === nextId);
+					const savedBusy =
+						foregroundBusy ||
+						candidates.some(
+							(id) =>
+								!this.#failed.has(id) &&
+								!states.some((state) => state.entry.id === id && state.prepared)
+						);
+					for (const state of states) {
+						state.entry.allowed =
+							state.active ||
+							state.opening ||
+							state.prepared ||
+							(state.entry.id === 'admin'
+								? !savedBusy
+								: !foregroundBusy && state.entry.id === nextId);
+					}
+					this.#savedBusy = savedBusy;
+					this.#canConstruct = !foregroundBusy && constructing;
+					this.warming =
+						savedBusy ||
+						states.some(
+							(state) =>
+								state.entry.id === 'admin' &&
+								state.entry.allowed &&
+								!state.prepared &&
+								!state.failed
+						);
+					this.#trim();
+				});
+			});
+			$effect(() => {
+				const profiler = profiles.profiler;
+				const pending = this.#pending;
+				const data = this.#candidates
+					.map((id) => pending.find((data) => data.id === id))
+					.find((data) => data !== undefined);
+				if (!this.#canConstruct || !profiler || !data) return;
+				const abort = new AbortController();
+				void profiler.scheduler
+					.run(
+						() => 'background',
+						() =>
+							untrack(() => {
+								if (
+									this.#destroyed ||
+									!this.#canConstruct ||
+									profiles.profiler !== profiler ||
+									!this.#pending.includes(data) ||
+									!this.#candidates.includes(data.id!)
+								)
+									return;
+								const entry = this.acquireContract(data);
+								entry.allowed = true;
+								this.#trim();
+							}),
+						abort.signal
+					)
+					.catch(() => {});
+				return () => abort.abort();
+			});
+		});
+	}
+	acquire(id: string, input: ContractSourceInput): DocumentResource {
+		if (this.#pending.some((data) => data.id === id))
+			this.#pending = this.#pending.filter((data) => data.id !== id);
+		let entry = this.entries.find((entry) => entry.id === id);
+		if (!entry) {
+			if (id !== 'admin') this.#makeRoom(id);
+			entry = new DocumentResource(id, input);
+			this.entries = [...this.entries, entry];
+		} else entry.workspace.accept(input);
+		entry.lastUsed = ++this.#clock;
+		return entry;
+	}
+	acquireContract(data: ReadyContract) {
+		const entry = this.acquire(data.id!, {
+			blocks: { data: data.snapshot.blocks },
+			items: { data: data.snapshot.items }
+		});
+		entry.confirmedChoices = data.contract.selectedConcessions;
+		this.update(entry, entry.confirmedChoices);
+		return entry;
+	}
+	update(entry: DocumentResource, choices: ConcessionSelection) {
+		if (!sameSelection(entry.choices, choices)) entry.choices = Object.freeze({ ...choices });
+	}
+	/** Called after navigation guards pass, before Home releases its candidates. */
+	beginOpen(id: string) {
+		const entry = this.entries.find((entry) => entry.id === id);
+		if (!entry) return;
+		entry.openings++;
+		entry.opening = true;
+		entry.allowed = true;
+		this.profiles.scheduler.wake();
+		let released = false;
+		return () => {
+			if (released) return;
+			released = true;
+			entry.openings = Math.max(0, entry.openings - 1);
+			entry.opening = entry.openings > 0;
+			if (!this.#destroyed) {
+				this.candidates(this.#rank);
+				this.#trim();
+			}
+		};
+	}
+	activate(entry: DocumentResource) {
+		if (this.active && this.active !== entry) this.deactivate(this.active);
+		this.active = entry;
+		entry.active = true;
+		entry.allowed = true;
+		entry.lastUsed = ++this.#clock;
+		this.#failed.delete(entry.id);
+		const profiler = this.profiles.profiler;
+		if (
+			entry.workspace.viewer.prepared &&
+			profiler &&
+			entry.workspace.source.renderSource &&
+			entry.workspace.renderer.isCurrent({
+				source: entry.workspace.source.renderSource,
+				concessions: entry.choices,
+				profiler
+			})
+		)
+			recordColdStart('prepared-document-acquired');
+		else recordColdStart('unprepared-document-acquired');
+		this.profiles.scheduler.wake();
+		this.#trim();
+	}
+	deactivate(entry: DocumentResource) {
+		entry.active = false;
+		entry.bindings = undefined;
+		entry.target = undefined;
+		entry.workspace.viewer.ready = false;
+		entry.workspace.viewer.visible = false;
+		if (this.active === entry) this.active = undefined;
+		this.update(entry, entry.id === 'admin' ? {} : entry.confirmedChoices);
+		this.#trim();
+	}
+	candidates(ranked: readonly string[]) {
+		this.#rank = [...ranked];
+		const recent = recentOpenings().find((opening) =>
+			this.entries.some((entry) => entry.id === opening.id)
+		)?.id;
+		const reserved = this.entries
+			.filter(
+				(entry) => entry.id !== 'admin' && (entry.active || entry.opening || entry.id === recent)
+			)
+			.map((entry) => entry.id);
+		const selected = [
+			...reserved,
+			...ranked
+				.filter((id) => !reserved.includes(id) && !this.#failed.has(id))
+				.slice(0, Math.max(0, 4 - reserved.length))
+		];
+		const ids = ranked.filter((id) => selected.includes(id));
+		if (!sameOrder(this.#candidates, ids)) this.#candidates = [...ids];
+		const pending = this.#pending.filter((data) => ids.includes(data.id!));
+		if (!sameOrder(this.#pending, pending)) this.#pending = pending;
+		for (const id of this.#failed)
+			if (id !== 'admin' && !ranked.includes(id)) this.#failed.delete(id);
+		for (const entry of this.entries)
+			if (
+				entry.id !== 'admin' &&
+				!entry.active &&
+				!entry.opening &&
+				!ids.includes(entry.id) &&
+				!entry.completed
+			)
+				this.evict(entry.id);
+		// Reorder candidate dispatch without changing mounted component identities.
+		const entries = [...this.entries].sort(
+			(a, b) =>
+				(ids.includes(a.id) ? ids.indexOf(a.id) : ids.length) -
+				(ids.includes(b.id) ? ids.indexOf(b.id) : ids.length)
+		);
+		if (!sameOrder(this.entries, entries)) this.entries = entries;
+	}
+	/** Explicit interaction may retry a candidate suppressed by background failure or eviction. */
+	promote(id: string) {
+		this.#failed.delete(id);
+	}
+	prepare(data: ReadyContract) {
+		if (this.#destroyed) return;
+		const entry = this.entries.find((entry) => entry.id === data.id);
+		if (entry) {
+			entry.confirmedChoices = data.contract.selectedConcessions;
+			if (!entry.active) this.update(entry, entry.confirmedChoices);
+			return;
+		}
+		if (this.#failed.has(data.id!) || !this.#candidates.includes(data.id!)) return;
+		const pending = this.#pending.find((pending) => pending.id === data.id);
+		if (pending === data) return;
+		if (pending) this.#pending = this.#pending.map((value) => (value === pending ? data : value));
+		else this.#pending = [...this.#pending, data];
+	}
+	failedPreparation(id: string) {
+		this.#failed.add(id);
+		const entry = this.entries.find((entry) => entry.id === id);
+		if (entry && !entry.active && !entry.opening) this.evict(id);
+		this.candidates(this.#rank);
+	}
+	remove(id: string) {
+		this.evict(id);
+		this.candidates(this.#rank.filter((candidate) => candidate !== id));
+	}
+
+	evict(id: string) {
+		if (this.#pending.some((data) => data.id === id))
+			this.#pending = this.#pending.filter((data) => data.id !== id);
+		const entry = this.entries.find((entry) => entry.id === id);
+		if (!entry) return;
+		this.entries = this.entries.filter((current) => current !== entry);
+		if (this.active === entry) this.active = undefined;
+		entry.destroy();
+		recordColdStart('document-resource-evicted');
+	}
+	#removable(saved: readonly DocumentResource[]) {
+		const recent = recentOpenings()[0]?.id;
+		const rank = (entry: DocumentResource) => {
+			const index = this.#rank.indexOf(entry.id);
+			return entry.id === recent ? -1 : index < 0 ? Number.MAX_SAFE_INTEGER : index;
+		};
+		return saved
+			.filter((entry) => !entry.active && !entry.opening)
+			.sort((a, b) => rank(b) - rank(a) || a.lastUsed - b.lastUsed);
+	}
+	#makeRoom(id: string) {
+		const saved = this.entries.filter((entry) => entry.id !== 'admin');
+		if (saved.length < 4) return;
+		const victim = this.#removable(saved).find((entry) => entry.id !== id);
+		if (victim) {
+			const candidate = this.#candidates.includes(victim.id);
+			if (candidate) this.#failed.add(victim.id);
+			this.evict(victim.id);
+			if (candidate) this.candidates(this.#rank);
+		}
+	}
+	#trim() {
+		let evicted = false;
+		const saved = this.entries.filter((entry) => entry.id !== 'admin');
+		const removable = this.#removable(saved);
+		let count = saved.length;
+		let pages = removable.reduce(
+			(sum, entry) => sum + (entry.workspace.renderer.snapshot?.pages.length ?? 0),
+			0
+		);
+		for (const entry of removable) {
+			if (count <= 4 && pages <= 60) break;
+			count--;
+			pages -= entry.workspace.renderer.snapshot?.pages.length ?? 0;
+			this.#failed.add(entry.id); // Data remains cached; navigation can still acquire it.
+			this.evict(entry.id);
+			evicted = true;
+		}
+		if (evicted) this.candidates(this.#rank);
+	}
+	destroy() {
+		this.#destroyed = true;
+		this.#release();
+		for (const entry of this.entries) entry.destroy();
+		this.entries = [];
+		this.active = undefined;
+		this.#pending = [];
+	}
+}
+export function setDocumentResources(resources: DocumentResources) {
+	return setContext(RESOURCES, resources);
+}
+export function getDocumentResources(): DocumentResources | undefined {
+	return getContext(RESOURCES);
+}

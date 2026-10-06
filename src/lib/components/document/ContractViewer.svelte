@@ -13,7 +13,9 @@
 	import { pointPosition } from '$lib/contract/source-index';
 	import { unitsInRange } from '$lib/contract/ranges';
 	import { EMPTY_PREVIEW_CHANGES, type ConcessionSelection } from '$lib/document/runtime/types';
-	import { recordColdStart } from '$lib/document/runtime/render-perf';
+	import type { Priority } from '$lib/document/runtime/scheduler';
+	import { getDocumentResources } from '$lib/document/runtime/resources.svelte';
+	import { recordColdStart, recordDocumentReady } from '$lib/document/runtime/render-perf';
 	import { prewarmSavedConcessions } from '$lib/document/runtime/prewarm';
 	import {
 		sourcePointBounds,
@@ -43,6 +45,11 @@
 	import '$lib/styles/document.css';
 	const annotationRegistry = setAnnotationRegistry();
 	let {
+		active = true,
+		interactive = true,
+		retained = false,
+		prepare = true,
+		priority = () => 'foreground',
 		hasPanel = false,
 		followScroll = false,
 		panelContent,
@@ -56,6 +63,11 @@
 		allowPlaybookNavigation = true,
 		onSelect
 	}: {
+		active?: boolean;
+		interactive?: boolean;
+		retained?: boolean;
+		prepare?: boolean;
+		priority?: Priority;
 		hasPanel?: boolean;
 		followScroll?: boolean;
 		panelContent: Snippet;
@@ -70,6 +82,7 @@
 		onSelect: (itemId: string, annotationId: string) => boolean | void;
 	} = $props();
 	const { source, renderer, viewer } = getContractWorkspace();
+	const interacting = $derived(active && interactive);
 	const snapshot = $derived(renderer.snapshot);
 	const displayComplete = $derived(Boolean(snapshot));
 	let highlights = $state<DocumentHighlightController>();
@@ -77,22 +90,29 @@
 	let highlightRects = $state.raw<PageHighlights>(new Map());
 	$effect(() => {
 		const stage = viewer.documentStageElement;
-		if (!stage || !displayComplete) return;
+		if (!interacting || !stage || !displayComplete || !viewer.visible) return;
 		const controller = new DocumentHighlightController(stage);
-		const interactions = new DocumentClauseInteractions(stage, controller, selectAnnotation);
-		clauseInteractions = interactions;
 		highlights = controller;
 		const unsubscribe = controller.subscribe((rects) => {
 			highlightRects = rects;
 		});
 		return () => {
 			unsubscribe();
-			interactions.destroy();
 			controller.destroy();
-			clauseInteractions = undefined;
 			highlights = undefined;
 			highlightRects = new Map();
 			authoringRanges.clear();
+		};
+	});
+	$effect(() => {
+		const stage = viewer.documentStageElement,
+			controller = highlights;
+		if (!interacting || !stage || !controller || !allowPlaybookNavigation) return;
+		const interactions = new DocumentClauseInteractions(stage, controller, selectAnnotation);
+		clauseInteractions = interactions;
+		return () => {
+			interactions.destroy();
+			clauseInteractions = undefined;
 		};
 	});
 	$effect(() => {
@@ -162,7 +182,7 @@
 	});
 	$effect(() => {
 		const stage = viewer.documentStageElement;
-		if (!stage) return;
+		if (!interacting || !stage) return;
 		let scrollVersion = 0;
 		const onScroll = () => scrollVersion++;
 		window.addEventListener('scroll', onScroll, { passive: true });
@@ -199,6 +219,7 @@
 			const capturedScrollVersion = scrollVersion;
 			void tick().then(() => {
 				if (
+					!interacting ||
 					!stage.isConnected ||
 					window.scrollY !== scrollY ||
 					scrollVersion !== capturedScrollVersion ||
@@ -237,10 +258,18 @@
 	});
 	const hasActiveConflicts = $derived(requestedModel.conflicts.length > 0);
 	const sharedProfiles = getContractLayoutProfiles();
+	const resources = getDocumentResources();
 	let surface = $state.raw<ProfileSurface>();
 	const profiler = $derived(
 		sharedProfiles ? sharedProfiles.profiler : surface ? new LayoutProfiler(surface) : undefined
 	);
+	$effect(() => {
+		const local = sharedProfiles ? undefined : profiler;
+		return () => local?.scheduler.destroy();
+	});
+	$effect(() => {
+		viewer.preparationBlocked = Boolean(requestedModel.error || hasActiveConflicts);
+	});
 	const current = $derived(
 		Boolean(
 			profiler &&
@@ -257,7 +286,9 @@
 			!hasActiveConflicts
 		)
 	);
-	const canOpenPlaybookItems = $derived(current && allowPlaybookNavigation && !picking);
+	const canOpenPlaybookItems = $derived(
+		interacting && viewer.prepared && current && allowPlaybookNavigation && !picking
+	);
 	$effect(() => {
 		clauseInteractions?.setEnabled(canOpenPlaybookItems);
 	});
@@ -318,6 +349,7 @@
 			occurrence = selectedOccurrence,
 			point = panelSource;
 		return () => {
+			if (!interacting) return;
 			const anchor = annotationAnchor(id, occurrence, point);
 			(anchor?.owner ?? viewer.documentStageElement)?.focus({ preventScroll: true });
 		};
@@ -327,7 +359,7 @@
 	}
 	async function positionPanel() {
 		await tick();
-		if (!viewer.documentStageElement || !hasPanel) return;
+		if (!interacting || !viewer.documentStageElement || !hasPanel) return;
 		const anchor = annotationAnchor();
 		const bounds =
 			(anchor ? annotationAnchorBounds(anchor) : null) ??
@@ -359,14 +391,15 @@
 		void panelSource;
 		void hasPanel;
 		void pageScale;
-		void positionPanel();
+		if (interacting) void positionPanel();
 	});
 	async function keepPanelVisible() {
 		const panel = layoutElement?.querySelector<HTMLElement>('[data-workspace-panel]');
-		if (!panel || !hasPanel) return;
+		if (!interacting || !panel || !hasPanel) return;
 		await positionPanel();
 		await tick();
 		if (
+			!interacting ||
 			!hasPanel ||
 			followScroll ||
 			layoutElement?.querySelector('[data-workspace-panel]') !== panel
@@ -382,12 +415,12 @@
 	let wasFollowingScroll = false;
 	$effect(() => {
 		const following = followScroll;
-		if (wasFollowingScroll && !following) untrack(() => void keepPanelVisible());
+		if (interacting && wasFollowingScroll && !following) untrack(() => void keepPanelVisible());
 		wasFollowingScroll = following;
 	});
 	$effect(() => {
 		const el = layoutElement;
-		if (!el) return;
+		if (!active || !viewer.visible || !el) return;
 		layoutWidth = el.getBoundingClientRect().width;
 		const observer = new ResizeObserver(([entry]) => {
 			layoutWidth = entry.contentBoxSize?.[0]?.inlineSize ?? entry.contentRect.width;
@@ -396,6 +429,7 @@
 		return () => observer.disconnect();
 	});
 	function retryRender() {
+		if (!interacting) return;
 		if (requestedModel.error) {
 			renderer.fail(requestedModel.error);
 			return;
@@ -405,10 +439,12 @@
 				source: source.renderSource,
 				concessions: selectedConcessions,
 				previewChanges,
+				priority,
 				profiler
 			});
 	}
 	$effect(() => {
+		const enabled = prepare;
 		const layoutProfiler = profiler,
 			model = source.renderSource,
 			selection = selectedConcessions,
@@ -416,6 +452,10 @@
 			blocked = hasActiveConflicts,
 			error = requestedModel.error;
 		untrack(() => {
+			if (!enabled) {
+				renderer.cancelPending();
+				return;
+			}
 			if (error) {
 				renderer.fail(error);
 				return;
@@ -439,34 +479,125 @@
 				source: model,
 				concessions: selection,
 				previewChanges: preview,
+				priority,
 				profiler: layoutProfiler
 			});
 		});
 	});
 	onMount(() => {
-		recordColdStart('viewer-mounted');
+		if (interacting) recordColdStart('viewer-mounted');
+	});
+	$effect(() => {
+		if (!interacting) return;
 		viewer.retry = retryRender;
 		viewer.restoreAnnotationFocus = restoreAnnotationFocus;
 		viewer.captureAnnotationFocus = captureAnnotationFocus;
+		return () => {
+			viewer.retry = undefined;
+			viewer.restoreAnnotationFocus = undefined;
+			viewer.captureAnnotationFocus = undefined;
+		};
 	});
+
 	$effect(() => {
 		const layoutProfiler = profiler,
 			commit = snapshot;
-		if (!current || previewChanges.length || !commit || !layoutProfiler) return;
+		if (
+			!interacting ||
+			resources?.warming ||
+			!viewer.prepared ||
+			!current ||
+			previewChanges.length ||
+			!commit ||
+			!layoutProfiler
+		)
+			return;
 		return untrack(() => prewarmSavedConcessions(commit, layoutProfiler));
 	});
+	let mountedPages = $state.raw<typeof pages>([]);
+	let pageElementsSnapshot = $state.raw<typeof snapshot>();
+	let activated = $state(false);
 	$effect(() => {
-		viewer.ready = current;
-		if (current) recordColdStart('interaction-ready');
+		if (!active) activated = false;
+		else if (current && pageElementsSnapshot === snapshot) activated = true;
+	});
+	$effect(() => {
+		const commit = snapshot,
+			enabled = prepare,
+			foreground = active || !retained,
+			layoutProfiler = profiler;
+		if (!commit || !enabled || !layoutProfiler) return;
+		const abort = new AbortController();
+		untrack(() => {
+			void (async () => {
+				if (foreground) mountedPages = commit.pages;
+				else {
+					// Keep existing elements; add only one new page per idle slice.
+					mountedPages = commit.pages.slice(0, mountedPages.length);
+					while (!abort.signal.aborted && mountedPages.length < commit.pages.length) {
+						await layoutProfiler.scheduler.run(
+							priority,
+							() => {
+								mountedPages = commit.pages.slice(0, mountedPages.length + 1);
+							},
+							abort.signal
+						);
+						await tick();
+					}
+				}
+				await tick();
+				if (!abort.signal.aborted) {
+					pageElementsSnapshot = commit;
+					recordColdStart(
+						foreground ? 'active-page-elements-ready' : 'background-page-elements-ready'
+					);
+				}
+			})().catch(() => {});
+		});
+		return () => abort.abort();
+	});
+	$effect(() => {
+		viewer.visible = active && (!retained || activated);
+	});
+	$effect(() => {
+		if (interacting && viewer.visible && snapshot && profiler)
+			untrack(() => renderer.protectGeometry(profiler!));
+	});
+	let lastReadySnapshot: typeof snapshot;
+	let visibleGeneration = 0;
+	$effect(() => {
+		const prepared = current && pageElementsSnapshot === snapshot;
+		viewer.prepared = prepared;
+		viewer.ready = interacting && prepared;
+		if (interacting && prepared) {
+			if (lastReadySnapshot === snapshot) recordColdStart('prepared-page-elements-reused');
+			lastReadySnapshot = snapshot;
+			recordColdStart('interaction-ready');
+			const navigationStartedAt = recordDocumentReady();
+			const generation = ++visibleGeneration;
+			let timer: ReturnType<typeof setTimeout> | undefined;
+			const frame = requestAnimationFrame(() => {
+				timer = setTimeout(() => {
+					if (interacting && generation === visibleGeneration)
+						recordColdStart('first-visible-paint-opportunity', navigationStartedAt);
+				}, 0);
+			});
+			return () => {
+				cancelAnimationFrame(frame);
+				clearTimeout(timer);
+			};
+		}
+		if (prepared) lastReadySnapshot = snapshot;
 	});
 	onDestroy(() => {
 		viewer.ready = false;
+		viewer.visible = false;
 		viewer.documentStageElement = undefined;
 		viewer.retry = undefined;
 		viewer.restoreAnnotationFocus = undefined;
 		viewer.captureAnnotationFocus = undefined;
 		annotationRegistry.clear();
-		renderer.destroy();
+		if (!retained) renderer.destroy();
 	});
 </script>
 
@@ -479,7 +610,9 @@
 			{@const concession = item?.concessions.find(
 				(concession) => concession.id === conflict.concession.id
 			)}
-			<button class="ml-2 underline" onclick={() => onRemoveConcession(conflict.itemId)}
+			<button
+				class="ml-2 underline"
+				onclick={interacting ? () => onRemoveConcession(conflict.itemId) : undefined}
 				>Remove “{concession?.description ?? conflict.concession.id}”{item?.instructions?.summary
 					? ` — ${item.instructions.summary}`
 					: ''}</button
@@ -487,19 +620,30 @@
 	</div>
 {/if}
 {#if !sharedProfiles}<LayoutProfileSurface bind:surface />{/if}
+{#if retained && active && !activated && pages.length && renderer.error}
+	<div role="alert" class="mx-auto max-w-xl text-center">
+		<strong>We couldn’t display this contract.</strong>
+		<button type="button" class="ml-2 underline" onclick={interacting ? retryRender : undefined}
+			>Retry</button
+		>
+	</div>
+{/if}
 {#if !pages.length && !renderer.error}
-	<LoadingPagination />
+	{#if !retained}<LoadingPagination />{/if}
 {:else if !pages.length}
 	<div
 		class="flex min-h-[calc(100vh-100px)] flex-col items-center justify-center gap-1.5 text-center text-ink-secondary"
 		role="alert"
 	>
 		<strong>We couldn’t display this contract.</strong>
-		<button type="button" class="underline" onclick={retryRender}>Retry</button>
+		<button type="button" class="underline" onclick={interacting ? retryRender : undefined}
+			>Retry</button
+		>
 	</div>
 {:else}
 	<div
 		class="viewer-root w-full"
+		class:awaiting-prepared={retained && active && !activated}
 		data-document-commit={snapshot?.id}
 		data-page-count={pages.length}
 		style:--contract-page-width={`${PAGE_FORMAT.width}px`}
@@ -521,9 +665,10 @@
 					class="page-stack absolute top-0 left-0 flex w-(--contract-page-width) origin-top-left flex-col gap-(--contract-page-gap)"
 					style:transform={`scale(${pageScale})`}
 				>
-					{#each pages as page (page.number)}
+					{#each mountedPages as page (page.number)}
 						<DocumentPage
 							{page}
+							interactive={interacting}
 							highlights={highlightRects.get(page.number) ?? EMPTY_HIGHLIGHTS}
 							{selectedAnnotationId}
 							{canOpenPlaybookItems}
@@ -535,6 +680,7 @@
 		{/snippet}
 		<ContractWorkspaceLayout
 			{hasPanel}
+			interactive={interacting}
 			{followScroll}
 			displayedPageWidth={displayWidth}
 			documentHeight={displayHeight}
@@ -546,3 +692,9 @@
 		/>
 	</div>
 {/if}
+
+<style>
+	.awaiting-prepared {
+		display: none;
+	}
+</style>

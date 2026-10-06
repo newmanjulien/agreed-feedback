@@ -56,10 +56,20 @@ function referenceAddress(start: string, end?: string): string {
 export function numberAddresses(
 	blocks: readonly Pick<ContractBlock, 'numbering'>[]
 ): Map<string, Address> {
+	const iterator = iterateNumberAddresses(blocks);
+	let next = iterator.next();
+	while (!next.done) next = iterator.next();
+	return next.value;
+}
+
+export function* iterateNumberAddresses(
+	blocks: readonly Pick<ContractBlock, 'numbering'>[]
+): Generator<undefined, Map<string, Address>> {
 	const result = new Map<string, Address>();
 	const positions = new Map<string, number>();
 	for (const block of blocks) {
 		const item = block.numbering;
+		yield undefined;
 		if (!item) continue;
 		const parent = item.parentItemKey ? result.get(item.parentItemKey)?.address : '';
 		if (item.parentItemKey && !parent) throw new Error(`Missing parent address: ${item.itemKey}`);

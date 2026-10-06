@@ -161,8 +161,13 @@ export function getInteractionOwner(): symbol | undefined {
 export function protectedInteraction() {
 	const controller = getInteractionController();
 	const owner = getInteractionOwner();
-	return (element: HTMLElement) => {
-		const release = owner ? controller.protect(element, owner) : undefined;
-		return { destroy: () => release?.() };
+	return (element: HTMLElement, enabled = true) => {
+		let release: (() => void) | undefined;
+		const update = (next = true) => {
+			release?.();
+			release = next && owner ? controller.protect(element, owner) : undefined;
+		};
+		update(enabled);
+		return { update, destroy: () => release?.() };
 	};
 }

@@ -1,19 +1,30 @@
 <script lang="ts">
 	import Menu from '$lib/components/ui/Menu.svelte';
-	import DotsThreeIcon from 'phosphor-svelte/lib/DotsThreeIcon';
-	import type { Id } from '../../../convex/_generated/dataModel';
+	import SquareIconButton from '$lib/components/ui/SquareIconButton.svelte';
+	import Avatar from '$lib/components/ui/Avatar.svelte';
+	import DotsThreeVerticalIcon from 'phosphor-svelte/lib/DotsThreeVerticalIcon';
+	import type { CachedCard } from '$lib/contract/browser-storage';
+	import type { Action } from 'svelte/action';
 	let {
 		contract,
 		deleting = false,
 		onRename,
-		onDelete
+		onDelete,
+		observe,
+		onWarm,
+		onCool
 	}: {
-		contract: { _id: Id<'savedContracts'>; companyName: string; savedAt: number };
+		contract: CachedCard;
 		deleting?: boolean;
 		onRename: () => void;
 		onDelete: () => void;
+		observe: Action<HTMLElement, CachedCard>;
+		onWarm: () => void;
+		onCool: () => void;
 	} = $props();
 	let open = $state(false);
+	let hovered = false;
+	let focused = false;
 	let trigger = $state<HTMLButtonElement>();
 	const menuId = $props.id();
 	const date = $derived(
@@ -24,35 +35,70 @@
 </script>
 
 <article
-	class="relative min-w-0 rounded-lg border border-[#e5e5e5] bg-white shadow-[0_1px_2px_rgb(0_0_0/4%)] transition-colors hover:border-[#c5c5c5]"
+	use:observe={contract}
+	class="relative min-w-0 rounded-xl border border-[#e5e5e5] bg-white shadow-[0_1px_2px_rgb(0_0_0/4%)] transition-colors hover:border-[#d5d5d5]"
 >
 	<a
 		href={`/contracts/${contract._id}`}
-		class="flex min-h-[160px] flex-col justify-between gap-10 rounded-lg p-5 pr-14 outline-none focus-visible:ring-2 focus-visible:ring-ink"
+		data-sveltekit-preload-data="off"
+		onmouseenter={() => {
+			hovered = true;
+			onWarm();
+		}}
+		onfocus={() => {
+			focused = true;
+			onWarm();
+		}}
+		onmouseleave={() => {
+			hovered = false;
+			if (!focused) onCool();
+		}}
+		onblur={() => {
+			focused = false;
+			if (!hovered) onCool();
+		}}
+		class="flex min-h-[96px] flex-col justify-between gap-1.5 rounded-xl px-5 py-3 pr-12 outline-none focus-visible:ring-1 focus-visible:ring-[#d5d5d5]"
 		aria-label={`Open contract for ${contract.companyName}`}
 	>
-		<h2
-			class="line-clamp-2 break-words text-[15px] leading-6 font-medium"
-			title={contract.companyName}
-		>
+		<h2 class="line-clamp-2 break-words text-sm leading-5 font-medium" title={contract.companyName}>
 			{contract.companyName}
 		</h2>
-		<p class="text-[13px] text-ink-muted">
-			Last saved <time datetime={new Date(contract.savedAt).toISOString()}>{date}</time>
+		<div class="flex min-w-0 items-center gap-2 text-xs text-ink-muted">
+			<Avatar
+				name={contract.creator.name}
+				avatarUrl={contract.creator.avatarUrl}
+				size={20}
+				decorative
+			/>
+			<p class="min-w-0 truncate" title={`Created by ${contract.creator.name}`}>
+				Created by {contract.creator.name}
+			</p>
+		</div>
+		<p class="text-xs text-ink-muted">
+			Last edited <time datetime={new Date(contract.savedAt).toISOString()}>{date}</time>
 		</p>
 	</a>
-	<button
-		bind:this={trigger}
-		type="button"
-		disabled={deleting}
-		onclick={() => (open = !open)}
-		aria-label={`Options for ${contract.companyName}`}
-		aria-haspopup="menu"
-		aria-expanded={open}
-		aria-controls={open ? menuId : undefined}
-		class="absolute top-4 right-3 flex size-8 items-center justify-center rounded-md hover:bg-[#f3f3f3] disabled:opacity-50"
-		><DotsThreeIcon size={24} weight="bold" aria-hidden="true" /></button
-	>
+	<div class="absolute top-2 right-3">
+		<SquareIconButton
+			bind:element={trigger}
+			size="sm"
+			type="button"
+			disabled={deleting}
+			onclick={() => (open = !open)}
+			onkeydown={(event) => {
+				if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+					event.preventDefault();
+					open = true;
+				}
+			}}
+			aria-label={`Options for ${contract.companyName}`}
+			aria-haspopup="menu"
+			aria-expanded={open}
+			aria-controls={open ? menuId : undefined}
+		>
+			<DotsThreeVerticalIcon size={19} weight="bold" aria-hidden="true" />
+		</SquareIconButton>
+	</div>
 	<Menu
 		{open}
 		{trigger}
@@ -64,7 +110,8 @@
 			<button
 				type="button"
 				role="menuitem"
-				class="block w-full rounded px-4 py-2 text-left text-sm hover:bg-fill-subtle focus:bg-fill-subtle"
+				tabindex="-1"
+				class="w-full cursor-pointer rounded-md border-0 bg-transparent px-3 py-2 text-left text-[14px] text-ink-secondary hover:bg-control-fill focus-visible:bg-control-fill focus-visible:outline-2 focus-visible:outline-accent"
 				onclick={() => {
 					close();
 					onRename();
@@ -73,7 +120,8 @@
 			<button
 				type="button"
 				role="menuitem"
-				class="block w-full rounded px-4 py-2 text-left text-sm text-danger hover:bg-danger-surface focus:bg-danger-surface"
+				tabindex="-1"
+				class="w-full cursor-pointer rounded-md border-0 bg-transparent px-3 py-2 text-left text-[14px] text-danger hover:bg-danger-surface focus-visible:bg-danger-surface focus-visible:outline-2 focus-visible:outline-accent"
 				onclick={() => {
 					close();
 					onDelete();

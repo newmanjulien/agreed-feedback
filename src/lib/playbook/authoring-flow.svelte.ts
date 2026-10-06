@@ -154,12 +154,21 @@ export class AuthoringFlow {
 	get canBack() {
 		return this.canCancel && this.stagedCreation && this.step === 'other-part';
 	}
+	get creationIncomplete() {
+		const concession = this.creationConcession;
+		return Boolean(
+			concession &&
+			(!concession.description.trim() ||
+				!concession.changes[0].replacement.some(
+					(atom) => atom.kind === 'reference' || atom.text.trim().length > 0
+				) ||
+				(this.otherClauseActive && !this.secondarySelection))
+		);
+	}
 	get readinessReason() {
 		const targetReason = this.additionTargetReason;
 		if (targetReason) return targetReason;
 		if (!this.session.canEdit) return this.session.statusMessage;
-		if (this.otherClauseActive && !this.secondarySelection)
-			return 'Select the other clause of the contract';
 		if (this.pendingAddition)
 			return this.session.additionReadiness(
 				this.pendingAddition.key,
@@ -331,7 +340,7 @@ export class AuthoringFlow {
 	}
 	next() {
 		if (!this.stagedCreation || this.lastStep) return this.submit();
-		if (this.readinessReason) return false;
+		if (this.creationIncomplete || this.readinessReason) return false;
 		this.clearFeedback();
 		this.step = 'other-part';
 		return false;
@@ -343,7 +352,13 @@ export class AuthoringFlow {
 	}
 	submit() {
 		const entry = this.entry;
-		if (!entry || (this.stagedCreation && !this.lastStep) || this.readinessReason) return false;
+		if (
+			!entry ||
+			(this.stagedCreation && !this.lastStep) ||
+			this.creationIncomplete ||
+			this.readinessReason
+		)
+			return false;
 		this.clearFeedback();
 		if (this.pendingAddition) {
 			const concession = this.pendingAddition.concession;

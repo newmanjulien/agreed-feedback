@@ -6,6 +6,7 @@
 	let {
 		fragment,
 		profileMode = false,
+		interactive = true,
 		selectedAnnotationId,
 		canOpenPlaybookItems,
 		onAnnotationSelect
@@ -13,6 +14,7 @@
 		fragment: PageFragment;
 		/** Preserve layout markup while suppressing global IDs and interactive semantics. */
 		profileMode?: boolean;
+		interactive?: boolean;
 		selectedAnnotationId: string | null;
 		canOpenPlaybookItems: boolean;
 		onAnnotationSelect: (
@@ -30,13 +32,14 @@
 		class="contract-block contract-heading"
 		data-block-key={fragment.blockKey}
 		data-source-fragment-key={fragmentKey(fragment)}
-		tabindex={profileMode ? undefined : -1}
+		tabindex={interactive && !profileMode ? -1 : undefined}
 	>
 		<InlineContent
 			{profileMode}
+			{interactive}
 			tokens={fragment.tokens}
 			{selectedAnnotationId}
-			canOpenPlaybookItems={canOpenPlaybookItems && !profileMode}
+			canOpenPlaybookItems={canOpenPlaybookItems && interactive && !profileMode}
 			{onAnnotationSelect}
 		/>
 	</svelte:element>
@@ -51,9 +54,10 @@
 	>
 		<InlineContent
 			{profileMode}
+			{interactive}
 			tokens={fragment.tokens}
 			{selectedAnnotationId}
-			canOpenPlaybookItems={canOpenPlaybookItems && !profileMode}
+			canOpenPlaybookItems={canOpenPlaybookItems && interactive && !profileMode}
 			{onAnnotationSelect}
 		/>
 	</p>
@@ -77,9 +81,10 @@
 						<th scope="col" data-source-row={rowIndex} data-source-cell={cellIndex}>
 							<InlineContent
 								{profileMode}
+								{interactive}
 								tokens={cell.tokens}
 								{selectedAnnotationId}
-								canOpenPlaybookItems={canOpenPlaybookItems && !profileMode}
+								canOpenPlaybookItems={canOpenPlaybookItems && interactive && !profileMode}
 								{onAnnotationSelect}
 							/>
 						</th>{/each}</tr
@@ -96,9 +101,10 @@
 						>
 							<InlineContent
 								{profileMode}
+								{interactive}
 								tokens={cell.tokens}
 								{selectedAnnotationId}
-								canOpenPlaybookItems={canOpenPlaybookItems && !profileMode}
+								canOpenPlaybookItems={canOpenPlaybookItems && interactive && !profileMode}
 								{onAnnotationSelect}
 							/>
 						</td>{/each}</tr

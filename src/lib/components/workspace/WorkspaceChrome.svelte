@@ -25,30 +25,17 @@
 	const protect = protectedInteraction();
 	let {
 		variant = 'rep',
-		feedback = null,
-		companyName = null,
-		saving = false,
-		canSave = true,
-		dirty = false,
-		onSave
+		feedback = null
 	}: {
 		variant?: HelpVariant;
 		feedback?: OperationStatus | null;
-		companyName?: string | null;
-		saving?: boolean;
-		canSave?: boolean;
-		dirty?: boolean;
-		onSave?: () => void;
 	} = $props();
-	const { source, session, renderer, viewer } = getContractWorkspace();
+	const { source, renderer, viewer } = getContractWorkspace();
 	let helpVisible = $state(false);
 	onMount(() => {
-		if (!session.helpAutoHandled) {
-			session.helpAutoHandled = true;
-			helpVisible = !isHelpHidden(variant);
-		}
+		helpVisible = !isHelpHidden(variant);
 	});
-	const searchEnabled = $derived(Boolean(renderer.snapshot));
+	const searchEnabled = $derived(Boolean(renderer.snapshot && viewer.visible));
 	const searchSession = new DocumentSearchSession();
 	let searchOpen = $state(false);
 	let searchPanelElement = $state<HTMLElement>();
@@ -145,25 +132,6 @@
 </script>
 
 <AppHeader>
-	{#snippet actions()}
-		{#if onSave}
-			<p
-				class="min-w-0 truncate text-xs text-ink-secondary sm:text-sm"
-				title={companyName ?? 'New contract'}
-			>
-				{companyName ?? 'New contract'}
-			</p>
-			<button
-				use:protect
-				type="button"
-				disabled={!canSave || saving}
-				onclick={onSave}
-				class="shrink-0 rounded bg-[#171717] px-2 py-1 text-[11px] text-white disabled:opacity-50 sm:px-3 sm:text-xs"
-				aria-label={dirty ? 'Save contract, unsaved changes' : 'Save contract'}
-				>{saving ? 'Saving…' : 'Save contract'}</button
-			>
-		{/if}
-	{/snippet}
 	<div
 		class="pointer-events-none absolute top-[calc(100%+20px)] right-0 left-0 flex justify-center max-[999px]:top-[calc(100%+8px)] max-[999px]:right-3 max-[999px]:left-auto max-[999px]:w-[min(454px,calc(100vw-24px))] max-[999px]:flex-col max-[999px]:items-end max-[999px]:gap-2"
 	>

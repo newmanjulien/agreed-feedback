@@ -42,6 +42,13 @@ export class LayoutProfileCache {
 		}
 		return profile;
 	}
+	/** An evicted document's geometry becomes subject to the ordinary LRU capacity. */
+	release(epoch: string): void {
+		if (epoch !== this.#epoch) return;
+		const previous = this.#active;
+		this.#active = new Map();
+		for (const [key, profile] of previous) this.#store(key, profile);
+	}
 
 	/** Normalize and validate the complete batch before inserting any entry. */
 	setBatch(

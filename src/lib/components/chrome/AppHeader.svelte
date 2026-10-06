@@ -2,6 +2,8 @@
 	import { asset } from '$app/paths';
 	import { page } from '$app/state';
 	import type { Snippet } from 'svelte';
+	import Avatar from '$lib/components/ui/Avatar.svelte';
+	import { OCEANS_PROFILE } from '$lib/profiles';
 	let { actions, children }: { actions?: Snippet; children?: Snippet } = $props();
 	const navItems = [
 		{ label: 'Home', href: '/' },
@@ -16,7 +18,7 @@
 			href="/"
 			aria-label="Agreed Home"
 		>
-			<img src={asset('/logo.png')} alt="" width="68" height="122" class="h-5 w-auto md:h-6.5" />
+			<img src={asset('/logo.png')} alt="" width="68" height="122" class="h-4.5 w-auto md:h-5.5" />
 		</a>
 		<nav class="flex h-full shrink-0 items-stretch" aria-label="Primary navigation">
 			{#each navItems as item (item.href)}
@@ -25,7 +27,7 @@
 						? page.url.pathname.startsWith('/admin')
 						: !page.url.pathname.startsWith('/admin')}
 				<a
-					class="relative mr-1 flex items-center px-2 text-[14px] leading-none transition-colors sm:mr-4"
+					class="relative mr-0.5 flex items-center px-1.5 text-[13px] leading-none transition-colors sm:mr-3"
 					class:text-ink={active}
 					class:text-ink-muted={!active}
 					aria-current={active ? 'page' : undefined}
@@ -39,13 +41,7 @@
 		</nav>
 		<div class="my-auto ml-auto flex min-w-0 items-center gap-1.5 sm:gap-3">
 			{#if actions}{@render actions()}{/if}
-			<img
-				src={asset('/oceanstalent_logo.jpeg')}
-				alt="Oceans Talent logo"
-				width="30"
-				height="30"
-				class="size-[30px] shrink-0 rounded-full"
-			/>
+			<Avatar name={OCEANS_PROFILE.name} avatarUrl={OCEANS_PROFILE.avatarUrl} size={26} />
 		</div>
 	</div>
 	{#if children}{@render children()}{/if}

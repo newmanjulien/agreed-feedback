@@ -5,6 +5,8 @@
 		title,
 		initialName = '',
 		submitLabel = 'Save contract',
+		busyLabel = 'Saving…',
+		lockName = false,
 		busy = false,
 		error = null,
 		onSubmit,
@@ -13,6 +15,8 @@
 		title: string;
 		initialName?: string;
 		submitLabel?: string;
+		busyLabel?: string;
+		lockName?: boolean;
 		busy?: boolean;
 		error?: string | null;
 		onSubmit: (name: string) => void;
@@ -60,12 +64,12 @@
 			id={`${titleId}-name`}
 			bind:value={name}
 			oninput={() => (validation = null)}
-			disabled={busy}
+			disabled={busy || lockName}
 			maxlength="200"
 			autocomplete="organization"
 			aria-invalid={Boolean(validation || error)}
 			aria-describedby={validation || error ? `${titleId}-error` : undefined}
-			class="w-full rounded-md border border-line px-3 py-2 text-sm outline-none focus:border-ink"
+			class="h-9 w-full rounded-xl border border-[#e5e5e5] bg-white px-3 text-[13px] text-ink outline-none transition-colors placeholder:text-[#8a8a8a] focus:border-[#d5d5d5] disabled:opacity-50"
 		/>
 		{#if validation || error}<p
 				id={`${titleId}-error`}
@@ -79,13 +83,13 @@
 				type="button"
 				disabled={busy}
 				onclick={onClose}
-				class="rounded-md border border-line px-4 py-2 text-sm disabled:opacity-50">Cancel</button
+				class="h-9 rounded-xl border border-[#e5e5e5] bg-white px-3 text-[13px] font-normal transition-colors hover:bg-[#f3f3f3] focus-visible:outline-1 focus-visible:outline-[#d5d5d5] disabled:opacity-50">Cancel</button
 			>
 			<button
 				type="submit"
 				disabled={busy}
-				class="rounded-md bg-[#171717] px-4 py-2 text-sm text-white disabled:opacity-50"
-				>{busy ? 'Saving…' : submitLabel}</button
+				class="h-9 rounded-xl bg-[#171717] px-3 text-[13px] font-normal text-white hover:bg-[#303030] focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-[#d5d5d5] disabled:opacity-50"
+				>{busy ? busyLabel : submitLabel}</button
 			>
 		</div>
 	</form>

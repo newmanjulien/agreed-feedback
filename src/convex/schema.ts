@@ -17,8 +17,11 @@ export default defineSchema({
 		companyName: v.string(),
 		savedAt: v.number(),
 		selectedConcessions: v.record(v.id('playbookItems'), v.string()),
-		baselineVersion: v.string(),
-		playbookVersion: v.string(),
+		revision: v.optional(v.number()),
+		lastOperationId: v.optional(v.string()),
+		// Legacy snapshot hashes; no longer written or returned.
+		baselineVersion: v.optional(v.string()),
+		playbookVersion: v.optional(v.string()),
 		blockCount: v.number(),
 		itemCount: v.number()
 	})
@@ -36,6 +39,11 @@ export default defineSchema({
 	})
 		.index('by_contractId', ['contractId'])
 		.index('by_contractId_and_itemId', ['contractId', 'itemId']),
+	// Receipts survive contract deletion so a creation retry cannot resurrect it.
+	contractCreationReceipts: defineTable({
+		operationId: v.string(),
+		contractId: v.id('savedContracts')
+	}).index('by_operationId', ['operationId']),
 	// Transport receipts survive deletion; retry must never recreate a deleted item.
 	creationReceipts: defineTable({ operationId: v.string(), itemId: v.id('playbookItems') }).index(
 		'by_operationId',

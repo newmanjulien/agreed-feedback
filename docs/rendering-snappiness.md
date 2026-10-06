@@ -83,10 +83,10 @@ remain supported. An oversized visual line, heading/first-line pair, or table
 header-plus-row fails with a technical layout error.
 
 Each page has ordered placements associating prepared content with fragment kind,
-interval and presentation. `reconcilePages()` runs after complete pagination. At the same
-page position and epoch, equal prepared identities, intervals and presentation retain the
-previous page object. Table column values must also agree. Moved or differently sliced
-content keeps the candidate page. Changed page numbers include removed pages.
+interval and presentation. `iterateReconciledPages()` runs after complete pagination. At
+the same page position and epoch, equal prepared identities, intervals and presentation
+retain the previous page object. Table column values must also agree. Moved or differently
+sliced content keeps the candidate page. Changed page numbers include removed pages.
 
 ## Complete snapshots and interactions
 
