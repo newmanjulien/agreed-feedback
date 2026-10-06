@@ -223,10 +223,10 @@
 		{:else if cards.length === 0 && !waiting}
 			<div class="state" role="status">
 				{#if query}<h2 class="text-[13px] font-medium">No contracts found</h2>
-					<p class="mt-2 text-xs text-ink-muted">No company names match “{query}”.</p>
-					<button onclick={() => (search = '')} class="mt-4 text-xs underline">Clear search</button>
-				{:else}<h2 class="font-medium">No contracts yet</h2>
-					<p class="mt-2 text-sm text-ink-muted">
+					<p class="mt-2 text-[13px] text-ink-muted">No company names match “{query}”.</p>
+					<button onclick={() => (search = '')} class="mt-4 text-[13px] underline">Clear search</button>
+				{:else}<h2 class="text-[13px] font-medium">No contracts yet</h2>
+					<p class="mt-2 text-[13px] text-ink-muted">
 						Select Add New to start your first contract.
 					</p>{/if}
 			</div>
