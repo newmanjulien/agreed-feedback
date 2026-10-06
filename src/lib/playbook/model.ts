@@ -10,6 +10,14 @@ export type Concession = Infer<typeof validators.concession>;
 export type PlaybookItem = Infer<typeof validators.playbookItem>;
 export type PlaybookItemId = Id<'playbookItems'>;
 export type PlaybookItemRecord = Doc<'playbookItems'>;
+export type ConcessionSelection = Readonly<Record<string, string>>;
+
+export function sameSelection(a: ConcessionSelection, b: ConcessionSelection): boolean {
+	return (
+		Object.keys(a).length === Object.keys(b).length &&
+		Object.entries(a).every(([key, value]) => b[key] === value)
+	);
+}
 
 /** Generate once on authoring, never during rendering or projection. */
 export const newTriggerId = (): string => crypto.randomUUID();

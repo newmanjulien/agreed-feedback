@@ -1,7 +1,9 @@
 @import 'tailwindcss';
+@import '@fontsource-variable/inter';
 
 @theme {
-	--font-sans: Arial, Helvetica, sans-serif;
+	--font-sans: 'Inter Variable', Inter, sans-serif;
+	--font-document: Arial, Helvetica, sans-serif;
 
 	--color-canvas: #f1f3f4;
 	--color-surface: #ffffff;
@@ -22,16 +24,20 @@
 	--color-danger-surface-hover: #ffe4e1;
 
 	--radius-base: 14px;
+	--radius-button-sm: 4px;
+	--radius-button-md: 6px;
+	--radius-button-lg: 10px;
+	--radius-button-xl: 12px;
 }
 
 :root {
-	--app-header-height: 51px;
+	--app-header-height: 34px;
 	--document-viewport-gap: 16px;
 }
 
-@media (max-width: 650px) {
+@media (min-width: 768px) {
 	:root {
-		--app-header-height: 48px;
+		--app-header-height: 38px;
 	}
 }
 

@@ -1,5 +1,6 @@
 import type { AnnotationActivation } from '../annotation-anchor';
 import type { DocumentHighlightController } from './controller';
+import { countOverlayWork } from '../runtime/render-perf';
 
 const DRAG_DISTANCE = 5;
 
@@ -21,6 +22,7 @@ export class DocumentClauseInteractions {
 	#completedOwner: HTMLElement | null = null;
 	#events = new AbortController();
 	#unsubscribe: () => void;
+	#hoverFrame: number | undefined;
 
 	constructor(
 		stage: HTMLElement,
@@ -42,22 +44,27 @@ export class DocumentClauseInteractions {
 		stage.addEventListener('keydown', () => this.#resetGesture(), options);
 		document.addEventListener('scroll', this.#scroll, { ...options, capture: true });
 		this.#unsubscribe = highlights.subscribeGeometry((change) => {
-			if (change === 'measure') this.#updateHover();
-			else {
+			if (change === 'invalidate') {
+				this.#cancelHover();
 				this.#resetGesture();
 				this.#setHover(null);
-			}
+			} else this.#scheduleHover();
 		});
 	}
 
 	setEnabled(enabled: boolean) {
+		if (this.#enabled === enabled) return;
 		this.#enabled = enabled;
-		if (!enabled) this.#resetGesture();
-		this.#updateHover();
+		if (!enabled) {
+			this.#resetGesture();
+			this.#cancelHover();
+			this.#setHover(null);
+		} else this.#scheduleHover();
 	}
 
 	#hit(x: number, y: number) {
 		if (!this.#enabled) return null;
+		countOverlayWork('hoverChecks');
 		// Ignore document regions obscured by a panel or other UI.
 		const element = document.elementFromPoint(x, y);
 		if (!element || !this.#stage.contains(element)) return null;
@@ -73,6 +80,17 @@ export class DocumentClauseInteractions {
 	#updateHover = () => {
 		this.#setHover(this.#pointer ? this.#hit(this.#pointer.x, this.#pointer.y) : null);
 	};
+	#scheduleHover = () => {
+		if (!this.#enabled || !this.#pointer || this.#hoverFrame !== undefined) return;
+		this.#hoverFrame = requestAnimationFrame(() => {
+			this.#hoverFrame = undefined;
+			this.#updateHover();
+		});
+	};
+	#cancelHover() {
+		if (this.#hoverFrame !== undefined) cancelAnimationFrame(this.#hoverFrame);
+		this.#hoverFrame = undefined;
+	}
 
 	#down = (event: PointerEvent) => {
 		this.#resetGesture();
@@ -87,8 +105,9 @@ export class DocumentClauseInteractions {
 				dragged: false
 			};
 		if (event.pointerType !== 'touch') {
+			this.#cancelHover();
 			this.#pointer = { x: event.clientX, y: event.clientY };
-			this.#updateHover();
+			this.#setHover(owner);
 		}
 	};
 
@@ -104,7 +123,7 @@ export class DocumentClauseInteractions {
 	#hoverMove = (event: PointerEvent) => {
 		if (!event.isPrimary || event.pointerType === 'touch') return;
 		this.#pointer = { x: event.clientX, y: event.clientY };
-		this.#updateHover();
+		this.#scheduleHover();
 	};
 
 	#up = (event: PointerEvent) => {
@@ -150,6 +169,7 @@ export class DocumentClauseInteractions {
 	}
 
 	#leave = () => {
+		this.#cancelHover();
 		this.#pointer = null;
 		this.#setHover(null);
 	};
@@ -161,7 +181,7 @@ export class DocumentClauseInteractions {
 
 	#scroll = () => {
 		this.#resetGesture();
-		this.#updateHover();
+		this.#scheduleHover();
 	};
 
 	destroy() {

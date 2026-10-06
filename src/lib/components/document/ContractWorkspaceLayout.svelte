@@ -6,6 +6,7 @@
 
 	let {
 		hasPanel,
+		interactive = true,
 		followScroll = false,
 		displayedPageWidth,
 		documentHeight,
@@ -13,9 +14,11 @@
 		layoutElement = $bindable(),
 		documentStageElement = $bindable(),
 		documentContent,
-		panelContent
+		panelContent,
+		footerContent
 	}: {
 		hasPanel: boolean;
+		interactive?: boolean;
 		followScroll?: boolean;
 		displayedPageWidth: number;
 		documentHeight: number;
@@ -24,6 +27,7 @@
 		documentStageElement?: HTMLDivElement;
 		documentContent: Snippet;
 		panelContent: Snippet;
+		footerContent?: Snippet;
 	} = $props();
 </script>
 
@@ -44,15 +48,18 @@
 		class={`mx-auto ${hasPanel ? '@min-[1150px]:ml-(--page-left) @min-[1150px]:mr-0' : ''}`}
 		style:width={`${displayedPageWidth}px`}
 	>
+		<!-- Programmatic focus only; inert previews have no focus target. -->
+		<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 		<div
 			class="document-stage relative"
 			bind:this={documentStageElement}
-			tabindex="-1"
+			tabindex={interactive ? -1 : undefined}
 			style:width={`${displayedPageWidth}px`}
 			style:height={`${documentHeight}px`}
 		>
 			{@render documentContent()}
 		</div>
+		{@render footerContent?.()}
 	</div>
 
 	{#if hasPanel}
@@ -61,7 +68,11 @@
 			class:follow-scroll={followScroll}
 			data-workspace-panel-rail
 		>
-			<div use:protect class="workspace-panel pointer-events-auto" data-workspace-panel>
+			<div
+				use:protect={interactive}
+				class="workspace-panel pointer-events-auto"
+				data-workspace-panel
+			>
 				{@render panelContent()}
 			</div>
 		</div>

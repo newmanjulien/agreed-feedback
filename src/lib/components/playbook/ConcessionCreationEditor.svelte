@@ -23,7 +23,7 @@
 	);
 </script>
 
-<div class="flex flex-col gap-3 text-[15px] leading-[1.45] text-ink-muted">
+<div class="flex flex-col gap-3 text-[14px] leading-[1.45] text-ink-muted">
 	<textarea
 		class="block min-h-28 w-full resize-y rounded-base border border-line bg-surface px-3 py-2 text-ink placeholder:text-ink-muted focus:border-accent focus:outline-2 focus:outline-accent/18 focus:outline-offset-1"
 		aria-label="Primary replacement clause"
@@ -46,7 +46,7 @@
 		<button
 			bind:this={optionsButton}
 			type="button"
-			class="flex w-full cursor-pointer items-center justify-between gap-3 rounded-base border border-line bg-surface px-3 py-2 text-left hover:bg-fill-subtle focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent"
+			class="flex w-full cursor-pointer items-center justify-between gap-3 rounded-button-xl border border-line bg-surface px-3 py-2 text-left hover:bg-fill-subtle focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent"
 			aria-label="Concession options"
 			aria-expanded={optionsOpen}
 			aria-controls={optionsId}
@@ -83,13 +83,13 @@
 				label="This is a rare concession"
 				checked={concession.tier === 'rare'}
 				onCheckedChange={(checked) => (concession.tier = checked ? 'rare' : 'preferred')}
-				className="rounded-md px-3 py-2 hover:bg-fill-subtle"
+				className="rounded-button-sm px-3 py-2 hover:bg-fill-subtle"
 			/>
 			<Checkbox
 				label="This concession affects another part of the contract"
 				checked={affectsOtherParts}
 				onCheckedChange={onAffectedPart}
-				className="rounded-md px-3 py-2 hover:bg-fill-subtle"
+				className="rounded-button-sm px-3 py-2 hover:bg-fill-subtle"
 			/>
 		</Popover>
 	</div>

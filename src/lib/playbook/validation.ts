@@ -7,7 +7,7 @@ import {
 	triggersIntersect,
 	validateTriggerRange
 } from './geometry';
-import { changesConflict } from './conflicts';
+import { createChangeConflictChecker } from './conflicts';
 import { equalConcession } from './draft';
 
 // Leave headroom under Convex's document limit for its system fields and encoding.
@@ -61,12 +61,12 @@ export function validateChangeGeometry(
 	triggers: readonly Trigger[],
 	changes: readonly ContractChange[]
 ): void {
+	const conflicts = createChangeConflictChecker(index);
 	for (const [i, change] of changes.entries()) {
 		changeTriggerOwner(index, triggers, change);
 		activatedBlock(index, change);
-		for (const previous of changes.slice(0, i))
-			if (changesConflict(index, previous, change))
-				throw new Error(`Conflicting changes: ${i + 1}`);
+		for (let j = 0; j < i; j++)
+			if (conflicts(changes[j], change)) throw new Error(`Conflicting changes: ${i + 1}`);
 	}
 }
 

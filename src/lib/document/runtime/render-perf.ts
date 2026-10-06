@@ -5,6 +5,76 @@ import type { LayoutProfileMetrics } from '../pagination/profiler';
 
 const enabled = () => dev || env.PUBLIC_CONTRACT_PERF === '1';
 
+type OverlayWork =
+	| 'measuredPages'
+	| 'measuredNodes'
+	| 'geometryNotifications'
+	| 'selectionUpdates'
+	| 'highlightPublications'
+	| 'hoverChecks'
+	| 'floatingUpdates';
+
+/** Fixed aggregate counters; inspecting idle work does not retain DOM or callback references. */
+export function countOverlayWork(name: OverlayWork, count = 1) {
+	if (!enabled() || typeof window === 'undefined') return;
+	const target = window as typeof window & {
+		__contractOverlayPerf?: Partial<Record<OverlayWork, number>>;
+	};
+	const counters = (target.__contractOverlayPerf ??= {});
+	counters[name] = (counters[name] ?? 0) + count;
+}
+
+type SearchWork =
+	| 'refreshes'
+	| 'scannedCharacters'
+	| 'rangeResolutions'
+	| 'materializedRanges'
+	| 'measuredNodes'
+	| 'rangeMeasurements';
+
+/** Search counters retain only totals, never queries, ranges, or text nodes. */
+export function countSearchWork(name: SearchWork, count = 1) {
+	if (!enabled() || typeof window === 'undefined') return;
+	const target = window as typeof window & {
+		__contractSearchPerf?: Partial<Record<SearchWork, number>>;
+	};
+	const counters = (target.__contractSearchPerf ??= {});
+	counters[name] = (counters[name] ?? 0) + count;
+}
+
+/** Aggregate Admin lifecycle counters; no departed component or query references. */
+function adminQueryCounters() {
+	if (!enabled() || typeof window === 'undefined') return;
+	const target = window as typeof window & {
+		__adminQueryPerf?: {
+			activeOwners: number;
+			mounts: number;
+			unmounts: number;
+			sourceUpdates: number;
+		};
+	};
+	return (target.__adminQueryPerf ??= {
+		activeOwners: 0,
+		mounts: 0,
+		unmounts: 0,
+		sourceUpdates: 0
+	});
+}
+export function recordAdminQueryOwner() {
+	const counters = adminQueryCounters();
+	if (!counters) return;
+	counters.activeOwners++;
+	counters.mounts++;
+	return () => {
+		counters.activeOwners--;
+		counters.unmounts++;
+	};
+}
+export function recordAdminSourceUpdate() {
+	const counters = adminQueryCounters();
+	if (counters) counters.sourceUpdates++;
+}
+
 /** Local, bounded navigation milestones; timestamps use the browser time origin. */
 export function recordColdStart(name: string, startedAt?: number) {
 	if (!enabled() || typeof window === 'undefined') return;
@@ -15,6 +85,122 @@ export function recordColdStart(name: string, startedAt?: number) {
 	const marks = (target.__contractColdStart ??= []);
 	marks.push({ name, at, durationMs: startedAt === undefined ? undefined : at - startedAt });
 	if (marks.length > 100) marks.shift();
+}
+
+/** DOM flush durations, separate from geometry preparation and scheduler wait time. */
+export function recordPageMount(
+	generation: number,
+	startedAt: number,
+	pageCount: number,
+	atomic = false
+) {
+	if (!enabled() || typeof window === 'undefined') return;
+	const target = window as typeof window & {
+		__contractPageMountPerf?: {
+			generation: number;
+			at: number;
+			durationMs: number;
+			pageCount: number;
+			atomic: boolean;
+		}[];
+	};
+	const samples = (target.__contractPageMountPerf ??= []);
+	samples.push({
+		generation,
+		at: startedAt,
+		durationMs: performance.now() - startedAt,
+		pageCount,
+		atomic
+	});
+	if (samples.length > 100) samples.shift();
+}
+
+/** Bounded numeric windows, including awaited DOM flushes; never retain document content. */
+export interface SchedulerWindowSample {
+	at: number;
+	budgetMs: number;
+	durationMs: number;
+	preparationCallbacks: number;
+	appendedPages: number;
+	preparationMs: number;
+	mountMs: number;
+	overruns: number;
+}
+export function recordSchedulerWindow(sample: SchedulerWindowSample) {
+	if (!enabled() || typeof window === 'undefined') return;
+	const target = window as typeof window & { __contractSchedulerPerf?: SchedulerWindowSample[] };
+	const samples = (target.__contractSchedulerPerf ??= []);
+	samples.push({ ...sample });
+	if (samples.length > 100) samples.shift();
+}
+
+/** Home-scoped observation includes browser DOM work following background slices. */
+export function observeHomeWarming(): () => void {
+	if (!enabled() || typeof PerformanceObserver === 'undefined') return () => {};
+	const target = window as typeof window & {
+		__contractHomeWarmingPerf?: {
+			startedAt: number;
+			endedAt?: number;
+			longTasksSupported: boolean;
+			longTasks: { at: number; durationMs: number }[];
+		}[];
+	};
+	const sample = {
+		startedAt: performance.now(),
+		endedAt: undefined as number | undefined,
+		longTasksSupported: PerformanceObserver.supportedEntryTypes.includes('longtask'),
+		longTasks: [] as { at: number; durationMs: number }[]
+	};
+	const samples = (target.__contractHomeWarmingPerf ??= []);
+	samples.push(sample);
+	if (samples.length > 20) samples.shift();
+	recordColdStart('home-warming-start');
+	let observer: PerformanceObserver | undefined;
+	const collect = (entries: readonly PerformanceEntry[]) => {
+		for (const entry of entries) {
+			sample.longTasks.push({ at: entry.startTime, durationMs: entry.duration });
+			if (sample.longTasks.length > 100) sample.longTasks.shift();
+		}
+	};
+	if (sample.longTasksSupported) {
+		observer = new PerformanceObserver((list) => collect(list.getEntries()));
+		observer.observe({ type: 'longtask' });
+	}
+	return () => {
+		if (observer) collect(observer.takeRecords());
+		observer?.disconnect();
+		sample.endedAt = performance.now();
+		recordColdStart('home-warming-end');
+	};
+}
+
+let documentNavigation: { pathname: string; startedAt: number } | undefined;
+export function recordDocumentNavigation(pathname: string, startedAt = performance.now()) {
+	if (!enabled() || typeof window === 'undefined') return;
+	if (pathname !== '/admin' && !/^\/contracts\/[^/]+$/.test(pathname)) {
+		cancelDocumentNavigation();
+		return;
+	}
+	documentNavigation = { pathname, startedAt };
+	recordColdStart('document-navigation-start');
+}
+
+export function cancelDocumentNavigation() {
+	documentNavigation = undefined;
+}
+
+export function recordDocumentReady() {
+	if (!enabled() || typeof window === 'undefined') return;
+	const navigation = documentNavigation;
+	if (!navigation || navigation.pathname !== window.location.pathname) return;
+	recordColdStart(
+		navigation.pathname === '/admin'
+			? 'admin-navigation-to-document-ready'
+			: 'contract-navigation-to-document-ready',
+		navigation.startedAt
+	);
+	documentNavigation = undefined;
+	return navigation.startedAt;
 }
 
 /** Fixed work categories: bounded counters, no source text or backend identifiers. */
@@ -60,6 +246,7 @@ export function recordDomainWork(domain: DocumentDomain) {
 
 export interface RenderPerfSample extends LayoutProfileMetrics {
 	generation: number;
+	priority?: import('./scheduler').RenderPriority;
 	sourceRevision: number;
 	requestedAt: number;
 	inputAt: number;
@@ -68,6 +255,9 @@ export interface RenderPerfSample extends LayoutProfileMetrics {
 	compositionCompleteAt?: number;
 	preparationCompleteAt?: number;
 	paginationCompleteAt?: number;
+	firstPageAt?: number;
+	preparationSlices: number;
+	maxPreparationSliceMs: number;
 	paintOpportunityAt?: number;
 	inputToPaintOpportunityMs?: number;
 	affectedContainers: number;
@@ -112,6 +302,8 @@ export function createPerfSample(
 		composeMs: 0,
 		prepareMs: 0,
 		profileResolveMs: 0,
+		preparationSlices: 0,
+		maxPreparationSliceMs: 0,
 		profileCacheHits: 0,
 		profileCacheMisses: 0,
 		profileUniqueMisses: 0,

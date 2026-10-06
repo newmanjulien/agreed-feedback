@@ -1,26 +1,37 @@
 <script lang="ts">
-	import { untrack, onMount, tick } from 'svelte';
+	import { untrack, onMount, onDestroy, tick } from 'svelte';
 	import { beforeNavigate } from '$app/navigation';
 	import { createContractWorkspace, setContractWorkspace } from '$lib/document/runtime/context';
-	import type { ContractSourceInput } from '$lib/document/runtime/source.svelte';
-	import { recordContractInput } from '$lib/document/runtime/render-perf';
+	import { recordAdminSourceUpdate, recordContractInput } from '$lib/document/runtime/render-perf';
 	import { sameSourceRange, snapshotPreviewChanges } from '$lib/document/runtime/types';
 	import { env } from '$env/dynamic/public';
 	import { useConvexClient } from 'convex-svelte';
+	import { getAdminQueries } from '$lib/contract/admin-queries.svelte';
 	import { AuthoringSession } from '$lib/playbook/authoring.svelte';
 	import { convexSaveTransport } from '$lib/playbook/save-transport';
 	import type { OperationStatus } from '$lib/components/chrome/operation-status';
 	import { AuthoringFlow } from '$lib/playbook/authoring-flow.svelte';
-	import ContractViewer from '$lib/components/document/ContractViewer.svelte';
+	import { getDocumentResources } from '$lib/document/runtime/resources.svelte';
+	import DocumentViewerSlot from '$lib/components/document/DocumentViewerSlot.svelte';
+	import LoadingPagination from '$lib/components/document/LoadingPagination.svelte';
 	import SourceSelectionToolbar from '$lib/components/document/SourceSelectionToolbar.svelte';
 	import PlaybookEditor from '$lib/components/playbook/PlaybookEditor.svelte';
 	import WorkspaceChrome from './WorkspaceChrome.svelte';
 	import { setInteractionOwner } from '$lib/components/ui/interactions';
-	let { data }: { data: ContractSourceInput } = $props();
-	setInteractionOwner(Symbol('authoring-workspace'));
-	const workspace = setContractWorkspace(untrack(() => createContractWorkspace(data)));
-	const { source, renderer, viewer } = workspace;
+
 	const client = env.PUBLIC_CONVEX_URL ? useConvexClient() : null;
+	const data = getAdminQueries();
+	const resources = getDocumentResources();
+	const resource = resources ? untrack(() => resources.acquire('admin', data)) : undefined;
+	if (resource && resources) untrack(() => resources.activate(resource));
+	onDestroy(() => {
+		if (resource && resources) resources.deactivate(resource);
+	});
+	setInteractionOwner(resource?.owner ?? Symbol('authoring-workspace'));
+	const workspace = setContractWorkspace(
+		resource?.workspace ?? untrack(() => createContractWorkspace(data))
+	);
+	const { source, renderer, viewer } = workspace;
 	const authoring = new AuthoringSession(client ? convexSaveTransport(client) : null);
 	$effect(() => {
 		const { compiled, geometry, geometryVersion, items } = source;
@@ -39,7 +50,12 @@
 		}, 2500);
 		return () => clearTimeout(timer);
 	});
-	$effect(() => workspace.accept(data));
+	$effect(() => {
+		if (!resources) {
+			workspace.accept(data);
+			recordAdminSourceUpdate();
+		}
+	});
 	const flow: AuthoringFlow = new AuthoringFlow(authoring, () => ({
 		index: source.compiled?.index ?? null,
 		geometry: source.geometry,
@@ -111,7 +127,9 @@
 			event.returnValue = '';
 		};
 		window.addEventListener('beforeunload', warn);
-		return () => window.removeEventListener('beforeunload', warn);
+		return () => {
+			window.removeEventListener('beforeunload', warn);
+		};
 	});
 </script>
 
@@ -120,9 +138,12 @@
 	<main
 		oninputcapture={recordContractInput}
 		onclickcapture={recordContractInput}
-		class="pt-6 pb-12 admin-selection-enabled"
+		class="pt-14 pb-12 admin-selection-enabled min-[1000px]:pt-6"
 		aria-label="Contract authoring"
 	>
+		<h1 class="mb-5 px-2 text-center text-[13px] leading-6 text-ink-muted/50">
+			Edit the instructions reps will see
+		</h1>
 		{#snippet panelContent()}{#if entry && source.renderSource}{#key entry.key}<PlaybookEditor
 						{flow}
 						onCancel={cancel}
@@ -137,7 +158,8 @@
 			>
 				{flow.feedback}
 			</p>{/if}
-		<ContractViewer
+		<DocumentViewerSlot
+			entry={resource}
 			hasPanel={Boolean(draft)}
 			followScroll={flow.otherClauseActive}
 			{panelContent}
@@ -152,9 +174,9 @@
 			onSelect={(itemId, triggerId) => flow.openItem(itemId, triggerId)}
 		/>
 	</main>
-	{#if renderer.snapshot}<SourceSelectionToolbar
+	{#if viewer.ready && viewer.displayedSnapshot}<SourceSelectionToolbar
 			container={viewer.documentStageElement}
-			snapshot={renderer.snapshot}
+			snapshot={viewer.displayedSnapshot}
 			enabled={flow.selectionMode !== 'inactive'}
 			autoConfirm={flow.picking}
 			onSelectionIssue={(issue) => flow.reportIssue(issue)}
@@ -165,4 +187,4 @@
 {:else if source.issue}<p role="alert">
 		We couldn’t load this contract. Please refresh to try again.
 	</p>
-{:else}<p role="status">Loading contract…</p>{/if}
+{:else}<LoadingPagination label="Loading contract" />{/if}

@@ -12,7 +12,7 @@ function* alternatives(snapshot: RenderSnapshot): Generator<PreparedBlock | unde
 	const composer = new ContractCompositionEngine(source.blocks, source.sourceIndex);
 	const preparation = new LayoutPreparationEngine();
 	// Establish current versions once, yielding between blocks without preparing them.
-	for (const _ of composer.compose({
+	for (const _ of composer.iterate({
 		items: source.items,
 		activeConcessions: concessions,
 		view: 'redline'
@@ -33,11 +33,11 @@ function* alternatives(snapshot: RenderSnapshot): Generator<PreparedBlock | unde
 				const selection = { ...concessions };
 				if (choice === undefined) delete selection[item.itemId];
 				else selection[item.itemId] = choice;
-				for (const block of composer.compose(
+				for (const block of composer.iterate(
 					{ items: source.items, activeConcessions: selection, view: 'redline' },
 					{ changedOnly: true }
 				))
-					yield preparation.prepare(block);
+					yield block ? preparation.prepare(block) : undefined;
 			} catch {
 				// An invalid saved alternative is optional work; foreground validation owns errors.
 			}
@@ -52,54 +52,72 @@ export function prewarmSavedConcessions(
 	profiler: LayoutProfiler
 ): () => void {
 	const abort = new AbortController();
+	const release = profiler.trackAlternative(abort);
 	const blocks = alternatives(snapshot);
-	const seen = new Set(
-		snapshot.pages.flatMap((page) =>
-			page.placements.map(({ prepared }) => prepared.geometryFingerprint)
-		)
-	);
-	let cancelIdle: (() => void) | undefined;
+	const seen = new Set<string>();
+	function* visibleGeometry() {
+		for (const page of snapshot.pages)
+			for (const { prepared } of page.placements) {
+				seen.add(prepared.geometryFingerprint);
+				yield undefined;
+			}
+	}
+	const initial = visibleGeometry();
+	let initialized = false;
 	const current = () =>
 		!abort.signal.aborted &&
 		profiler.epoch === snapshot.layoutEpoch &&
 		profiler.cache.availableWarmSlots > 0;
-	function schedule() {
-		if (!current()) return;
-		if (typeof window.requestIdleCallback === 'function') {
-			const id = window.requestIdleCallback((deadline) => void run(() => deadline.timeRemaining()));
-			cancelIdle = () => window.cancelIdleCallback(id);
-		} else {
-			// Browsers without idle callbacks still yield between small units of optional work.
-			const id = setTimeout(() => {
-				const started = performance.now();
-				void run(() => 4 - (performance.now() - started));
-			}, 100);
-			cancelIdle = () => clearTimeout(id);
-		}
-	}
-	async function run(timeRemaining: () => number) {
-		cancelIdle = undefined;
-		const started = performance.now();
-		while (current() && timeRemaining() > 0 && performance.now() - started < 4) {
-			const next = blocks.next();
-			if (next.done) return;
-			const block = next.value;
-			if (!block || seen.has(block.geometryFingerprint)) continue;
-			seen.add(block.geometryFingerprint);
-			try {
-				// Never queue a whole alternative document behind the shared surface.
-				await profiler.prewarm(block, abort.signal);
-			} catch {
-				// Unsupported geometry does not make prewarming a rendering dependency.
+	async function run() {
+		try {
+			while (current()) {
+				const block = await profiler.scheduler.run(
+					() => 'alternative',
+					() => {
+						if (!current()) return;
+						const started = performance.now();
+						do {
+							if (!initialized) {
+								initialized = Boolean(initial.next().done);
+								continue;
+							}
+							const next = blocks.next();
+							if (next.done) return null;
+							if (!next.value || seen.has(next.value.geometryFingerprint)) continue;
+							seen.add(next.value.geometryFingerprint);
+							return next.value;
+						} while (performance.now() - started < 4);
+					},
+					abort.signal
+				);
+				if (block === null) return;
+				if (block && current()) {
+					try {
+						await profiler.resolve(
+							[block],
+							undefined,
+							() => {
+								if (!current()) throw new Error('Alternative preparation cancelled.');
+							},
+							() => 'alternative',
+							abort.signal
+						);
+					} catch {
+						/* Optional geometry. */
+					}
+				}
 			}
-			break;
+		} catch {
+			/* Layout teardown cancels optional work. */
+		} finally {
+			release();
+			blocks.return(undefined);
 		}
-		schedule();
 	}
-	schedule();
+	void run();
 	return () => {
 		abort.abort();
-		cancelIdle?.();
+		release();
 		blocks.return(undefined);
 	};
 }

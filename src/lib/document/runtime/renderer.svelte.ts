@@ -1,18 +1,20 @@
 import { tick } from 'svelte';
+import type { Priority } from './scheduler';
+import type { LayoutProfiles } from '../pagination/profile';
 import { ContractCompositionEngine } from '$lib/contract/compose';
-import type { ContractChange } from '$lib/playbook/model';
-import { paginatePreparedDocument } from '../pagination/paginate';
-import { reconcilePages } from '../pagination/reconcile';
+import { sameSelection, type ContractChange } from '$lib/playbook/model';
+import { iteratePreparedDocument } from '../pagination/paginate';
+import { iterateReconciledPages } from '../pagination/reconcile';
 import { type LayoutProfiler, StaleLayoutProfileError } from '../pagination/profiler';
 import { LayoutPreparationEngine, type PreparedBlock } from '../pagination/prepare';
 import {
 	countStartupWork,
 	createPerfSample,
+	recordColdStart,
 	recordPerfSample,
 	type RenderPerfSample
 } from './render-perf';
 import {
-	sameSelection,
 	samePreviewChanges,
 	EMPTY_PREVIEW_CHANGES,
 	type ConcessionSelection,
@@ -30,11 +32,16 @@ interface RenderCurrentInput {
 	/** Caller-owned preview changes must be immutable for the request's lifetime. */
 	previewChanges?: readonly ContractChange[];
 	profiler: LayoutProfiler;
+	priority?: Priority;
+	/** Initial activation can publish exact closed pages; warm updates commit atomically. */
+	progressive?: boolean;
 }
 interface RenderRequest extends RenderCurrentInput {
 	previewChanges: readonly ContractChange[];
 	generation: number;
 	perf?: RenderPerfSample;
+	abort: AbortController;
+	firstPagePaint?: { epoch: string; promise: Promise<void>; acknowledge: () => void };
 }
 
 /** Latest-request worker: compose, prepare, profile, paginate, reconcile, commit. */
@@ -47,7 +54,16 @@ export class ContractRenderController {
 	error = $state.raw<RenderFailure | null>(null);
 	#generation = 0;
 	#next?: RenderRequest;
+	#inflight?: RenderRequest;
 	#running = false;
+	#abort?: AbortController;
+	#geometry?: {
+		blocks: readonly PreparedBlock[];
+		profiles: LayoutProfiles;
+		epoch: string;
+		owner: symbol;
+	};
+	#protectedGeometry?: { profiler: LayoutProfiler; owner: symbol };
 	#composition?: ContractCompositionEngine;
 	#preparation = new LayoutPreparationEngine();
 	#commitListeners = new Set<() => void>();
@@ -60,7 +76,10 @@ export class ContractRenderController {
 		this.#commitListeners.clear();
 		this.#composition = undefined;
 		this.#preparation = new LayoutPreparationEngine();
+		this.#protectedGeometry?.profiler.release(this.#protectedGeometry.owner);
+		this.#protectedGeometry = undefined;
 		this.snapshot = null;
+		this.#geometry = undefined;
 	}
 	beforeCommit(listener: () => void) {
 		this.#commitListeners.add(listener);
@@ -77,27 +96,104 @@ export class ContractRenderController {
 		return (
 			profiler.epoch !== undefined &&
 			this.snapshot?.layoutEpoch === profiler.epoch &&
-			this.snapshot?.source.revision === source.revision &&
+			this.snapshot?.source === source &&
 			sameSelection(this.snapshot.concessions, concessions) &&
 			samePreviewChanges(this.snapshot.previewChanges, previewChanges)
 		);
 	}
+	isPreparingCurrent(input: RenderCurrentInput) {
+		const job = this.pending;
+		return Boolean(
+			job &&
+			job.generation === this.#generation &&
+			job.layoutEpoch !== undefined &&
+			job.layoutEpoch === input.profiler.epoch &&
+			job.source === input.source &&
+			sameSelection(job.concessions, input.concessions) &&
+			samePreviewChanges(job.previewChanges, input.previewChanges ?? EMPTY_PREVIEW_CHANGES)
+		);
+	}
+	/** Only the viewer can establish that this generation's first exact page mounted. */
+	acknowledgeFirstPagePaint(generation: number, epoch: string) {
+		const request = this.#inflight;
+		if (request?.generation !== generation || !this.#isCurrent(request, epoch)) return;
+		if (request.firstPagePaint?.epoch === epoch) request.firstPagePaint.acknowledge();
+	}
+	#waitForFirstPagePaint(request: RenderRequest, epoch: string) {
+		const signal = request.abort.signal;
+		let acknowledge!: () => void;
+		const promise = new Promise<void>((resolve, reject) => {
+			const cancel = () => reject(signal.reason);
+			acknowledge = () => {
+				signal.removeEventListener('abort', cancel);
+				resolve();
+			};
+			if (signal.aborted) cancel();
+			else signal.addEventListener('abort', cancel, { once: true });
+		});
+		request.firstPagePaint = { epoch, promise, acknowledge };
+	}
+	get retainedPageCount() {
+		return new Set([...(this.snapshot?.pages ?? []), ...(this.pending?.pages ?? [])]).size;
+	}
+
+	protectGeometry(profiler: LayoutProfiler) {
+		const geometry = this.#geometry;
+		if (!geometry || geometry.epoch !== profiler.epoch) return;
+		if (
+			this.#protectedGeometry?.profiler !== profiler ||
+			this.#protectedGeometry.owner !== geometry.owner
+		)
+			this.#protectedGeometry?.profiler.release(this.#protectedGeometry.owner);
+		profiler.retain(geometry.blocks, geometry.profiles, geometry.epoch, geometry.owner);
+		this.#protectedGeometry = { profiler, owner: geometry.owner };
+	}
 	request(input: RenderCurrentInput) {
 		if (this.#destroyed) return;
+		const queued = this.#next ?? this.#inflight;
+		if (
+			this.pending?.status === 'running' &&
+			this.pending.layoutEpoch === input.profiler.epoch &&
+			queued &&
+			queued.source === input.source &&
+			queued.profiler === input.profiler &&
+			sameSelection(queued.concessions, input.concessions) &&
+			samePreviewChanges(queued.previewChanges, input.previewChanges ?? EMPTY_PREVIEW_CHANGES)
+		)
+			return;
+		input.profiler.beginPreparation();
+		this.#abort?.abort(OBSOLETE);
+		const abort = (this.#abort = new AbortController());
 		const generation = ++this.#generation;
 		this.#recordCancelled(this.#next);
 		this.#next = {
 			...input,
+			abort,
 			concessions: Object.freeze({ ...input.concessions }),
 			previewChanges: input.previewChanges ?? EMPTY_PREVIEW_CHANGES,
 			generation,
 			perf: createPerfSample(generation, input.source.revision)
 		};
-		this.pending = { generation, sourceRevision: input.source.revision };
+		if (this.#next.perf) this.#next.perf.priority = input.priority?.() ?? 'foreground';
+		if (input.priority?.() === 'background')
+			recordColdStart('background-document-preparation-start');
+		this.pending = {
+			generation,
+			sourceRevision: input.source.revision,
+			source: this.#next.source,
+			concessions: this.#next.concessions,
+			previewChanges: this.#next.previewChanges,
+			layoutEpoch: input.profiler.epoch,
+			pages: Object.freeze([]),
+			progressive: Boolean(input.progressive),
+			status: 'running'
+		};
 		this.error = null;
 		void this.#drain();
 	}
 	cancelPending() {
+		this.#abort?.abort(OBSOLETE);
+		this.#abort = undefined;
 		++this.#generation;
 		this.#recordCancelled(this.#next);
 		this.#next = undefined;
@@ -121,16 +217,20 @@ export class ContractRenderController {
 		try {
 			while (this.#next) {
 				const request = this.#next;
+				this.#inflight = request;
 				this.#next = undefined;
 				try {
 					const result = await this.#render(request);
-					if (!this.#isCurrent(request, result.layoutEpoch)) throw OBSOLETE;
+					if (!this.#isCurrent(request, result.snapshot.layoutEpoch)) throw OBSOLETE;
 					for (const listener of this.#commitListeners) listener();
-					if (!this.#isCurrent(request, result.layoutEpoch)) throw OBSOLETE;
+					if (!this.#isCurrent(request, result.snapshot.layoutEpoch)) throw OBSOLETE;
 					this.#cancelPaintObservation?.();
 					const assignedAt = request.perf ? performance.now() : 0;
-					this.snapshot = result;
+					this.#geometry = result.geometry;
+					this.snapshot = result.snapshot;
 					this.pending = null;
+					if (request.perf?.priority === 'background')
+						recordColdStart('background-document-preparation-ready', request.perf.requestedAt);
 					if (request.perf) {
 						request.perf.snapshotAt = assignedAt;
 						request.perf.totalMs = assignedAt - request.perf.requestedAt;
@@ -140,7 +240,8 @@ export class ContractRenderController {
 						request.perf.commitToDomMs = performance.now() - assignedAt;
 						request.perf.settledTotalMs = performance.now() - request.perf.requestedAt;
 						recordPerfSample(request.perf);
-						this.#observePaint(request);
+						if ((request.priority?.() ?? 'foreground') === 'foreground')
+							this.#observePaint(request);
 					}
 				} catch (cause) {
 					if (
@@ -157,12 +258,13 @@ export class ContractRenderController {
 						request.perf.totalMs = performance.now() - request.perf.requestedAt;
 						recordPerfSample(request.perf);
 					}
-					this.pending = null;
+					this.pending = this.pending?.pages.length ? { ...this.pending, status: 'failed' } : null;
 					this.error = { message: 'We couldn’t update the contract.', cause };
 					console.error('Contract rendering failed.', cause);
 				}
 			}
 		} finally {
+			this.#inflight = undefined;
 			this.#running = false;
 			if (this.#next) void this.#drain();
 		}
@@ -176,7 +278,13 @@ export class ContractRenderController {
 			timer = setTimeout(() => {
 				this.#cancelPaintObservation = undefined;
 				// The displayed snapshot remains valid while a warm request is pending.
-				if (this.#destroyed || request.generation !== this.snapshot?.id || sample.failed) return;
+				if (
+					this.#destroyed ||
+					request.generation !== this.snapshot?.id ||
+					sample.failed ||
+					(request.priority?.() ?? 'foreground') !== 'foreground'
+				)
+					return;
 				sample.paintOpportunityAt = performance.now();
 				sample.inputToPaintOpportunityMs = sample.paintOpportunityAt - sample.inputAt;
 				recordPerfSample(sample);
@@ -190,11 +298,20 @@ export class ContractRenderController {
 	#isCurrent(request: RenderRequest, epoch: string) {
 		return (
 			!this.#destroyed &&
+			!request.abort.signal.aborted &&
 			request.generation === this.#generation &&
 			request.profiler.epoch === epoch
 		);
 	}
-	async #render(request: RenderRequest): Promise<RenderSnapshot> {
+	async #render(request: RenderRequest): Promise<{
+		snapshot: RenderSnapshot;
+		geometry: {
+			blocks: readonly PreparedBlock[];
+			profiles: LayoutProfiles;
+			epoch: string;
+			owner: symbol;
+		};
+	}> {
 		// Leave the effect flush before the profile surface uses flushSync.
 		await tick();
 		if (request.generation !== this.#generation) throw OBSOLETE;
@@ -204,18 +321,6 @@ export class ContractRenderController {
 			if (!this.#isCurrent(request, epoch)) throw OBSOLETE;
 		};
 		const perf = request.perf;
-		const measure = <T>(
-			field: 'composeMs' | 'prepareMs' | 'paginateMs' | 'reconcileMs',
-			work: () => T
-		): T => {
-			if (!perf) return work();
-			const startedAt = performance.now();
-			try {
-				return work();
-			} finally {
-				perf[field] = performance.now() - startedAt;
-			}
-		};
 		if (perf) {
 			perf.layoutEpoch = epoch;
 			perf.renderStartedAt = performance.now();
@@ -230,64 +335,190 @@ export class ContractRenderController {
 		const composer = this.#composition;
 		const prepared: PreparedBlock[] = [];
 		this.#preparation.begin();
-		const composed = measure('composeMs', () => {
-			try {
-				return [
-					...composer.compose({
-						items: request.source.items,
-						activeConcessions: request.concessions,
-						previewChanges: request.previewChanges,
-						view: 'redline'
-					})
-				];
-			} finally {
-				if (perf) {
-					perf.blocksRecomposed = composer.recomposedBlocks;
-					perf.affectedContainers = composer.affectedContainers;
-				}
-			}
+		const priority = request.priority ?? (() => 'foreground');
+		const iterator = composer.iterate({
+			items: request.source.items,
+			activeConcessions: request.concessions,
+			previewChanges: request.previewChanges,
+			view: 'redline'
 		});
-		const addresses = composer.addresses;
-		if (perf) perf.compositionCompleteAt = performance.now();
-		measure('prepareMs', () => {
-			try {
-				for (const block of composed) prepared.push(this.#preparation.prepare(block));
-			} finally {
-				if (perf) {
-					perf.blocksProcessed = this.#preparation.preparedCount;
-					perf.tokensProcessed = this.#preparation.tokenCount;
-				}
-			}
-		});
-		if (perf) perf.preparationCompleteAt = performance.now();
-		checkCurrent();
-		const profileStartedAt = perf ? performance.now() : 0;
-		let profiles;
+		let done = false;
 		try {
-			profiles = await request.profiler.resolve(prepared, perf, checkCurrent);
+			while (!done)
+				await request.profiler.scheduler.run(
+					priority,
+					() => {
+						checkCurrent();
+						const started = performance.now();
+						do {
+							const composeStart = performance.now();
+							const next = iterator.next();
+							if (perf) perf.composeMs += performance.now() - composeStart;
+							if (next.done) {
+								done = true;
+								break;
+							}
+							if (!next.value) continue;
+							const prepareStart = performance.now();
+							prepared.push(this.#preparation.prepare(next.value));
+							if (perf) perf.prepareMs += performance.now() - prepareStart;
+						} while (performance.now() - started < 4);
+					},
+					request.abort.signal
+				);
 		} finally {
-			if (perf) perf.profileResolveMs = performance.now() - profileStartedAt;
+			iterator.return(undefined);
+			if (perf) {
+				perf.blocksRecomposed = composer.recomposedBlocks;
+				perf.affectedContainers = composer.affectedContainers;
+				perf.blocksProcessed = this.#preparation.preparedCount;
+				perf.tokensProcessed = this.#preparation.tokenCount;
+			}
+		}
+		const addresses = composer.addresses;
+		if (perf) {
+			perf.compositionCompleteAt = performance.now();
+			perf.preparationCompleteAt = performance.now();
 		}
 		checkCurrent();
-		const candidates = measure('paginateMs', () => paginatePreparedDocument(prepared, profiles));
+		// Warm requests reuse cached geometry and retain immediate dispatch.
+		// Initial requests measure only the paginator's next missing shape.
+		const resolveStarted = performance.now();
+		const resolved = request.progressive
+			? undefined
+			: await request.profiler.resolve(
+					prepared,
+					perf,
+					checkCurrent,
+					priority,
+					request.abort.signal,
+					'bounds'
+				);
+		if (perf && !request.progressive) perf.profileResolveMs += performance.now() - resolveStarted;
+		const local = request.profiler.createRequest(epoch, perf, resolved);
+		const profiles = local.profiles;
+		const pagination = iteratePreparedDocument(prepared, profiles);
+		const pages: import('../pagination/types').PaginatedPage[] = [];
+		const changedPages: number[] = [];
+		let pagesReused = 0;
+		let paginationDone = false;
+		let queued: ReturnType<typeof pagination.next> | undefined;
+		const advance = () => {
+			const started = performance.now();
+			try {
+				return pagination.next();
+			} finally {
+				if (perf) perf.paginateMs += performance.now() - started;
+			}
+		};
+		let reconciliation: ReturnType<typeof iterateReconciledPages> | undefined;
+		const paced = () => Boolean(request.progressive && pages.length && priority() === 'foreground');
+		try {
+			while (!paginationDone || reconciliation) {
+				await request.profiler.scheduler.run(
+					priority,
+					(deadline) => {
+						checkCurrent();
+						const started = performance.now();
+						const stopAt = deadline ?? started + 4;
+						try {
+							do {
+								if (reconciliation) {
+									const reconcileStart = performance.now();
+									const next = reconciliation.next();
+									if (perf) perf.reconcileMs += performance.now() - reconcileStart;
+									if (next.done) {
+										pages.push(...next.value.pages);
+										changedPages.push(...next.value.changedPages);
+										pagesReused += next.value.pagesReused;
+										reconciliation = undefined;
+										if (request.progressive && this.pending) {
+											if (pages.length === 1) this.#waitForFirstPagePaint(request, epoch);
+											this.pending = { ...this.pending, pages: Object.freeze([...pages]) };
+											if (pages.length === 1 && perf) {
+												perf.firstPageAt = performance.now();
+												recordPerfSample(perf);
+											}
+										}
+										if (request.firstPagePaint) return;
+									}
+								} else {
+									const next = queued ?? advance();
+									queued = undefined;
+									if (next.done) {
+										paginationDone = true;
+										break;
+									}
+									if (next.value?.type === 'geometry') {
+										// One missing block plus its heading's required next-line lookahead.
+										const missing = next.value;
+										const resolveStarted = performance.now();
+										queued = local.resolve(missing.block, missing.detail, (upgrade) => {
+											let following = advance();
+											if (
+												following.value?.type === 'geometry' &&
+												following.value.block === missing.block &&
+												following.value.detail === 'exact'
+											) {
+												upgrade();
+												following = advance();
+											}
+											return following;
+										});
+										const index = prepared.indexOf(next.value.block);
+										const following = prepared[index + 1];
+										if (
+											next.value.block.fragment.type === 'heading' &&
+											following?.fragment.type === 'paragraph'
+										)
+											local.resolve(following, 'exact');
+										if (perf) perf.profileResolveMs += performance.now() - resolveStarted;
+									} else if (next.value?.type === 'page') {
+										reconciliation = iterateReconciledPages(
+											[next.value.page],
+											epoch,
+											this.snapshot ?? undefined,
+											pages.length
+										);
+									}
+								}
+							} while (performance.now() < stopAt);
+						} finally {
+							if (perf) {
+								perf.preparationSlices++;
+								perf.maxPreparationSliceMs = Math.max(
+									perf.maxPreparationSliceMs,
+									performance.now() - started
+								);
+							}
+						}
+					},
+					request.abort.signal,
+					paced
+				);
+				const firstPagePaint = request.firstPagePaint;
+				if (firstPagePaint) {
+					await firstPagePaint.promise;
+					request.firstPagePaint = undefined;
+					checkCurrent();
+				}
+			}
+		} finally {
+			pagination.return();
+			reconciliation?.return({ pages: [], changedPages: [], pagesReused: 0 });
+		}
+		if (!pages.length) throw new Error('Pagination produced no pages.');
+		for (let i = pages.length; i < (this.snapshot?.pages.length ?? 0); i++)
+			changedPages.push(i + 1);
 		if (perf) perf.paginationCompleteAt = performance.now();
-		if (!candidates.length) throw new Error('Pagination produced no pages.');
-		const { pages, changedPages, pagesReused } = measure('reconcileMs', () =>
-			reconcilePages(candidates, epoch, this.snapshot ?? undefined)
-		);
 		if (perf) {
 			perf.pageCount = pages.length;
 			perf.pagesChanged = changedPages.length;
 			perf.pagesReused = pagesReused;
 		}
-		for (const page of pages) {
-			if (Object.isFrozen(page)) continue;
-			page.placements.forEach((placement) => Object.freeze(placement));
-			Object.freeze(page.placements);
-			Object.freeze(page);
-		}
 		checkCurrent();
-		return Object.freeze({
+		const geometry = { blocks: prepared, profiles, epoch, owner: Symbol('render-geometry') };
+		const snapshot = Object.freeze({
 			id: request.generation,
 			source: request.source,
 			concessions: request.concessions,
@@ -297,5 +528,6 @@ export class ContractRenderController {
 			changedPages: Object.freeze(changedPages),
 			pages: Object.freeze(pages)
 		});
+		return { snapshot, geometry };
 	}
 }

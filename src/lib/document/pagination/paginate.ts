@@ -6,6 +6,8 @@ import {
 	paragraphFirstLineHeight,
 	paragraphFragmentHeight,
 	tableFragmentHeight,
+	type GeometryDetail,
+	type ParagraphLayoutProfile,
 	type LayoutProfiles
 } from './profile';
 import type { LayoutPlacement, PageFragment, PaginatedPage } from './types';
@@ -14,34 +16,42 @@ export interface PaginationOptions {
 	capacity?: (pageIndex: number) => number;
 }
 
-/** Complete, synchronous page assignment from request-local, validated geometry.
- * Always starts at block zero. There is no measurement, cache, scheduling or prior layout.
- */
-export function paginatePreparedDocument(
+export type PaginationStep =
+	| { type: 'geometry'; block: PreparedBlock; detail: GeometryDetail }
+	| { type: 'page'; page: PaginatedPage }
+	| undefined;
+
+/** A yielded page is closed: subsequent geometry cannot change its placements. */
+export function* iteratePreparedDocument(
 	blocks: readonly PreparedBlock[],
 	profiles: LayoutProfiles,
 	{ capacity = pageCapacity }: PaginationOptions = {}
-): PaginatedPage[] {
-	const pages: PaginatedPage[] = [];
-	if (!blocks.length) return pages;
+): Generator<PaginationStep, void> {
+	if (!blocks.length) return;
 	const capacityAt = (pageIndex: number) => {
 		const value = capacity(pageIndex);
 		if (!Number.isFinite(value) || value <= 0)
 			throw new Error('Pagination requires a finite, positive page capacity.');
 		return value;
 	};
-	const profileFor = (block: PreparedBlock) => {
+	function* profileFor(
+		block: PreparedBlock,
+		detail: GeometryDetail = 'bounds'
+	): Generator<PaginationStep, NonNullable<ReturnType<LayoutProfiles['get']>>> {
+		const cached = profiles.get(block);
+		if (!cached || (detail === 'exact' && cached.kind === 'paragraph' && !cached.lines))
+			yield { type: 'geometry', block, detail };
 		const profile = profiles.get(block);
 		if (!profile || profile.kind !== block.fragment.type)
 			throw new Error(`Missing or mismatched layout profile for "${block.fragment.blockKey}".`);
 		return profile;
-	};
+	}
 	let page: { number: number; placements: LayoutPlacement[] } = { number: 1, placements: [] };
 	let remaining = capacityAt(0);
 	const fits = (height: number) => fitsPage(height, remaining);
-	function newPage() {
+	function* newPage(): Generator<PaginationStep, void> {
 		if (!page.placements.length) throw new Error('Pagination cannot emit an empty page.');
-		pages.push(page);
+		yield { type: 'page', page };
 		page = { number: page.number + 1, placements: [] };
 		remaining = capacityAt(page.number - 1);
 	}
@@ -52,14 +62,20 @@ export function paginatePreparedDocument(
 	for (let index = 0; index < blocks.length; index++) {
 		const block = blocks[index];
 		const whole = block.fragment;
-		const profile = profileFor(block);
+		yield undefined;
+		let profile = yield* profileFor(block);
 		if (whole.type === 'heading' && profile.kind === 'heading') {
 			const next = blocks[index + 1];
-			const following = next?.fragment.type === 'paragraph' ? profileFor(next) : undefined;
+			const following =
+				next?.fragment.type === 'paragraph' ? yield* profileFor(next, 'exact') : undefined;
+			if (following?.kind === 'paragraph' && !following.lines)
+				throw new Error('Heading lookahead requires exact observed lines.');
 			const required =
 				profile.outerHeight +
-				(following?.kind === 'paragraph' ? paragraphFirstLineHeight(following) : 0);
-			if (!fits(required) && page.placements.length) newPage();
+				(following?.kind === 'paragraph' && following.lines
+					? paragraphFirstLineHeight({ ...following, lines: following.lines })
+					: 0);
+			if (!fits(required) && page.placements.length) yield* newPage();
 			if (!fits(required))
 				throw new Error(
 					`Heading "${whole.anchor}" cannot fit with its required spacing and following line on an empty page.`
@@ -80,8 +96,8 @@ export function paginatePreparedDocument(
 			};
 			// Preserve the move-whole-table rule before considering body-row splits.
 			if (!fits(height) && page.placements.length && fitsPage(height, capacityAt(page.number)))
-				newPage();
-			if (!rowCount && !fits(height) && page.placements.length) newPage();
+				yield* newPage();
+			if (!rowCount && !fits(height) && page.placements.length) yield* newPage();
 			if (fits(height)) {
 				accept(block, table, height);
 				continue;
@@ -95,7 +111,7 @@ export function paginatePreparedDocument(
 						throw new Error(
 							`Table headers and body row ${start} in "${whole.blockKey}" exceed an empty page.`
 						);
-					newPage();
+					yield* newPage();
 					continue;
 				}
 				accept(
@@ -111,39 +127,64 @@ export function paginatePreparedDocument(
 					tableFragmentHeight(profile, start, end)
 				);
 				start = end;
-				if (start < rowCount) newPage();
+				if (start < rowCount) yield* newPage();
 			}
 		} else if (whole.type === 'paragraph' && profile.kind === 'paragraph') {
-			if (profile.tokenCount !== whole.tokens.length)
+			const outerHeight = profile.marginBlockStart + profile.contentHeight + profile.marginBlockEnd;
+			if (fits(outerHeight)) {
+				if (profile.tokenCount !== whole.tokens.length)
+					throw new Error(`Paragraph layout profile does not match "${whole.blockKey}".`);
+				accept(block, paragraphSlice(whole, 0, whole.tokens.length), outerHeight);
+				continue;
+			}
+			const detailed = yield* profileFor(block, 'exact');
+			if (detailed.kind !== 'paragraph' || !detailed.lines)
+				throw new Error('Paragraph splitting requires exact observed lines.');
+			const exact: ParagraphLayoutProfile = { ...detailed, lines: detailed.lines };
+			if (exact.tokenCount !== whole.tokens.length)
 				throw new Error(`Paragraph layout profile does not match "${whole.blockKey}".`);
-			if (!profile.lines.length) {
-				const height = paragraphFragmentHeight(profile, 0, 0);
-				if (!fits(height) && page.placements.length) newPage();
+			if (!exact.lines.length) {
+				const height = paragraphFragmentHeight(exact, 0, 0);
+				if (!fits(height) && page.placements.length) yield* newPage();
 				if (!fits(height))
 					throw new Error(`Paragraph spacing in "${whole.blockKey}" exceeds an empty page.`);
 				accept(block, paragraphSlice(whole, 0, whole.tokens.length), height);
 				continue;
 			}
-			for (let start = 0; start < profile.lines.length;) {
-				const end = maximumParagraphLineEnd(profile, start, remaining);
+			for (let start = 0; start < exact.lines.length;) {
+				const end = maximumParagraphLineEnd(exact, start, remaining);
 				if (end === start) {
 					if (!page.placements.length)
 						throw new Error(
 							`Visual line ${start} and its spacing in "${whole.blockKey}" exceed an empty page.`
 						);
-					newPage();
+					yield* newPage();
 					continue;
 				}
 				accept(
 					block,
-					paragraphSlice(whole, profile.lines[start].startToken, profile.lines[end - 1].endToken),
-					paragraphFragmentHeight(profile, start, end)
+					paragraphSlice(whole, exact.lines[start].startToken, exact.lines[end - 1].endToken),
+					paragraphFragmentHeight(exact, start, end)
 				);
 				start = end;
-				if (start < profile.lines.length) newPage();
+				if (start < exact.lines.length) yield* newPage();
 			}
 		}
 	}
-	if (page.placements.length) pages.push(page);
+	if (page.placements.length) yield { type: 'page', page };
+}
+
+/** Synchronous compatibility entry point for callers with complete geometry. */
+export function paginatePreparedDocument(
+	blocks: readonly PreparedBlock[],
+	profiles: LayoutProfiles,
+	options: PaginationOptions = {}
+): PaginatedPage[] {
+	const pages: PaginatedPage[] = [];
+	for (const step of iteratePreparedDocument(blocks, profiles, options)) {
+		if (step?.type === 'geometry')
+			throw new Error(`Missing layout profile for "${step.block.fragment.blockKey}".`);
+		if (step?.type === 'page') pages.push(step.page);
+	}
 	return pages;
 }

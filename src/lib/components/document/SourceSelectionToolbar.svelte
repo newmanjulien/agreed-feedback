@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount, untrack } from 'svelte';
-	import type { VirtualElement } from '@floating-ui/dom';
+	import type { FloatingVirtualAnchor } from '$lib/components/ui/floating';
 	import FloatingSurface from '$lib/components/ui/FloatingSurface.svelte';
 	import Tooltip from '$lib/components/ui/Tooltip.svelte';
 	import type { RenderSnapshot } from '$lib/document/runtime/types';
@@ -11,7 +11,6 @@
 		SelectionEligibility
 	} from '$lib/playbook/source-picking';
 	import { getDocumentHighlights } from '$lib/document/highlights/controller';
-	import { finalLineBounds } from '$lib/document/highlights/geometry';
 	import { mapSelection } from '$lib/document/selection/dom-selection';
 	import { createSelectionGesture } from '$lib/document/selection/selection-gesture';
 	import ArticleIcon from 'phosphor-svelte/lib/ArticleIcon';
@@ -73,6 +72,8 @@
 		);
 	}
 	function invalidateSelection() {
+		releaseSelection?.();
+		releaseSelection = undefined;
 		anchor = null;
 		acceptedRange = null;
 		acceptedEndpoints = null;
@@ -99,10 +100,12 @@
 		});
 	});
 
-	let anchor = $state<VirtualElement | null>(null);
+	let anchor = $state<FloatingVirtualAnchor | null>(null);
 	const actionButtons = $state<Partial<Record<AuthoringMode, HTMLButtonElement>>>({});
 	let frameId: number | null = null;
 	let gesture: ReturnType<typeof createSelectionGesture> | undefined;
+	const anchorListeners = new Set<() => void>();
+	let releaseSelection: (() => void) | undefined;
 
 	function cancelUpdate() {
 		if (frameId === null) return;
@@ -131,7 +134,7 @@
 
 		const selection = window.getSelection();
 		if (!container || !selection || selection.rangeCount !== 1 || selection.isCollapsed) {
-			anchor = null;
+			invalidateSelection();
 			return;
 		}
 
@@ -143,9 +146,9 @@
 		}
 
 		const controller = getDocumentHighlights(container);
-		const last = controller
-			? controller.finalLineBounds([range])
-			: finalLineBounds(container, [range]);
+		if (controller && !releaseSelection)
+			releaseSelection = controller.subscribeSelection(scheduleUpdate);
+		const last = controller?.finalLineBounds([range]);
 		if (!last) {
 			anchor = null;
 			return;
@@ -154,17 +157,20 @@
 		if (!anchor)
 			anchor = {
 				contextElement: container,
+				subscribe: (update) => {
+					anchorListeners.add(update);
+					return () => {
+						anchorListeners.delete(update);
+					};
+				},
 				getBoundingClientRect: () => {
 					if (!selectionUnchanged() || !container) return new DOMRect();
 					const current = window.getSelection()!.getRangeAt(0);
 					const highlights = getDocumentHighlights(container);
-					return (
-						(highlights
-							? highlights.finalLineBounds([current])
-							: finalLineBounds(container, [current])) ?? new DOMRect()
-					);
+					return highlights?.finalLineBounds([current]) ?? new DOMRect();
 				}
 			};
+		else for (const listener of anchorListeners) listener();
 	}
 
 	function scheduleUpdate() {
@@ -232,6 +238,8 @@
 		return () => {
 			gesture?.destroy();
 			cancelUpdate();
+			releaseSelection?.();
+			anchorListeners.clear();
 		};
 	});
 </script>

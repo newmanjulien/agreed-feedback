@@ -56,7 +56,18 @@ export function unitsInRange(index: SourceIndex, range: SourceRange): readonly S
 	const start = pointPosition(index, range.start),
 		end = pointPosition(index, range.end);
 	if (start === end) return [resolvePoint(index, range.start)];
-	return index.units.filter((u) => u.position < end && u.position + u.length > start);
+	// Source units and their ends are ordered, including persisted empty anchors.
+	const units = index.units;
+	let low = 0,
+		high = units.length;
+	while (low < high) {
+		const mid = (low + high) >>> 1;
+		if (units[mid].position + units[mid].length <= start) low = mid + 1;
+		else high = mid;
+	}
+	let last = low;
+	while (last < units.length && units[last].position < end) last++;
+	return units.slice(low, last);
 }
 export function rangeTouchesTable(index: SourceIndex, range: SourceRange): boolean {
 	validateRange(index, range);

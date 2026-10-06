@@ -12,12 +12,14 @@
 		item,
 		selected,
 		conflicts = {},
+		disabled = false,
 		onToggle,
 		onClose
 	}: {
 		item: PlaybookItemRecord;
 		selected?: string;
 		conflicts?: Record<string, string>;
+		disabled?: boolean;
 		onToggle: (id: string) => void;
 		onClose: () => void;
 	} = $props();
@@ -81,7 +83,7 @@
 							>
 								<InlineAction
 									danger={applied}
-									disabled={Boolean(conflict)}
+									disabled={disabled || Boolean(conflict)}
 									label={concessions.length > 1
 										? `${applied ? 'Remove' : 'Apply'} concession ${i + 1} of ${concessions.length}`
 										: undefined}

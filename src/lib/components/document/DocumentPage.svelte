@@ -8,12 +8,14 @@
 	let {
 		page,
 		highlights = [],
+		interactive = true,
 		selectedAnnotationId,
 		canOpenPlaybookItems,
 		onAnnotationSelect
 	}: {
 		page: PaginatedPage;
 		highlights?: readonly HighlightRect[];
+		interactive?: boolean;
 		selectedAnnotationId: string | null;
 		canOpenPlaybookItems: boolean;
 		onAnnotationSelect: (
@@ -34,6 +36,7 @@
 		{#each page.placements as { fragment } (fragmentKey(fragment))}
 			<BlockFragment
 				{fragment}
+				{interactive}
 				{selectedAnnotationId}
 				{canOpenPlaybookItems}
 				{onAnnotationSelect}

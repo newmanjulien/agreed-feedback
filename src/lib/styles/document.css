@@ -44,7 +44,7 @@
 }
 
 .contract-document {
-	font-family: var(--font-sans);
+	font-family: var(--font-document);
 	color: #171717;
 	user-select: text;
 }

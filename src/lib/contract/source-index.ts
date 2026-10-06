@@ -1,6 +1,6 @@
 import type { BaselineBlock, InlineSource, SourcePoint } from './source-model';
 import { numberSourceKey } from './source-model';
-import { numberAddresses, referenceText, type Address } from './numbering';
+import { iterateNumberAddresses, referenceText, type Address } from './numbering';
 
 export interface SourceUnit {
 	readonly sourceKey: string;
@@ -29,23 +29,47 @@ export function sourceAddresses(
 	blocks: readonly BaselineBlock[],
 	activeBlocks: ReadonlySet<string> = new Set()
 ): Map<string, Address> {
-	return numberAddresses(
-		blocks.filter((b) => b.kind !== 'paragraph' || !b.optional || activeBlocks.has(b.blockKey))
-	);
+	const iterator = iterateSourceAddresses(blocks, activeBlocks);
+	let next = iterator.next();
+	while (!next.done) next = iterator.next();
+	return next.value;
+}
+export function* iterateSourceAddresses(
+	blocks: readonly BaselineBlock[],
+	activeBlocks: ReadonlySet<string> = new Set()
+): Generator<undefined, Map<string, Address>> {
+	const active: BaselineBlock[] = [];
+	for (const block of blocks) {
+		if (block.kind !== 'paragraph' || !block.optional || activeBlocks.has(block.blockKey))
+			active.push(block);
+		yield undefined;
+	}
+	return yield* iterateNumberAddresses(active);
 }
 
 /** Copies display/coordinate data; generated display changes never change source coordinates. */
 export function buildSourceIndex(
 	blocks: readonly BaselineBlock[],
-	addresses = sourceAddresses(blocks)
+	addresses?: Map<string, Address>
 ): SourceIndex {
+	const iterator = iterateSourceIndex(blocks, addresses);
+	let next = iterator.next();
+	while (!next.done) next = iterator.next();
+	return next.value;
+}
+
+export function* iterateSourceIndex(
+	blocks: readonly BaselineBlock[],
+	addresses?: Map<string, Address>
+): Generator<undefined, SourceIndex> {
+	const currentAddresses = addresses ?? (yield* iterateSourceAddresses(blocks));
 	const units: SourceUnit[] = [];
 	const byKey = new Map<string, SourceUnit>();
 	const containers = new Map<string, SourceContainer>();
 	const blockMap = new Map<string, BaselineBlock>();
 	let position = 0;
 	let previousOrder = -1;
-	function container(
+	function* container(
 		block: BaselineBlock,
 		containerKey: string,
 		content: readonly InlineSource[],
@@ -75,16 +99,17 @@ export function buildSourceIndex(
 				numberSourceKey(block.numbering.itemKey),
 				'number',
 				1,
-				addresses.get(block.numbering.itemKey)?.label ?? ''
+				currentAddresses.get(block.numbering.itemKey)?.label ?? ''
 			);
 		for (const atom of content) {
+			yield undefined;
 			if (atom.sourceKey.startsWith('number:'))
 				throw new Error(`Reserved source namespace: ${atom.sourceKey}`);
 			add(
 				atom.sourceKey,
 				atom.kind,
 				atom.kind === 'text' ? atom.text.length : 1,
-				atom.kind === 'text' ? atom.text : referenceText(atom, addresses)
+				atom.kind === 'text' ? atom.text : referenceText(atom, currentAddresses)
 			);
 		}
 		if (!local.length)
@@ -112,13 +137,14 @@ export function buildSourceIndex(
 			throw new Error(`Invalid block order: ${block.blockKey}`);
 		previousOrder = block.order;
 		blockMap.set(block.blockKey, block);
-		if (block.kind === 'table')
-			block.rows.forEach((row, r) =>
-				row.forEach((cell, c) =>
-					container(block, `${block.blockKey}/cell/${r}/${c}`, cell.content, true)
-				)
-			);
-		else container(block, block.blockKey, block.content, false);
+		if (block.kind === 'table') {
+			for (const [r, row] of block.rows.entries())
+				for (const [c, cell] of row.entries()) {
+					yield* container(block, `${block.blockKey}/cell/${r}/${c}`, cell.content, true);
+					yield undefined;
+				}
+		} else yield* container(block, block.blockKey, block.content, false);
+		yield undefined;
 	}
 	return { units: Object.freeze(units), byKey, containers, blocks: blockMap };
 }

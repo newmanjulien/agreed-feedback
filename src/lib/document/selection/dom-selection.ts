@@ -1,5 +1,5 @@
 import type { SourceRange, SourcePoint } from '$lib/contract/source-model';
-import { comparePoints, validateRange } from '$lib/contract/ranges';
+import { comparePoints, unitsInRange, validateRange } from '$lib/contract/ranges';
 import { pointPosition, resolvePoint, type SourceIndex } from '$lib/contract/source-index';
 
 /** Resolve source coordinates into visible text ranges, including fragments split across pages. */
@@ -19,11 +19,7 @@ export function sourceRangeToDomRanges(
 	const ranges: Range[] = [];
 	let current: Range | undefined;
 	let block: Element | null = null;
-	const blockKeys = new Set(
-		index.units
-			.filter((unit) => unit.position < end && unit.position + unit.length > start)
-			.map((unit) => unit.blockKey)
-	);
+	const blockKeys = new Set(unitsInRange(index, range).map((unit) => unit.blockKey));
 	const selector = [...blockKeys]
 		.flatMap((key) => [
 			`[data-block-key="${CSS.escape(key)}"] [data-source-start-key]`,

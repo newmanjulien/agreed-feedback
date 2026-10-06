@@ -2,6 +2,8 @@
 	import { recordColdStart } from '$lib/document/runtime/render-perf';
 	import { DocumentSearchSession } from '$lib/document/search/search-session.svelte';
 	import UtilityRail from '$lib/components/chrome/UtilityRail.svelte';
+	import AppHeader from '$lib/components/chrome/AppHeader.svelte';
+	import InfoIcon from 'phosphor-svelte/lib/InfoIcon';
 	import DocumentSearchPanel from '$lib/components/search/DocumentSearchPanel.svelte';
 	import AppStatus from '$lib/components/chrome/AppStatus.svelte';
 	import MagnifyingGlassIcon from 'phosphor-svelte/lib/MagnifyingGlassIcon';
@@ -24,16 +26,16 @@
 	let {
 		variant = 'rep',
 		feedback = null
-	}: { variant?: HelpVariant; feedback?: OperationStatus | null } = $props();
-	const { source, session, renderer, viewer } = getContractWorkspace();
+	}: {
+		variant?: HelpVariant;
+		feedback?: OperationStatus | null;
+	} = $props();
+	const { source, renderer, viewer } = getContractWorkspace();
 	let helpVisible = $state(false);
 	onMount(() => {
-		if (!session.helpAutoHandled) {
-			session.helpAutoHandled = true;
-			helpVisible = !isHelpHidden(variant);
-		}
+		helpVisible = !isHelpHidden(variant);
 	});
-	const searchEnabled = $derived(Boolean(renderer.snapshot));
+	const searchEnabled = $derived(Boolean(viewer.displayedSnapshot && viewer.visible));
 	const searchSession = new DocumentSearchSession();
 	let searchOpen = $state(false);
 	let searchPanelElement = $state<HTMLElement>();
@@ -105,8 +107,8 @@
 	$effect(() => {
 		const target = searchEnabled ? viewer.documentStageElement : undefined;
 		if (!searchEnabled) closeSearch(false);
-		void renderer.snapshot?.id;
-		const pages = renderer.snapshot?.pages ?? [];
+		void viewer.displayedSnapshot?.id;
+		const pages = viewer.displayedSnapshot?.pages ?? [];
 		let cancelled = false;
 		void tick().then(() => {
 			if (cancelled) return;
@@ -129,29 +131,7 @@
 	});
 </script>
 
-<header
-	class="sticky top-0 z-40 flex h-[var(--app-header-height)] items-center border-b border-line bg-surface/96 px-[18px] backdrop-blur-[12px] max-[650px]:px-3"
->
-	<p class="m-0 min-w-0 flex-1 truncate text-sm text-ink-secondary">
-		{variant === 'admin'
-			? 'Add and edit contract instructions (beta)'
-			: 'Understand and negotiate the contract (beta)'}
-	</p>
-	<div class="flex shrink-0 items-center gap-1">
-		<div use:protect class="hidden max-[999px]:block">
-			<SquareIconButton
-				bind:element={mobileSearchButton}
-				type="button"
-				disabled={!searchEnabled}
-				aria-label="Search"
-				aria-pressed={searchOpen}
-				aria-controls="document-search"
-				onclick={() => mobileSearchButton && toggleSearch(mobileSearchButton)}
-			>
-				<MagnifyingGlassIcon aria-hidden="true" size={19} weight="regular" />
-			</SquareIconButton>
-		</div>
-	</div>
+<AppHeader>
 	<div
 		class="pointer-events-none absolute top-[calc(100%+20px)] right-0 left-0 flex justify-center max-[999px]:top-[calc(100%+8px)] max-[999px]:right-3 max-[999px]:left-auto max-[999px]:w-[min(454px,calc(100vw-24px))] max-[999px]:flex-col max-[999px]:items-end max-[999px]:gap-2"
 	>
@@ -172,14 +152,37 @@
 		>
 			<AppStatus
 				{feedback}
-				renderPending={Boolean(renderer.snapshot && renderer.pending)}
-				renderError={renderer.snapshot ? renderer.error : null}
-				sourceStale={Boolean(renderer.snapshot && source.issue)}
+				renderPending={Boolean(viewer.displayedSnapshot && renderer.pending)}
+				renderError={viewer.displayedSnapshot ? renderer.error : null}
+				sourceStale={Boolean(viewer.displayedSnapshot && source.issue)}
 				onRetryRender={viewer.retry}
 			/>
 		</div>
 	</div>
-</header>
+</AppHeader>
+
+<div
+	use:protect
+	class="fixed top-[calc(var(--app-header-height)+8px)] left-2 z-20 flex gap-1 rounded-lg border border-line bg-surface shadow-sm min-[1000px]:hidden"
+>
+	<SquareIconButton
+		bind:element={mobileSearchButton}
+		type="button"
+		disabled={!searchEnabled}
+		aria-label="Search contract"
+		aria-pressed={searchOpen}
+		aria-controls="document-search"
+		onclick={() => mobileSearchButton && toggleSearch(mobileSearchButton)}
+	>
+		<MagnifyingGlassIcon aria-hidden="true" size={19} weight="regular" />
+	</SquareIconButton>
+	<SquareIconButton
+		type="button"
+		aria-label="Help: How Agreed works"
+		onclick={() => (helpVisible = true)}
+		><InfoIcon aria-hidden="true" size={19} weight="regular" /></SquareIconButton
+	>
+</div>
 
 <div
 	use:protect

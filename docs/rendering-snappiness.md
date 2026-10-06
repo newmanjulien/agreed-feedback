@@ -1,9 +1,12 @@
 # Contract geometry compilation and pure pagination
 
 The renderer composes provenance-preserving blocks, prepares stable tokens, resolves
-browser layout profiles, paginates the entire document, reconciles page identities,
-and commits one complete `RenderSnapshot`. Geometry is incremental; page assignment
-always starts at block zero. A cache-only render never touches the profiling DOM.
+browser geometry, and runs one resumable paginator from block zero. Initial openings
+publish exact closed pages before remaining pagination finishes; the complete
+`RenderSnapshot` adopts those frozen page objects. Warm updates retain the displayed
+complete document until their complete replacement commits. A cache-only render never
+touches the profiling DOM. See [current verification](staggered-opening-verification.md)
+for browser observations and remaining acceptance limits.
 
 ## Composition and preparation
 
@@ -30,28 +33,38 @@ generated offsets and annotations follow the rules in
 The app layout mounts a persistent `LayoutProfileSurface` and provides its `LayoutProfiler`
 to route viewers. A standalone viewer, or `PUBLIC_CONTRACT_ROUTE_PROFILES=0`, uses the
 original viewer-local host. The profiler
-serializes surface access, resolves cached geometry and deduplicates missing fingerprints
-before making one whole-block batch call. Request-local associations use current prepared
-objects. `LayoutProfileCache` retains all shapes in the latest resolved document and a
+serializes surface access and resolves cached geometry by fingerprint. Initial pagination
+requests one missing block and necessary heading lookahead per synchronous surface
+transaction; a bounds read can immediately upgrade to exact geometry against that same
+DOM. Warm requests retain bulk cache resolution and detailed concession prewarming.
+Request-local associations use current prepared objects and survive cache eviction. `LayoutProfileCache` retains all shapes in the latest resolved document and a
 256-entry LRU of other shapes for one layout epoch. Idle alternatives cannot evict current
 geometry, including in documents larger than the LRU. The cache validates and freezes
-explicit geometry fields without retaining content or provenance.
+explicit geometry fields without retaining content or provenance. Each fingerprint has one
+entry per epoch: exact profiles satisfy bounds requests, and an upgrade updates protected
+and ordinary entries. Bounds never replace exact geometry.
 
 The hidden, inert surface renders production `BlockFragment`, inline, revision and source
 components at contract content width. Profile mode retains layout wrappers while suppressing
 heading IDs, focus semantics and Trigger activation. Each source leaf carries an unconditional
-`data-contract-token` marker. Hidden leaves retain full source metadata by default.
-`PUBLIC_CONTRACT_PROFILE_METADATA=0` opts into omitting unused source-coordinate
-attributes while keeping the same spans and text. Unset or `1` keeps full metadata.
-Visible leaves always retain all selection and provenance metadata; annotation
-and revision wrappers remain identical. All first-pass
-DOM writes precede geometry reads. Tables share one additional write/read pass under canonical
-columns. The surface clears hidden content after every batch, including failures.
+`data-contract-token` marker. Hidden leaves omit unused source-coordinate and interaction
+attributes by default; `PUBLIC_CONTRACT_PROFILE_METADATA=1` restores them. Visible leaves
+always retain all selection and provenance metadata. Text, spans, marks, annotation and
+revision wrappers, and layout classes remain identical. A synchronous scoped operation
+mounts one block, reads its geometry, lets pagination request immediate detail, and clears
+it before returning, including on failure. The surface is never held across an asynchronous
+wait. Tables still use the additional canonical-column write/read pass before affected
+pages can close.
 
 Profiles contain fractional CSS-pixel geometry:
 
 - Headings retain their complete outer height.
-- Paragraphs retain contiguous, half-open token ranges for browser-observed visual lines.
+- Paragraph bounds retain actual content height, margins and token count. Whole paragraphs
+  can fit without reading line boxes only when conservative production DOM, token and CSS
+  checks establish support. Splitting and heading lookahead request exact profiles;
+  unsupported bounds structures fall back to exact profiling. No line geometry or token
+  boundaries are inferred by dividing height by line height.
+- Exact paragraphs retain contiguous, half-open token ranges for browser-observed visual lines.
   Allocated line boxes include line-height leading; glyph rectangles alone do not define
   fragment heights. Collapsed whitespace keeps its tokens without allocating a line;
   an empty insertion slot can allocate one unsplittable line.
@@ -70,8 +83,11 @@ and rejects stale results before cache insertion. A new epoch prevents old page 
 
 ## Pure pagination and reconciliation
 
-`paginatePreparedDocument(blocks, profiles, options)` is synchronous and DOM-free. It
-assigns all pages using request-local profiles, with no cache access or previous-page input.
+`iteratePreparedDocument(blocks, profiles, options)` is DOM-free and resumable. It yields
+geometry requests, cooperative checkpoints and closed pages whose placements later blocks
+cannot change. Heading lookahead and canonical full-table measurement precede page closure.
+`paginatePreparedDocument()` remains a synchronous wrapper for existing callers. Both use
+request-local geometry, with no cache access or previous-page input.
 Paragraphs split only at complete observed lines. Each fragment retains its start margin;
 only the final fragment includes end spacing. If final spacing does not fit, the last line
 moves with it. Headings keep with the next paragraph's first actual line, including final
@@ -83,27 +99,51 @@ remain supported. An oversized visual line, heading/first-line pair, or table
 header-plus-row fails with a technical layout error.
 
 Each page has ordered placements associating prepared content with fragment kind,
-interval and presentation. `reconcilePages()` runs after complete pagination. At the same
-page position and epoch, equal prepared identities, intervals and presentation retain the
-previous page object. Table column values must also agree. Moved or differently sliced
-content keeps the candidate page. Changed page numbers include removed pages.
+interval and presentation. `iterateReconciledPages()` reconciles each closed page once
+with its absolute page offset, then freezes it for publication and final adoption. At
+the same page position and epoch, equal prepared identities, intervals and presentation
+retain the previous page object. Table column values must also agree. Moved or differently
+sliced content keeps the candidate page. Changed page numbers include removed pages.
 
 ## Complete snapshots and interactions
 
 `ContractRenderController` serializes requests and checks generation and live epoch after
 profiling and immediately before committing, including after commit listeners. The same
 currentness check runs when queued profiling starts and before inserting its results, so
-cancelled or superseded requests skip pending DOM work. A published
-snapshot contains accepted source, concessions, preview changes, pages, epoch and changed
+cancelled or superseded requests skip pending DOM work. A pending job records request
+identity, source, selections, preview, epoch, finished pages and running/failed status.
+Partial pages never become a `RenderSnapshot`. A published complete snapshot contains accepted source, concessions, preview changes, pages, epoch and changed
 page numbers. Page records, placement records and their arrays are frozen at publication;
 prepared content follows the immutable input contract.
 
-Cold loads show `LoadingPagination` until the first complete snapshot commits. Warm requests,
-cancellations and technical failures retain the previous complete document. Retry resubmits
-current valid source and intent. Search can use the displayed snapshot during warm work;
-authoring and Trigger availability require current source, selection, preview and epoch,
-with no pending work, error or active conflict. Interaction controllers attach after the
-first complete snapshot and survive warm commits.
+Initial openings include reactivating retained pages that disagree with confirmed intent.
+They show the first eligible exact page, append one available page per paced slice, and
+show “Preparing remaining pages…” at the tail. Document height comes from mounted pages;
+completion does not bulk-mount a backlog. Fully mounted matching retained contracts display
+immediately. Every append validates generation, source identity, selections, preview, epoch
+and preparation eligibility. Invalidation, cancellation and eviction clear partial work;
+partial pages count toward inactive retention budgets.
+
+Before first display, pagination retains four-millisecond preparation slices and stops at
+its first closed-page publication. The viewer mounts that page alone, awaits its Svelte tick
+and a frame followed by a task, then acknowledges the matching generation and layout epoch
+outside serialized work. Visible preparation and individual page appends subsequently share
+an eight-millisecond deadline starting in a task after a frame. Queued appends take precedence
+within paced work, and their awaited DOM flushes count toward the same window. More work can
+run while time remains; an indivisible measurement or mount can overrun. Explicit warm updates
+dispatch immediately and remain atomic; speculative preparation uses idle dispatch.
+
+Scrolling and native selection work during partial display. The highlight controller attaches
+after the first paint opportunity, receives appended DOM changes and survives completion.
+Clause activation, authoring and search require the complete current document to be mounted.
+Snapshot consumers use `displayedSnapshot`, which is empty during partial opening; search
+continues against the displayed complete snapshot during warm updates. Warm requests and
+failures retain that complete document and its existing reconciliation and viewport anchoring.
+
+The first exact display closes creation once; full readiness records opening history
+separately once. Failure before first display reports an opening failure. Failure afterward
+retains eligible finished pages and shows an explicit incomplete-document error with Retry.
+Retry renders current valid source and intent; failed partial work never counts as complete.
 
 Page-number keys preserve unchanged DOM. Highlights refresh changed page geometry and retain
 unchanged range contributions; hover and pressed-state updates affect paint separately.
@@ -149,20 +189,26 @@ completion timestamps are only recorded when a phase succeeds.
 | `affectedContainers`, `blocksRecomposed`                                 | Dirty containers and resolved blocks rebuilt by composition                                                                                     |
 | `blocksProcessed`, `tokensProcessed`                                     | Blocks newly prepared and tokens newly tokenized; cache hits are excluded                                                                       |
 | `compositionCompleteAt`, `preparationCompleteAt`, `paginationCompleteAt` | Completed phase timestamps                                                                                                                      |
-| `profileResolveMs`                                                       | Entire resolution duration, including shared-surface queue wait, cache lookup, profiling, validation and associations                           |
-| `profileCacheHits`, `profileCacheMisses`                                 | Input block occurrences whose geometry was present or absent during cache resolution; duplicate missing shapes still count as misses            |
-| `profileUniqueMisses`, `profileBatchCount`                               | Distinct missing fingerprints and attempted surface batches                                                                                     |
+| `profileResolveMs`                                                       | Total active request-local resolution time; warm bulk resolution also includes its surface queue wait                                           |
+| `profileCacheHits`, `profileCacheMisses`                                 | Geometry resolutions satisfied by cached/request-local geometry or requiring measurement; bulk resolution counts input block occurrences        |
+| `profileUniqueMisses`, `profileBatchCount`                               | Distinct missing fingerprints per bulk pass or single-block misses/upgrades; attempted surface batches/transactions                             |
 | `profileDomUpdateMs`                                                     | Batched surface DOM updates, canonical table update and hidden-content cleanup                                                                  |
 | `profileReadMs`, `maxProfileBlockMs`                                     | Total geometry-read time and largest block's read time; both table passes contribute                                                            |
 | `profileTotalMs`                                                         | Surface-call duration including DOM updates, reads and cleanup, excluding queue wait and cache validation                                       |
 | `paginateMs`, `reconcileMs`                                              | Pure full-document pagination and content-safe reconciliation durations                                                                         |
+| `firstPageAt`                                                            | First frozen page publication; viewer first exact display is recorded separately in cold-start milestones                                       |
+| `preparationSlices`, `maxPreparationSliceMs`                             | Pagination/reconciliation slice count and maximum callback duration, excluding pacing waits                                                     |
 | `pageCount`, `pagesChanged`, `pagesReused`                               | Final pages, changed page positions (including removed positions), and retained page objects                                                    |
 | `snapshotAt`, `totalMs`                                                  | Snapshot assignment timestamp and request-to-assignment duration; cancelled/failed requests record time to termination                          |
 | `commitToDomMs`, `settledTotalMs`                                        | Assignment-to-Svelte-tick and request-to-tick durations                                                                                         |
 | `paintOpportunityAt`, `inputToPaintOpportunityMs`                        | Post-tick animation frame followed by a timer; a paint opportunity, not proof of physical presentation                                          |
 | `cancelled`, `failed`                                                    | Request termination flags                                                                                                                       |
 
-Samples are copied at commit, after the DOM tick and after the paint opportunity. Partial
+`window.__contractPageMountPerf` separately records generation, timestamp, page count,
+append/atomic status and assignment-to-DOM-tick duration. It excludes pacing waits and retains
+no DOM or text references.
+
+Samples are copied at first-page publication, commit, after the DOM tick and after the paint opportunity. Partial
 work remains measurable on cancellation or failure. Replacing the displayed snapshot or
 destroying the controller cancels its pending paint observation. Geometry-read timings can
 include browser layout; the first reader can pay for layout shared by the entire batch.
@@ -170,10 +216,13 @@ Development clocks add overhead, so use production browser traces for latency cl
 
 A prewarmed saved choice should show zero cache misses and zero profile batches. A normal
 one-block change with uncached geometry should show one unique miss and one batch. Both
-perform pure pagination, reconciliation and one snapshot commit. Investigate actual phase
-costs before adding scheduling or incremental page assignment.
+perform pure pagination, reconciliation and one snapshot commit. These warm operations retain immediate scheduling; initial pagination and mounting are paced.
 
 ## Verification and limits
+
+The observations below predate the progressive opening lifecycle and describe earlier
+geometry/runtime verification. Current measurements, commands and outstanding acceptance
+checks are in [staggered opening verification](staggered-opening-verification.md).
 
 Build/type checking and edited-file formatting pass. Focused local Chrome inspections
 covered the 113-block baseline, all 21 saved concessions in effective/redline views,

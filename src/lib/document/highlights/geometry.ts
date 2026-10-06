@@ -1,4 +1,5 @@
 import { HIGHLIGHT_THEME, type HighlightKind } from './theme';
+import { countSearchWork } from '../runtime/render-perf';
 
 export type { HighlightKind } from './theme';
 
@@ -37,10 +38,13 @@ interface TextContainer {
 	texts: TextEntry[];
 	bands: Band[];
 }
-interface PageGeometry {
+export interface PageGeometry {
 	element: HTMLElement;
 	number: number;
 	containers: TextContainer[];
+	/** DOM order, including nested text containers and table cells. */
+	textIndex: { entry: TextEntry; container: TextContainer }[];
+	textPositions: WeakMap<Text, number>;
 }
 
 export interface MeasuredInterval {
@@ -54,14 +58,19 @@ export interface MeasuredInterval {
 }
 
 /** Endpoint ancestors bound membership without probing a range against every page. */
-export function rangePageNumbers(range: Range): number[] {
+function rangePageInterval(range: Range): [number, number] | undefined {
 	const page = (node: Node) =>
 		(node instanceof Element ? node : node.parentElement)?.closest<HTMLElement>('.document-page');
 	const start = page(range.startContainer),
 		end = page(range.endContainer);
-	if (!start || !end || !start.isConnected || !end.isConnected) return [];
-	const first = Number(start.dataset.pageNumber),
-		last = Number(end.dataset.pageNumber);
+	if (!start || !end || !start.isConnected || !end.isConnected) return;
+	return [Number(start.dataset.pageNumber), Number(end.dataset.pageNumber)];
+}
+
+export function rangePageNumbers(range: Range): number[] {
+	const interval = rangePageInterval(range);
+	if (!interval) return [];
+	const [first, last] = interval;
 	return Array.from({ length: Math.max(0, last - first + 1) }, (_, i) => first + i);
 }
 
@@ -156,7 +165,22 @@ export function buildLineMaps(
 					}))
 				});
 			}
-			return { element, number: Number(element.dataset.pageNumber), containers };
+			const textIndex = containers
+				.flatMap((container) => container.texts.map((entry) => ({ entry, container })))
+				.sort((a, b) =>
+					a.entry.node.compareDocumentPosition(b.entry.node) & Node.DOCUMENT_POSITION_FOLLOWING
+						? -1
+						: 1
+				);
+			const textPositions = new WeakMap<Text, number>();
+			textIndex.forEach(({ entry }, i) => textPositions.set(entry.node, i));
+			return {
+				element,
+				number: Number(element.dataset.pageNumber),
+				containers,
+				textIndex,
+				textPositions
+			};
 		});
 }
 
@@ -191,6 +215,31 @@ function textInterval(range: Range, node: Text): [number, number] | null {
 	}
 }
 
+/** Direct text endpoints use the index; element endpoints use ordered boundary searches. */
+function rangeTextEntries(page: PageGeometry, range: Range) {
+	const { textIndex, textPositions } = page;
+	if (!range.startContainer.isConnected || !range.endContainer.isConnected) return [];
+	const boundary = (afterEnd: boolean) => {
+		let low = 0,
+			high = textIndex.length;
+		while (low < high) {
+			const middle = (low + high) >>> 1;
+			const entry = textIndex[middle].entry;
+			const point = range.comparePoint(entry.node, afterEnd ? 0 : entry.length);
+			if (afterEnd ? point <= 0 : point < 0) low = middle + 1;
+			else high = middle;
+		}
+		return low;
+	};
+	try {
+		const start = textPositions.get(range.startContainer as Text) ?? boundary(false);
+		const end = textPositions.get(range.endContainer as Text);
+		return textIndex.slice(start, end === undefined ? boundary(true) : end + 1);
+	} catch {
+		return [];
+	}
+}
+
 export function measureRanges(
 	pages: PageGeometry[],
 	ranges: readonly Range[],
@@ -198,51 +247,66 @@ export function measureRanges(
 ): MeasuredInterval[] {
 	const intervals: MeasuredInterval[] = [];
 	if (!ranges.length) return intervals;
-	const memberships = ranges.map((range) => new Set(rangePageNumbers(range)));
+	const search = kind === 'search-match' || kind === 'search-active';
+	let measuredNodes = 0,
+		rangeMeasurements = 0;
+	const memberships = ranges.map(rangePageInterval);
+	const includesPage = (interval: [number, number] | undefined, number: number) =>
+		interval !== undefined && number >= interval[0] && number <= interval[1];
 	for (const page of pages) {
-		if (!memberships.some((numbers) => numbers.has(page.number))) continue;
+		if (!memberships.some((interval) => includesPage(interval, page.number))) continue;
 		let space: ReturnType<typeof pageSpace> | undefined;
-		for (const container of page.containers) {
-			const measured: MeasuredInterval[] = [];
-			for (const entry of container.texts) {
+		const measured = new Map<TextContainer, MeasuredInterval[]>();
+		for (const [i, input] of ranges.entries()) {
+			if (!includesPage(memberships[i], page.number)) continue;
+			for (const { entry, container } of rangeTextEntries(page, input)) {
 				if (kind === 'native-selection' && !entry.selectable) continue;
-				for (const input of ranges) {
-					const interval = textInterval(input, entry.node);
-					if (!interval) continue;
-					if (interval[0] === 0 && interval[1] === entry.length) {
-						for (const rect of entry.rects)
-							measured.push({
-								page,
-								container,
-								band: rect.band,
-								left: rect.left,
-								right: rect.right,
-								kind
-							});
-						continue;
-					}
-					const { bounds, scale } = (space ??= pageSpace(page.element));
-					const range = document.createRange();
-					range.setStart(entry.node, interval[0]);
-					range.setEnd(entry.node, interval[1]);
-					for (const rect of range.getClientRects()) {
-						if (!rect.width || !rect.height) continue;
-						const center = (rect.top + rect.height / 2 - bounds.top) / scale;
-						const band = nearestBand(container.bands, center);
-						if (band)
-							measured.push({
-								page,
-								container,
-								band,
-								left: (rect.left - bounds.left) / scale,
-								right: (rect.right - bounds.left) / scale,
-								kind
-							});
-					}
+				const interval = textInterval(input, entry.node);
+				if (!interval) continue;
+				if (search) measuredNodes++;
+				let contributions = measured.get(container);
+				if (!contributions) measured.set(container, (contributions = []));
+				if (interval[0] === 0 && interval[1] === entry.length) {
+					for (const rect of entry.rects)
+						contributions.push({
+							page,
+							container,
+							band: rect.band,
+							left: rect.left,
+							right: rect.right,
+							kind
+						});
+					continue;
+				}
+				const { bounds, scale } = (space ??= pageSpace(page.element));
+				const range = document.createRange();
+				range.setStart(entry.node, interval[0]);
+				range.setEnd(entry.node, interval[1]);
+				if (search) rangeMeasurements++;
+				for (const rect of range.getClientRects()) {
+					if (!rect.width || !rect.height) continue;
+					const center = (rect.top + rect.height / 2 - bounds.top) / scale;
+					const band = nearestBand(container.bands, center);
+					if (band)
+						contributions.push({
+							page,
+							container,
+							band,
+							left: (rect.left - bounds.left) / scale,
+							right: (rect.right - bounds.left) / scale,
+							kind
+						});
 				}
 			}
-			intervals.push(...mergeIntervals(measured));
 		}
+		const containers = [...measured.keys()].sort((a, b) =>
+			a.element.compareDocumentPosition(b.element) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1
+		);
+		for (const container of containers) intervals.push(...mergeIntervals(measured.get(container)!));
+	}
+	if (search) {
+		countSearchWork('measuredNodes', measuredNodes);
+		countSearchWork('rangeMeasurements', rangeMeasurements);
 	}
 	return intervals;
 }
@@ -431,8 +495,4 @@ export function selectedLineBounds(intervals: MeasuredInterval[]): DOMRect | nul
 		(right - left) * scale,
 		last.band.height * scale
 	);
-}
-
-export function finalLineBounds(stage: HTMLElement, ranges: Range[]): DOMRect | null {
-	return selectedLineBounds(measureRanges(buildLineMaps(stage), ranges, 'native-selection'));
 }

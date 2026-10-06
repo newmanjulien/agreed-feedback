@@ -18,7 +18,7 @@ function recordIdentity(record: PlaybookItemRecord): string {
 		? JSON.stringify([record._creationTime, record.revision, record.lastOperationId])
 		: JSON.stringify(record);
 }
-/** App-scoped pure semantics; no renderer, reactive effects, native objects, or view intent. */
+/** Workspace-owned pure semantics; no renderer, reactive effects, native objects, or view intent. */
 export class DocumentDomain {
 	contract: CompiledContract | null = null;
 	geometry: PlaybookGeometryIndex | null = null;

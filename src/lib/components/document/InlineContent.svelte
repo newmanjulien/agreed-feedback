@@ -28,12 +28,14 @@
 	let {
 		tokens,
 		profileMode = false,
+		interactive = true,
 		selectedAnnotationId,
 		canOpenPlaybookItems,
 		onAnnotationSelect
 	}: {
 		tokens: readonly InlineToken[];
 		profileMode?: boolean;
+		interactive?: boolean;
 		selectedAnnotationId: string | null;
 		canOpenPlaybookItems: boolean;
 		onAnnotationSelect: (
@@ -70,8 +72,8 @@
 		<!-- Role and tabindex change together; keep the text nodes stable for search ranges. -->
 		<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 		<span
-			use:protect
-			use:registerOwner={profileMode ? [] : segment.membershipIds}
+			use:protect={interactive && !profileMode}
+			use:registerOwner={interactive && !profileMode ? segment.membershipIds : []}
 			class="playbook-trigger"
 			role={canOpenPlaybookItems ? 'button' : undefined}
 			tabindex={canOpenPlaybookItems ? 0 : undefined}
@@ -81,10 +83,12 @@
 			aria-pressed={canOpenPlaybookItems
 				? selectedAnnotationId !== null && segment.membershipIds.includes(selectedAnnotationId)
 				: undefined}
-			data-item-id={segment.target.itemId}
-			data-annotation-id={segment.target.id}
-			data-annotation-memberships={JSON.stringify(segment.membershipIds)}
-			onkeydown={(event) => handleKeydown(event, segment.target!.itemId, segment.target!.id)}
+			data-item-id={profileMode ? undefined : segment.target.itemId}
+			data-annotation-id={profileMode ? undefined : segment.target.id}
+			data-annotation-memberships={profileMode ? undefined : JSON.stringify(segment.membershipIds)}
+			onkeydown={interactive && !profileMode
+				? (event) => handleKeydown(event, segment.target!.itemId, segment.target!.id)
+				: undefined}
 		>
 			<RevisionText tokens={segment.tokens} {profileMode} />
 		</span>
